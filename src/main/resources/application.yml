@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ninja-ddd-practice
+#  h2
+  datasource:
+    url: jdbc:h2:mem:testdb # in-memory database, database name is testdb
+    driver-class-name: org.h2.Driver # H2 driver
+    username: sa # default username
+    password: password # default password
+  h2:
+    console:
+      enabled: true # enable H2 console, this console can be accessed by http://localhost:8080/h2-console
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+#    ddl- auto has 4 options: none, create, create-drop, update,
+#    none: no action
+#    create: When the application starts, it will create the tables based on the entities which are annotated with @Entity
+#    create-drop: When the application starts, it will create the tables based on the entities which are annotated with @Entity, and when the application stops, it will drop the tables
+    show-sql: true
+    open-in-view: false
+    generate-ddl: false
+
+
