@@ -139,100 +139,67 @@
 - 接下來我們要來設計忍具店的領域模型，這邊我們會使用 UML 來設計我們的領域模型。
 
 ```plantuml
-@startuml
-package "Interface Layer" {
-    class UserInterface {
-        +display()
-        +getInput()
-    }
-}
 
-package "Application Layer" {
-    class ApplicationService {
-        +handleCommand(Command)
-    }
-}
+```
 
-package "Domain Layer" {
-    class 忍具 {
-        -id: String
-        -name: String
-        -description: String
-        -price: Double
-        +addTool()
-        +updateTool()
-    }
-    class 訂單 {
-        -id: String
-        -status: String
-        -totalAmount: Double
-        +createOrder()
-        +updateOrderStatus()
-        +notifyNinja()
-    }
-    class 忍者 {
-        -id: String
-        -name: String
-        -email: String
-        +registerNinja()
-        +loginNinja()
-        +sendEmailNotification()
-    }
-    class 忍具包 {
-        -id: String
-        -tools: List<忍具>
-        +addToolToPackage()
-        +removeToolFromPackage()
-    }
-    class 庫存 {
-        -id: String
-        -quantity: Integer
-        +updateInventory()
-    }
-}
+- 預計我們的資料夾結構會長這樣
+```
+src
+├── main
+│   ├── java
+│   │   └── com
+│   │       └── kai
+│   │           └── ninja_ddd_practice
+│   │               ├── application
+│   │               │   ├── command
+│   │               │   │   ├── 
+│   │               │   │   └── 
+│   │               │   ├── event
+│   │               │   │   ├── 
+│   │               │   │   └── 
+│   │               │   ├── service
+│   │               │   │   └── 
+│   │               ├── domain
+│   │               │   ├── aggregate
+│   │               │   │   ├── ninjaTool
+|   |               |   |   |   ├── entity
+|   |               |   |   |   |   └── NinjaTool.java
+|   |               |   |   |   └── valueObject
+|   |               |   |   |       ├── ToolCategory.java
+|   |               |   |   |       └── ToolSpecification.java
+│   │               │   │   ├── order
+│   │               │   |   |   ├── entity
+|   |               |   |   |   |   └── Order.java
+|   |               |   |   |   └── valueObject
+|   |               |   |   |       └── 
+│   │               │   │   ├── ninja
+│   │               │   │   ├── ninjaToolBag
+│   │               │   │   └── inventory
+│   │               │   ├── repository
+│   │               │   │   └── 
+│   │               ├── infrastructure
+│   │               │   ├── adapter
+│   │               │   │   └── out
+│   │               │   │       └── event
+│   │               │   │           └── 
+│   │               │   ├── persistence
+│   │               │   │   └── 
+│   │               │   └── config
+│   │               │       └── 
+│   │               └── interface
+│   │                   ├── controller
+│   │                   │   ├── NinjaToolController.java
+│   |                   │   ├── OrderController.java
+│   |                   │   ├── NinjaController.java
+│   |                   │   ├── NinjaToolBagController.java
+│   |                   │   └── InventoryController.java
+│   │                   └── dto
+│   │                       ├── request
+│   │                       └── response
+│   └── resources
+│       ├── application.properties
+│       └── import.sql
 
-package "Infrastructure Layer" {
-    class Database {
-        +save(Entity)
-        +update(Entity)
-        +delete(Entity)
-        +findById(id: String): Entity
-    }
-    class MessagingSystem {
-        +sendMessage(message: String)
-    }
-}
-
-package "Anti-corruption Layer" {
-    class ACL_忍具管理上下文_訂單管理上下文 {
-        +translateToOrderContext()
-        +translateToToolContext()
-    }
-    class ACL_訂單管理上下文_忍者管理上下文 {
-        +translateToNinjaContext()
-        +translateToOrderContext()
-    }
-}
-
-UserInterface --> ApplicationService
-ApplicationService --> 忍具
-ApplicationService --> 訂單
-ApplicationService --> 忍者
-ApplicationService --> 忍具包
-ApplicationService --> 庫存
-
-忍具 --> Database
-訂單 --> Database
-忍者 --> Database
-忍具包 --> Database
-庫存 --> Database
-
-訂單 --> MessagingSystem
-忍者 --> MessagingSystem
-
-ACL_忍具管理上下文_訂單管理上下文 --> 訂單
-ACL_訂單管理上下文_忍者管理上下文 --> 忍者
-@enduml
 ```
 
 ### 忍具管理上下文
