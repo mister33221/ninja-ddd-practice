@@ -37,14 +37,11 @@
     訂單生成和管理
     支付系統（可能包括現金和特殊的忍者積分）
 
-4. 忍術相容性檢查
-    根據用戶的忍術屬性推薦合適的忍具
-
-5. 庫存和供應鏈管理
+4. 庫存和供應鏈管理
     實時庫存追踪
     與供應商的接口
 
-14. 多語言支持
+5. 多語言支持
     支持不同忍村的語言    
 
 以下是我之後有空再擴展的功能：
@@ -107,65 +104,295 @@
             - 經過整理、補充、討論，最終完善事件列表。
             - 本主題我們以橘色便利貼來標示事件。
             - 用戶管理
-                - 用戶註冊完成：當新用戶成功填寫註冊表單並提交，系統驗證並創建新賬戶後觸發。
-                - 用戶登入成功：用戶輸入正確的憑證並通過系統驗證後觸發。
-                - 用戶登出完成：用戶主動登出或系統自動登出用戶後觸發。
-                - 個人資料已更新：用戶修改其個人資訊（如聯繫方式、忍術屬性等）並保存後觸發。
+                - **用戶註冊完成**：當新用戶成功填寫註冊表單並提交，系統驗證並創建新賬戶後觸發。
+                - **用戶登入成功**：用戶輸入正確的憑證並通過系統驗證後觸發。
+                - **用戶登出完成**：用戶主動登出或系統自動登出用戶後觸發。
+                - **個人資料已更新**：用戶修改其個人資訊（如聯繫方式、忍術屬性等）並保存後觸發。
             - 商品管理
-                - 新忍具已添加：管理員在系統中添加新的忍具產品後觸發。
-                - 忍具分類已創建：管理員創建新的忍具分類（如新型武器類別）後觸發。
-                - 忍具分類已更新：管理員修改現有忍具分類的資訊後觸發。
-                - 商品資訊已更新：管理員修改忍具的詳細資訊（如描述、價格）後觸發。
-                - 新品上架完成：新添加的忍具正式在網站上發布並可供購買時觸發。
-                - 庫存數量已更新：由於銷售、退貨或補貨導致忍具庫存數量變化時觸發。
+                - **新忍具已添加**：管理員在系統中添加新的忍具產品後觸發。
+                - **忍具分類已創建**：管理員創建新的忍具分類（如新型武器類別）後觸發。
+                - **忍具分類已更新**：管理員修改現有忍具分類的資訊後觸發。
+                - **商品資訊已更新**：管理員修改忍具的詳細資訊（如描述、價格）後觸發。
+                - **新品上架完成**：新添加的忍具正式在網站上發布並可供購買時觸發。
+                - **庫存數量已更新**：由於銷售、退貨或補貨導致忍具庫存數量變化時觸發。
             - 購物功能
-                - 商品已添加到購物車：用戶選擇一件忍具並將其加入購物車時觸發。
-                - 商品已從購物車移除：用戶從購物車中刪除一件忍具時觸發。
-                - 購物車已清空：用戶選擇清空整個購物車或完成訂單後系統自動清空購物車時觸發。
-                - 訂單已創建：用戶確認購物車中的商品並生成訂單時觸發。
-                - 訂單狀態已更新：訂單狀態發生變化（如待付款、已付款、已發貨等）時觸發。
-                - 支付已完成：用戶成功支付訂單金額後觸發。
+                - **商品已添加到購物車**：用戶選擇一件忍具並將其加入購物車時觸發。
+                - **商品已從購物車移除**：用戶從購物車中刪除一件忍具時觸發。
+                - **購物車已清空**：用戶選擇清空整個購物車或完成訂單後系統自動清空購物車時觸發。
+                - **訂單已創建**：用戶確認購物車中的商品並生成訂單時觸發。
+                - **訂單狀態已更新**：訂單狀態發生變化（如待付款、已付款、已發貨等）時觸發。
+                - **支付已完成**：用戶成功支付訂單金額後觸發。
             - 庫存和供應鏈管理
-                - 庫存水平已達到閾值：某件忍具的庫存數量降至預設的最低閾值時觸發。
-                - 補貨訂單已生成：系統自動或管理員手動創建向供應商的補貨訂單時觸發。
-                - 供應商訂單已確認：供應商確認接受補貨訂單時觸發。
-                - 庫存已補充：新的忍具庫存到達並更新系統庫存數據時觸發。
+                - **庫存水平已達到閾值**：某件忍具的庫存數量降至預設的最低閾值時觸發。
+                - **補貨訂單已生成**：系統自動或管理員手動創建向供應商的補貨訂單時觸發。
+                - **供應商訂單已確認**：供應商確認接受補貨訂單時觸發。
+                - **庫存已補充**：新的忍具庫存到達並更新系統庫存數據時觸發。
             - 多語言支持
-                - 用戶語言偏好已更改：用戶在個人設置中選擇新的界面語言時觸發。
-                - 網站語言已切換：系統根據用戶的語言偏好或選擇切換網站界面語言時觸發。
+                - **用戶語言偏好已更改**：用戶在個人設置中選擇新的界面語言時觸發。
+                - **網站語言已切換**：系統根據用戶的語言偏好或選擇切換網站界面語言時觸發。
         2. 添加命令
             - 在事件的基礎上，說明如何觸發這些事件，定義出系統中可能會發生的所有命令。
             - 在定義命令時，需要識別出哪些人或那些系統可以觸發這些命令。
             - 本主題我們以藍色便利貼來標示命令。
-                - 添加忍具
-                - 更新忍具資訊
+            - 用戶管理
+                - 註冊用戶
+                - 登錄用戶
+                - 登出用戶
+                - 更新個人資料
+            - 商品管理
+                - 添加新忍具
+                - 創建忍具分類
+                - 更新忍具分類
+                - 更新商品資訊
+                - 上架新品
+                - 更新庫存數量
+            - 購物功能
+                - 添加商品到購物車
+                - 從購物車移除商品
+                - 清空購物車
                 - 創建訂單
                 - 更新訂單狀態
-                - 註冊忍者
-                - 登入
-                - 添加忍具到忍具包
-                - 從忍具包移除忍具
-                - 更新庫存
+                - 處理支付
+            - 庫存和供應鏈管理
+                - 檢查庫存水平
+                - 生成補貨訂單
+                - 確認供應商訂單
+                - 補充庫存
+            - 多語言支持
+                - 更改用戶語言偏好
+                - 切換網站語言
         3. 識別聚合
+            - 定義完 events 和 command，我們先來識別聚合，先將聚合識別出來，有助於定義數據的一致性及把邊界劃分清楚。
             - 聚合分組，根據業務邏輯，將相關的事件和命令分組，形成聚合。
-            - 這些聚合就是系統的主要業務對象。
+            - 每個聚合都有一個明確的聚合根，這有助於維護數據的一致性和完整性。
+            - 聚合的邊界基於業務邏輯和事務一致性需求來劃分，確保相關的實體和值對象在同一個事務邊界內。
+            - 這種設計促進了高內聚、低耦合的系統架構，使得每個聚合都能獨立地管理自己的數據和業務規則。
+            - 聚合的設計考慮了以上所有的事件和命令，確保每個聚合都能夠處理相應的業務操作。
             - 本主題我們以粉紅色便利貼來標示聚合。
-                - 忍具
-                - 訂單
-                - 忍者
-                - 忍具包
-                - 庫存
-        5. 定義策略
+            - 用戶聚合 (User Aggregate)
+                - **聚合根**：User
+                - **包含的實體/值對象**：UserProfile, UserCredentials
+                - **設計思路**：
+                - 用戶是系統的核心實體，包含了用戶的基本信息和身份驗證信息。
+                - 不包含語言偏好，因為這將通過 HTTP header 動態處理。
+                - **支持的命令**：註冊用戶、登錄用戶、登出用戶、更新個人資料。
+                    用戶聚合 (User Aggregate)
+                - **程式碼**
+                    - 聚合根: User
+                    ```java
+                    public class User {
+                        private UserId id;
+                        private UserProfile profile;
+                        private UserCredentials credentials;
+                        
+                        public void register(String username, String password, String email) { ... }
+                        public void login(String username, String password) { ... }
+                        public void logout() { ... }
+                        public void updateProfile(UserProfile newProfile) { ... }
+                        public void changePassword(String oldPassword, String newPassword) { ... }
+                    }
+                    ```
+                    - 值對象:
+                    ```java
+                    ypublic class UserProfile {
+                        private String fullName;
+                        private String email;
+                        private String phoneNumber;
+                        private LocalDate dateOfBirth;
+                    }
+
+                    public class UserCredentials {
+                        private String username;
+                        private String hashedPassword;
+                        private LocalDateTime lastLoginTime;
+                    }
+                    ```
+                    - 設計思路:
+                        User 作為聚合根，封裝了用戶的核心信息和行為。
+                        UserProfile 和 UserCredentials 作為值對象，分別處理用戶的個人信息和認證信息。
+                        方法設計反映了用戶的主要操作，如註冊、登錄、更新資料等。
+
+            - 商品聚合 (Product Aggregate)
+
+                - **聚合根**：Product
+                - **包含的實體/值對象**：ProductDetails, ProductCategory, InventoryLevel
+                - **設計思路**：
+                - 商品是忍具店的核心業務實體，包含了商品的基本信息、分類和庫存水平。
+                - 將 ProductDetails、ProductCategory 和 InventoryLevel 作為 Product 的一部分，確保商品相關的所有信息在一個事務邊界內。
+                - **支持的命令**：添加新忍具、創建忍具分類、更新忍具分類、更新商品資訊、上架新品、更新庫存數量。
+                - **程式碼**：
+                    - 聚合根: Product
+                    ```java
+                    public class Product {
+                        private ProductId id;
+                        private ProductDetails details;
+                        private ProductCategory category;
+                        private Money price;
+                        private int stockQuantity;
+                        
+                        public void updateDetails(ProductDetails newDetails) { ... }
+                        public void changeCategory(ProductCategory newCategory) { ... }
+                        public void updatePrice(Money newPrice) { ... }
+                    }
+                    ```
+                    - 值對象:
+                    ```java
+                    public class ProductDetails {
+                        private String name;
+                        private String description;
+                        private List<String> images;
+                    }
+
+                    public class ProductCategory {
+                        private String name;
+                        private String description;
+                    }
+                    ```
+                    - 設計思路:
+                        Product 作為聚合根，管理商品的所有相關信息。
+                        ProductDetails 和 ProductCategory 作為值對象，提供了商品的詳細信息和分類。
+                        方法設計允許更新商品的各個方面，包括詳情、分類、價格和庫存。
+
+            -  購物車聚合 (ShoppingCart Aggregate)
+
+                - **聚合根**：ShoppingCart
+                - **包含的實體/值對象**：CartItem
+                - **設計思路**：
+                - 購物車代表了用戶的臨時購買意圖，需要單獨管理。
+                - 將 CartItem 作為 ShoppingCart 的一部分，確保購物車操作的原子性。
+                - **支持的命令**：添加商品到購物車、從購物車移除商品、清空購物車。
+                - **程式碼**：
+
+                    - 聚合根: ShoppingCart
+                    ```java
+                    public class ShoppingCart {
+                        private ShoppingCartId id;
+                        private UserId userId;
+                        private List<CartItem> items;
+                        
+                        public void addItem(ProductId productId, int quantity) { ... }
+                        public void removeItem(ProductId productId) { ... }
+                        public void updateItemQuantity(ProductId productId, int newQuantity) { ... }
+                        public void clear() { ... }
+                    }
+                    ```
+                    - 值對象:
+                    ```java
+                    public class CartItem {
+                        private ProductId productId;
+                        private int quantity;
+                        private Money price;
+                    }
+                    ```
+                    - 設計思路:
+                        ShoppingCart 作為聚合根，管理用戶的購物車內容。
+                        CartItem 作為值對象，代表購物車中的單個商品項。
+                        方法設計支持添加、移除、更新商品，以及清空購物車等操作。
+
+            -  訂單聚合 (Order Aggregate)
+
+                - **聚合根**：Order
+                - **包含的實體/值對象**：OrderItem, OrderStatus, PaymentInfo
+                - **設計思路**：
+                - 訂單是一個重要的業務概念，代表了一次完整的交易。
+                - 將 OrderItem、OrderStatus 和 PaymentInfo 作為 Order 的一部分，確保訂單相關的所有信息在一個事務邊界內。
+                - **支持的命令**：創建訂單、更新訂單狀態、處理支付。
+                - **程式碼**：
+                    - 聚合根: Order
+                    ```java
+                    public class Order {
+                        private OrderId id;
+                        private UserId userId;
+                        private List<OrderItem> items;
+                        private OrderStatus status;
+                        private Money totalAmount;
+                        private PaymentInfo paymentInfo;
+                        
+                        public void addItem(ProductId productId, int quantity, Money price) { ... }
+                        public void updateStatus(OrderStatus newStatus) { ... }
+                        public void processPayment(PaymentInfo paymentInfo) { ... }
+                    }
+                    ```
+                    - 值對象:
+                    ```java
+                    public class OrderItem {
+                        private ProductId productId;
+                        private int quantity;
+                        private Money price;
+                    }
+
+                    public class OrderStatus {
+                        private String status; // e.g., "PENDING", "PAID", "SHIPPED", "DELIVERED"
+                    }
+
+                    public class PaymentInfo {
+                        private String paymentMethod;
+                        private String transactionId;
+                        private LocalDateTime paymentTime;
+                    }
+                    ```
+                    - 設計思路:
+                        Order 作為聚合根，封裝了訂單的所有相關信息和狀態。
+                        OrderItem、OrderStatus 和 PaymentInfo 作為值對象，分別處理訂單項、訂單狀態和支付信息。
+                        方法設計支持添加商品到訂單、更新訂單狀態和處理支付等操作。
+
+            -  庫存聚合 (Inventory Aggregate)
+
+                - **聚合根**：InventoryItem
+                - **包含的實體/值對象**：StockLevel, ReorderThreshold
+                - **設計思路**：
+                - 庫存管理是一個獨立的業務概念，需要單獨追踪和管理。
+                - 將 StockLevel 和 ReorderThreshold 作為 InventoryItem 的一部分，確保庫存操作的原子性。
+                - **支持的命令**：檢查庫存水平、生成補貨訂單、確認供應商訂單、補充庫存。
+                - **程式碼**：
+                    - 聚合根: InventoryItem
+                    ```java
+                    public class InventoryItem {
+                        private ProductId productId;
+                        private int quantity;
+                        private int reorderThreshold;
+                        
+                        public void addToStock(int amount) { ... }
+                        public void removeFromStock(int amount) { ... }
+                        public boolean isLowStock() { ... }
+                        public void updateReorderThreshold(int newThreshold) { ... }
+                    }
+                    ```
+                    - 值對象:
+                    ```java
+                    public class StockLevel {
+                        private int quantity;
+                    }
+
+                    public class ReorderThreshold {
+                        private int threshold;
+                    }
+                    ```
+                    - 設計思路:
+                        InventoryItem 作為聚合根，管理單個商品的庫存信息。
+                        方法設計支持增加和減少庫存、檢查庫存是否不足，以及更新重新訂購閾值。
+
+                - 這種設計的總體思路是：
+                    每個聚合都有一個明確的聚合根，負責維護該聚合的一致性和完整性。
+                    值對象用於表示那些沒有獨立身份，但包含重要業務數據的概念。
+                    方法設計反映了每個聚合的主要業務操作和規則。
+                    在每個根聚合的 ID 也使用一個物件包起來，提高可讀性及擴展性。
+                    聚合之間通過 ID 引用，而不是直接關聯，以保持鬆耦合。
+                    每個聚合都專注於其核心職責，遵循單一職責原則。
+                    這樣的設計有助於創建一個清晰、模塊化且易於維護的領域模型，同時也為未來的擴展和變更提供了良好的基礎。
+
+        4. 定義策略
             - 策略是指當特定事件發生時，需要自動執行的邏輯或行為。
             - 本主題我們以綠色便利貼來標示策略。
                 - 訂單已創建時，發送短信通知忍者
                 - 訂單狀態已更新時，發送短信通知忍者
                 - 忍者已註冊時，發送郵件通知忍者
-        4. 識別閱讀模型
+
+        5. 識別閱讀模型
             - 通過討論，確定系統中可能會發生的所有事件、命令、聚合、策略等。
         6. 劃分限界上下文
             - 根據事件風暴的結果，劃分限界上下文，確定各個聚合的邊界。
-        5. 優化
+        7. 優化
             - 通過討論、補充、整理，最終完善事件風暴的結果。
     3. 總結階段
         - 此時，我們的大白板上應該會呈現出一個完成的流程，包含了事件、命令、聚合、策略等。
