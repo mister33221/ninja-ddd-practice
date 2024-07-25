@@ -394,7 +394,7 @@
                         private List<OrderItem> items = new ArrayList<>();
 
                         @Embedded
-                        @Enumerated(EnumType.STRING)
+                        @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
                         @Column(nullable = false)
                         private OrderStatus status;
 
