@@ -175,35 +175,59 @@
                 - **設計思路**：
                 - 用戶是系統的核心實體，包含了用戶的基本信息和身份驗證信息。
                 - 不包含語言偏好，因為這將通過 HTTP header 動態處理。
-                - **支持的命令**：註冊用戶、登錄用戶、登出用戶、更新個人資料。
+                - **支持的命令**：註冊用戶、登錄用戶、更新個人資料。
                     用戶聚合 (User Aggregate)
                 - **程式碼**
                     - 聚合根: User
                     ```java
+                    @Entity
+                    @Table(name = "users")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class User {
-                        private UserId id;
+                        @Id
+                        @GeneratedValue(strategy = GenerationType.IDENTITY)
+                        private Long id;
+
+                        @Column(unique = true, nullable = false)
+                        private String username;
+
+                        @Embedded
                         private UserProfile profile;
+
+                        @Embedded
                         private UserCredentials credentials;
                         
                         public void register(String username, String password, String email) { ... }
                         public void login(String username, String password) { ... }
-                        public void logout() { ... }
                         public void updateProfile(UserProfile newProfile) { ... }
                         public void changePassword(String oldPassword, String newPassword) { ... }
                     }
                     ```
                     - 值對象:
                     ```java
-                    ypublic class UserProfile {
+                    @Embeddable
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    public class UserProfile {
+                        @Column(name = "full_name")
                         private String fullName;
+
+                        @Column(unique = true, nullable = false)
                         private String email;
+
+                        @Column(name = "phone_number")
                         private String phoneNumber;
+
+                        @Column(name = "date_of_birth")
                         private LocalDate dateOfBirth;
                     }
 
+                    @Embeddable
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class UserCredentials {
-                        private String username;
+                        @Column(name = "hashed_password", nullable = false)
                         private String hashedPassword;
+
+                        @Column(name = "last_login_time")
                         private LocalDateTime lastLoginTime;
                     }
                     ```
@@ -223,28 +247,60 @@
                 - **程式碼**：
                     - 聚合根: Product
                     ```java
+                    @Entity // 標記一個類為JPA實體。表示這個類將被映射到 DB 的一個 table。
+                    @Table(name = "products") // 指定實體對應的 table 名稱。
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class Product {
-                        private ProductId id;
+                        @Id // 標記一個屬性為主鍵。也就是這個屬性，將會作為這個 table 的主鍵。
+                        @GeneratedValue(strategy = GenerationType.IDENTITY) // 定義主鍵的生成策略。IDENTITY 表示自動增長。
+                        private Long id;
+
+                        @Embedded // 標記一個屬性為嵌入式對象。將會看到另外一個 Class 中被標記為 Embeddable。在 DB 中，他們都是在同一個 table 中。但在程式碼中為了提高重用性、可讀性，我們將他們分開為兩個 Class。
                         private ProductDetails details;
+
+                        @ManyToOne(fetch = FetchType.LAZY) // 標記一個屬性為多對一關聯。指的是多個 Product 可能屬於同一個 ProductCategory。
+                        @JoinColumn(name = "category_id") // 指定關聯的外鍵列名。這個 Product table 將會有一個 category_id 的列，用來關聯到 ProductCategory table 的 id 列。
                         private ProductCategory category;
-                        private Money price;
+
+                        @Column(nullable = false)
+                        private BigDecimal price;
+
+                        @Column(name = "stock_quantity", nullable = false)
                         private int stockQuantity;
                         
                         public void updateDetails(ProductDetails newDetails) { ... }
                         public void changeCategory(ProductCategory newCategory) { ... }
-                        public void updatePrice(Money newPrice) { ... }
+                        public void updatePrice(BigDecimal newPrice) { ... }
                     }
                     ```
                     - 值對象:
                     ```java
+                    @Embeddable
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class ProductDetails {
+                        @Column(nullable = false)
                         private String name;
+
+                        @Column(length = 1000)
                         private String description;
+
+                        @ElementCollection
+                        @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+                        @Column(name = "image_url")
                         private List<String> images;
                     }
 
+                    @Entity
+                    @Table(name = "product_categories")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class ProductCategory {
+                        @Id
+                        @GeneratedValue(strategy = GenerationType.IDENTITY)
+                        private Long id;
+
+                        @Column(nullable = false, unique = true)
                         private String name;
+
                         private String description;
                     }
                     ```
@@ -265,10 +321,20 @@
 
                     - 聚合根: ShoppingCart
                     ```java
+                    @Entity
+                    @Table(name = "shopping_carts")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class ShoppingCart {
-                        private ShoppingCartId id;
-                        private UserId userId;
-                        private List<CartItem> items;
+                        @Id
+                        @GeneratedValue(strategy = GenerationType.IDENTITY)
+                        private Long id;
+
+                        @Column(name = "user_id", nullable = false)
+                        private Long userId;
+
+                        @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+                        @JoinColumn(name = "cart_id")
+                        private List<CartItem> items = new ArrayList<>();
                         
                         public void addItem(ProductId productId, int quantity) { ... }
                         public void removeItem(ProductId productId) { ... }
@@ -278,10 +344,22 @@
                     ```
                     - 值對象:
                     ```java
+                    @Entity
+                    @Table(name = "cart_items")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class CartItem {
-                        private ProductId productId;
+                        @Id
+                        @GeneratedValue(strategy = GenerationType.IDENTITY)
+                        private Long id;
+
+                        @Column(name = "product_id", nullable = false)
+                        private Long productId;
+
+                        @Column(nullable = false)
                         private int quantity;
-                        private Money price;
+
+                        @Column(nullable = false)
+                        private BigDecimal price;
                     }
                     ```
                     - 設計思路:
@@ -300,12 +378,30 @@
                 - **程式碼**：
                     - 聚合根: Order
                     ```java
+                    @Entity
+                    @Table(name = "orders")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class Order {
-                        private OrderId id;
-                        private UserId userId;
-                        private List<OrderItem> items;
+                        @Id
+                        @GeneratedValue(strategy = GenerationType.IDENTITY)
+                        private Long id;
+
+                        @Column(name = "user_id", nullable = false)
+                        private Long userId;
+
+                        @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+                        @JoinColumn(name = "order_id")
+                        private List<OrderItem> items = new ArrayList<>();
+
+                        @Embedded
+                        @Enumerated(EnumType.STRING)
+                        @Column(nullable = false)
                         private OrderStatus status;
-                        private Money totalAmount;
+
+                        @Column(name = "total_amount", nullable = false)
+                        private BigDecimal totalAmount;
+
+                        @Embedded
                         private PaymentInfo paymentInfo;
                         
                         public void addItem(ProductId productId, int quantity, Money price) { ... }
@@ -313,21 +409,75 @@
                         public void processPayment(PaymentInfo paymentInfo) { ... }
                     }
                     ```
+                    - 列舉
+                    ```java
+                    public enum OrderStatus {
+                        PENDING("待處理"),
+                        PAID("已支付"),
+                        SHIPPED("已發貨"),
+                        DELIVERED("已送達"),
+                        CANCELLED("已取消");
+
+                        private final String description;
+
+                        OrderStatus(String description) {
+                            this.description = description;
+                        }
+
+                        public String getDescription() {
+                            return description;
+                        }
+
+                        public boolean canCancel() {
+                            return this == PENDING || this == PAID;
+                        }
+                    }
+                    ```
                     - 值對象:
                     ```java
+                    @Entity
+                    @Table(name = "order_items")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class OrderItem {
-                        private ProductId productId;
+                        @Id
+                        @GeneratedValue(strategy = GenerationType.IDENTITY)
+                        private Long id;
+
+                        @Column(name = "product_id", nullable = false)
+                        private Long productId;
+
+                        @Column(nullable = false)
                         private int quantity;
-                        private Money price;
+
+                        @Column(nullable = false)
+                        private BigDecimal price;
                     }
 
-                    public class OrderStatus {
-                        private String status; // e.g., "PENDING", "PAID", "SHIPPED", "DELIVERED"
+                    @Entity
+                    @Table(name = "inventory_items")
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    public class InventoryItem {
+                        @Id
+                        @Column(name = "product_id")
+                        private Long productId;
+
+                        @Column(nullable = false)
+                        private int quantity;
+
+                        @Column(name = "reorder_threshold", nullable = false)
+                        private int reorderThreshold;
                     }
 
+                    @Embeddable
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
                     public class PaymentInfo {
+                        @Column(name = "payment_method")
                         private String paymentMethod;
+
+                        @Column(name = "transaction_id")
                         private String transactionId;
+
+                        @Column(name = "payment_time")
                         private LocalDateTime paymentTime;
                     }
                     ```
