@@ -7,14 +7,14 @@ public enum OrderStatus {
     DELIVERED("已送達"),
     CANCELLED("已取消");
 
-    private final String description;
+    private final String statusDescription;
 
-    OrderStatus(String description) {
-        this.description = description;
+    OrderStatus(String statusDescription) {
+        this.statusDescription = statusDescription;
     }
 
-    public String getDescription() {
-        return description;
+    public String getStatusDescription() {
+        return statusDescription;
     }
 
     public boolean canCancel() {

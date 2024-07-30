@@ -101,9 +101,9 @@
         使用者介面。也就是畫面啦!可以依照 Read Model 簡單先畫出 Wireframe(線框圖)，讓使用者可以看到畫面的樣子。
     - External System: 
         外部系統。當我們的系統需要和其他系統進行交互時，我們可以使用 External System 來表示這個外部系統。
-    - Question: 
+    - Question(可選項): 
         問題。當參與者有任何問題，包含但不限於業務問題、流程問題、技術問題等，都可以提出問題，讓大家一起討論。
-    - Hotspot: 
+    - Hotspot(可選項): 
         熱點。當參與者討論到一個比較複雜或者重要的問題時，可能連參與的領域專家、技術人員都無法解決，抑或是目前所擁有的資訊不足以解決時，我們可以將這個問題標記為熱點，以便之後進一步討論。
     - Opportunity(可選項): 
         機會。表示為本系統可能存在的商機或價值，或是某個流程你覺得很讚，就給他一個讚的意思 :D。
@@ -139,8 +139,8 @@
             - 用戶管理
                 - **用戶註冊完成**：當新用戶成功填寫註冊表單並提交，系統驗證並創建新賬戶後觸發。
                 - **用戶登入成功**：用戶輸入正確的憑證並通過系統驗證後觸發。
-                - **用戶登出完成**：用戶主動登出或系統自動登出用戶後觸發。
                 - **個人資料已更新**：用戶修改其個人資訊（如聯繫方式、忍術屬性等）並保存後觸發。
+                - **用戶登出完成**：用戶主動登出或系統自動登出用戶後觸發。
             - 商品管理
                 - **新忍具已添加**：管理員在系統中添加新的忍具產品後觸發。
                 - **忍具分類已創建**：管理員創建新的忍具分類（如新型武器類別）後觸發。
@@ -160,9 +160,6 @@
                 - **補貨訂單已生成**：系統自動或管理員手動創建向供應商的補貨訂單時觸發。
                 - **供應商訂單已確認**：供應商確認接受補貨訂單時觸發。
                 - **庫存已補充**：新的忍具庫存到達並更新系統庫存數據時觸發。
-            - 多語言支持
-                - **用戶語言偏好已更改**：用戶在個人設置中選擇新的界面語言時觸發。
-                - **網站語言已切換**：系統根據用戶的語言偏好或選擇切換網站界面語言時觸發。
         2. 添加命令
             - 在事件的基礎上，說明如何觸發這些事件，定義出系統中可能會發生的所有命令。
             - 在定義命令時，需要識別出哪些人或那些系統可以觸發這些命令。
@@ -191,11 +188,18 @@
                 - 生成補貨訂單
                 - 確認供應商訂單
                 - 補充庫存
-            - 多語言支持
-                - 更改用戶語言偏好
-                - 切換網站語言
-        3. 識別聚合
-            - 定義完 events 和 command，我們先來識別聚合，先將聚合識別出來，有助於定義數據的一致性及把邊界劃分清楚。
+        3. 定義策略
+            - 策略是指當特定事件發生時，需要自動執行的邏輯或行為。
+            - 本主題我們以綠色便利貼來標示策略。
+                - 忍者已註冊時，發送郵件通知忍者
+                - 當訂單狀態變更為已發貨時，檢查庫存水平
+        4. 識別閱讀模型
+            - 通過討論，確定系統中可能會發生的所有事件、命令、聚合、策略等之後，將這些事件、命令、聚合、策略等映射到用戶界面上，形成閱讀模型。
+            閱讀模型也就是用戶在系統中看到的畫面，畫面上用戶可以看到的所有訊息。
+        5. 劃分限界上下文
+            - 根據事件風暴的結果，劃分限界上下文，確定各個聚合的邊界。
+        6. 識別聚合
+            - 定義完 events 和 command，限界上下文也都被劃分清楚了，那麼具在一起的也就是我們識別出的聚合。
             - 聚合分組，根據業務邏輯，將相關的事件和命令分組，形成聚合。
             - 每個聚合都有一個明確的聚合根，這有助於維護數據的一致性和完整性。
             - 聚合的邊界基於業務邏輯和事務一致性需求來劃分，確保相關的實體和值對象在同一個事務邊界內。
@@ -233,7 +237,6 @@
                         public void register(String username, String password, String email) { ... }
                         public void login(String username, String password) { ... }
                         public void updateProfile(UserProfile newProfile) { ... }
-                        public void changePassword(String oldPassword, String newPassword) { ... }
                     }
                     ```
                     - 值對象:
@@ -269,14 +272,13 @@
                         UserProfile 和 UserCredentials 作為值對象，分別處理用戶的個人信息和認證信息。
                         方法設計反映了用戶的主要操作，如註冊、登錄、更新資料等。
 
-            - 商品聚合 (Product Aggregate)
+                - 商品聚合 (Product Aggregate)
+                    - **聚合根**：Product
+                    - **包含的實體/值對象**：ProductDetails, ProductPrice
+                    - **設計思路**：
+                        - 商品是系統中的核心實體，包含了商品的基本信息和價格信息。
+                    - **支持的命令**：添加商品、更新商品信息、刪除商品。
 
-                - **聚合根**：Product
-                - **包含的實體/值對象**：ProductDetails, ProductCategory, InventoryLevel
-                - **設計思路**：
-                - 商品是忍具店的核心業務實體，包含了商品的基本信息、分類和庫存水平。
-                - 將 ProductDetails、ProductCategory 和 InventoryLevel 作為 Product 的一部分，確保商品相關的所有信息在一個事務邊界內。
-                - **支持的命令**：添加新忍具、創建忍具分類、更新忍具分類、更新商品資訊、上架新品、更新庫存數量。
                 - **程式碼**：
                     - 聚合根: Product
                     ```java
@@ -291,19 +293,23 @@
                         @Embedded // 標記一個屬性為嵌入式對象。將會看到另外一個 Class 中被標記為 Embeddable。在 DB 中，他們都是在同一個 table 中。但在程式碼中為了提高重用性、可讀性，我們將他們分開為兩個 Class。
                         private ProductDetails details;
 
-                        @ManyToOne(fetch = FetchType.LAZY) // 標記一個屬性為多對一關聯。指的是多個 Product 可能屬於同一個 ProductCategory。
-                        @JoinColumn(name = "category_id") // 指定關聯的外鍵列名。這個 Product table 將會有一個 category_id 的列，用來關聯到 ProductCategory table 的 id 列。
-                        private ProductCategory category;
-
                         @Column(nullable = false)
                         private BigDecimal price;
 
                         @Column(name = "stock_quantity", nullable = false)
                         private int stockQuantity;
-                        
+
+                        @Column(name = "category_id", nullable = false)
+                        private Long categoryId;
+
+                        @ElementCollection
+                        @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+                        @Column(name = "image_url")
+                        private List<Image> images;
+
                         public void updateDetails(ProductDetails newDetails) { ... }
-                        public void changeCategory(ProductCategory newCategory) { ... }
                         public void updatePrice(BigDecimal newPrice) { ... }
+                        public void updateCategoryId(Long newCategoryId) { ... }
                     }
                     ```
                     - 值對象:
@@ -323,6 +329,49 @@
                         private List<String> images;
                     }
 
+                    @Embeddable
+                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    public class Image {
+                        @Column(nullable = false)
+                        private String url;
+
+                        // 其他屬性和方法
+                    }
+                    ```
+                    - 列舉
+                    ```java
+                    public enum ProductStatus {
+                        PULL_ON_SHELVES("上架"),
+                        PULL_OFF_SHELVES("下架"),
+                        OUT_OF_STOCK("缺貨"),
+                        DISCONTINUED("停產");
+
+                        private final String statusDescription;
+
+                        ProductStatus(String statusDescription) {
+                            this.statusDescription = statusDescription;
+                        }
+
+                        public String getStatusDescription() {
+                            return statusDescription;
+                        }
+                    }
+                    ```
+                    - 設計思路:
+                        Product 作為聚合根，管理商品的所有相關信息。
+                        ProductDetails 和 ProductCategory 作為值對象，提供了商品的詳細信息和分類。
+                        方法設計允許更新商品的各個方面，包括詳情、分類、價格和庫存。
+
+            - 商品類別聚合 (Product Category Aggregate)
+
+                - **聚合根**：ProductCategory
+                - **包含的實體/值對象**：CategoryDetails
+                - **設計思路**：
+                    - 商品類別是系統中的輔助實體，主要用於分類和組織商品。
+                - **支持的命令**：添加類別、更新類別信息、刪除類別。
+                - **程式碼**：
+                    - 聚合根: ProductCategory
+                    ```java
                     @Entity
                     @Table(name = "product_categories")
                     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -338,9 +387,8 @@
                     }
                     ```
                     - 設計思路:
-                        Product 作為聚合根，管理商品的所有相關信息。
-                        ProductDetails 和 ProductCategory 作為值對象，提供了商品的詳細信息和分類。
-                        方法設計允許更新商品的各個方面，包括詳情、分類、價格和庫存。
+                        ProductCategory 作為聚合根，管理商品類別的基本信息。
+                        方法設計支持添加、更新和刪除商品類別。
 
             -  購物車聚合 (ShoppingCart Aggregate)
 
@@ -451,14 +499,14 @@
                         DELIVERED("已送達"),
                         CANCELLED("已取消");
 
-                        private final String description;
+                        private final String statusDescription;
 
-                        OrderStatus(String description) {
-                            this.description = description;
+                        OrderStatus(String statusDescription) {
+                            this.statusDescription = statusDescription;
                         }
 
-                        public String getDescription() {
-                            return description;
+                        public String getStatusDescription() {
+                            return statusDescription;
                         }
 
                         public boolean canCancel() {
@@ -563,36 +611,12 @@
                     聚合之間通過 ID 引用，而不是直接關聯，以保持鬆耦合。
                     每個聚合都專注於其核心職責，遵循單一職責原則。
                     這樣的設計有助於創建一個清晰、模塊化且易於維護的領域模型，同時也為未來的擴展和變更提供了良好的基礎。
-
-        4. 定義策略
-            - 策略是指當特定事件發生時，需要自動執行的邏輯或行為。
-            - 本主題我們以綠色便利貼來標示策略。
-                - 訂單已創建時，發送短信通知忍者
-                - 訂單狀態已更新時，發送短信通知忍者
-                - 忍者已註冊時，發送郵件通知忍者
-
-        5. 識別閱讀模型
-            - 通過討論，確定系統中可能會發生的所有事件、命令、聚合、策略等。
-        6. 劃分限界上下文
-            - 根據事件風暴的結果，劃分限界上下文，確定各個聚合的邊界。
         7. 優化
             - 通過討論、補充、整理，最終完善事件風暴的結果。
     3. 總結階段
         - 此時，我們的大白板上應該會呈現出一個完成的流程，包含了事件、命令、聚合、策略等。
         - 將事件風暴的結果整理成文檔，並且與參與者確認。
         - 這份文檔將作為我們設計領域模型的參考。
-
-![alt text](image.png)
-
-- 圖有點小，我把它畫成如下表格，方便大家查看。(老實說我不是很確定這樣畫對不對，還煩請指教。)
-
-| 聚合 | 事件 | 命令 | 策略 |
-|------|------|------|------|
-| 忍具 | - 忍具已添加<br>- 忍具已更新 | - 添加忍具<br>- 更新忍具資訊 | |
-| 訂單 | - 訂單已創建<br>- 訂單狀態已更新 | - 創建訂單<br>- 更新訂單狀態 | - 訂單已創建時，發送短信通知忍者<br>- 訂單狀態已更新時，發送短信通知忍者 |
-| 忍者 | - 忍者已註冊<br>- 忍者已登入 | - 註冊忍者<br>- 登入 | - 忍者已註冊時，發送郵件通知忍者 |
-| 忍具包 | - 忍具已加入忍具包<br>- 忍具已從忍具包移除 | - 添加忍具到忍具包<br>- 從忍具包移除忍具 | |
-| 庫存 | - 庫存已更新 | - 更新庫存 | |
 
 ## 3. 領域分析
 

@@ -1,4 +1,4 @@
-package com.kai.ninja_ddd_practice.domainLayer.model.aggregations.product.valueObject;
+package com.kai.ninja_ddd_practice.domainLayer.model.aggregations.productCategpry.aggregateRoot;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -12,11 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "orders")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +26,8 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
 
     @Embedded
+    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
+    @Column(nullable = false)
     private OrderStatus status;
 
     @Column(name = "total_amount", nullable = false)
