@@ -1,0 +1,19 @@
+<div class="modal-header">
+  <h4 class="modal-title pull-left">登錄</h4>
+  <button type="button" class="btn-close close pull-right" aria-label="Close" (click)="modalRef.hide()">
+    <span aria-hidden="true" class="visually-hidden">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <form (ngSubmit)="onSubmit()">
+    <div class="mb-3">
+      <label for="username" class="form-label">用戶名</label>
+      <input type="text" class="form-control" id="username" [(ngModel)]="username" name="username" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">密碼</label>
+      <input type="password" class="form-control" id="password" [(ngModel)]="password" name="password" required>
+    </div>
+    <button type="submit" class="btn btn-primary">登錄</button>
+  </form>
+</div>

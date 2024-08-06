@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: ninja-ddd-practice
+#  h2
+  datasource:
+    url: jdbc:h2:mem:testdb # in-memory database, database name is testdb
+    driver-class-name: org.h2.Driver # H2 driver
+    username: sa # default username
+    password: password # default password
+  h2:
+    console:
+      enabled: true # enable H2 console, this console can be accessed by http://localhost:8080/h2-console
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+#    ddl- auto has 5 options: none, validate, update, create, create-drop
+#    none: 不做任何操作。
+#    validate: 驗證 DB schema 是否和 Hibernate 的 Entity schema 一致。如果不一致的話，會丟出一個異常。通常會用於生 production 環境。
+#    update: 根據 Hibernate 的 Entity schema 更新 DB schema，這是最常用的選項。但不會刪除既存的資料。
+#    create: 根據 Hibernate 的 Entity schema 建立新的 DB schema，這會刪除既存的資料。
+#    create-drop: 在 SessionFactory 關閉的時候，刪除 DB schema。通常會用於 test 環境。
+    show-sql: true # 當有 SQL 執行時，會在 console 顯示 SQL 語句
+    open-in-view: false # 用於延長 Hibernate Session 的生命週期，使其在 View 中仍然有效，避免 LazyInitializationException。但這會導致性能問題，所以建議設置為 false。
+    generate-ddl: false # 與 ddl-auto 一樣，但是 ddl-auto 提供了更細的顆粒度控制。hibernate.ddl-auto 通常會覆蓋 spring.jpa.generate-ddl。這裡因為用了 ddl-auto，所以設置為 false。
+
+
