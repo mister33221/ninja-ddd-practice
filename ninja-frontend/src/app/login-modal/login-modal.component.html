@@ -14,6 +14,9 @@
       <label for="password" class="form-label">密碼</label>
       <input type="password" class="form-control" id="password" [(ngModel)]="password" name="password" required>
     </div>
-    <button type="submit" class="btn btn-primary">登錄</button>
+    <div class="d-flex justify-content-between align-items-center">
+      <button type="submit" class="btn btn-primary">登錄</button>
+      <a class="text-primary" style="cursor: pointer;" (click)="redirectToRegistration()">註冊</a>
+    </div>
   </form>
 </div>

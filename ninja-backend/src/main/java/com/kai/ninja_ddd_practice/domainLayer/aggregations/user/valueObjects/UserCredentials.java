@@ -1,4 +1,4 @@
-package com.kai.ninja_ddd_practice.domainLayer.aggregations.User.valueObjects;
+package com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

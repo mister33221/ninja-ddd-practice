@@ -1,7 +1,7 @@
-package com.kai.ninja_ddd_practice.domainLayer.aggregations.User.aggregateRoot;
+package com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot;
 
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.User.valueObjects.UserCredentials;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.User.valueObjects.UserProfile;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserCredentials;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserProfile;
 import jakarta.persistence.*;
 import lombok.*;
 

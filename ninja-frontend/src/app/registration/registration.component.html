@@ -1,0 +1,89 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-dark text-light">
+          <h3 class="mb-0">
+            <i class="bi bi-person-plus"></i> 註冊會員
+          </h3>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">
+                  <i class="bi bi-envelope"></i> 電子郵件
+                </label>
+                <input type="email" class="form-control" id="email" formControlName="email" placeholder="請輸入電子郵件">
+                <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="text-danger">
+                  請輸入有效的電子郵件地址
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="username" class="form-label">
+                  <i class="bi bi-person"></i> 用戶名
+                </label>
+                <input type="text" class="form-control" id="username" formControlName="username" placeholder="請輸入用戶名">
+                <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched" class="text-danger">
+                  用戶名至少需要3個字符
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="password" class="form-label">
+                  <i class="bi bi-lock"></i> 密碼
+                </label>
+                <input type="password" class="form-control" id="password" formControlName="password" placeholder="請輸入密碼">
+                <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="text-danger">
+                  密碼至少需要6個字符
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="confirmPassword" class="form-label">
+                  <i class="bi bi-lock-fill"></i> 確認密碼
+                </label>
+                <input type="password" class="form-control" id="confirmPassword" formControlName="confirmPassword" placeholder="請再次輸入密碼">
+                <div *ngIf="registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched" class="text-danger">
+                  密碼不匹配
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="fullname" class="form-label">
+                <i class="bi bi-person-badge"></i> 全名
+              </label>
+              <input type="text" class="form-control" id="fullname" formControlName="fullname" placeholder="請輸入全名">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="phonenumber" class="form-label">
+                  <i class="bi bi-telephone"></i> 電話號碼
+                </label>
+                <input type="tel" class="form-control" id="phonenumber" formControlName="phonenumber" placeholder="請輸入電話號碼">
+                <div *ngIf="registerForm.get('phonenumber')?.invalid && registerForm.get('phonenumber')?.touched" class="text-danger">
+                  請輸入有效的10位電話號碼
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="dateofbirth" class="form-label">
+                  <i class="bi bi-calendar"></i> 出生日期
+                </label>
+                <input type="date" class="form-control" id="dateofbirth" formControlName="dateofbirth">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="address" class="form-label">
+                <i class="bi bi-house"></i> 地址
+              </label>
+              <textarea class="form-control" id="address" formControlName="address" rows="3" placeholder="請輸入地址"></textarea>
+            </div>
+            <button type="submit" class="btn btn-dark w-100" [disabled]="registerForm.invalid">
+              <i class="bi bi-check-circle"></i> 註冊
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

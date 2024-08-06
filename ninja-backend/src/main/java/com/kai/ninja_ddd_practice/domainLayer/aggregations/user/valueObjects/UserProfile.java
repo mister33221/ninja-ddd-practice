@@ -1,4 +1,4 @@
-package com.kai.ninja_ddd_practice.domainLayer.aggregations.User.valueObjects;
+package com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -24,4 +24,7 @@ public class UserProfile {
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
+
+    @Column(name = "address")
+    private String address;
 }
