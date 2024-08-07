@@ -8,9 +8,16 @@
           <p class="card-text">這是一個強大的忍具，能夠大幅提升您的戰鬥力。</p>
           <div class="mt-auto d-flex justify-content-between align-items-center">
             <span class="text-muted">$99.99</span>
-            <button class="btn btn-outline-primary btn-sm" (click)="onSomeAction()">
-              <i class="bi bi-cart-plus"></i> 加入購物車
-            </button>
+            <div>
+              <!-- 手機版顯示圖標 -->
+              <button class="btn btn-outline-primary btn-sm d-md-none" (click)="onSomeAction()">
+                <i class="bi bi-cart-plus"></i>
+              </button>
+              <!-- 桌面版顯示文字和圖標 -->
+              <button class="btn btn-outline-primary btn-sm d-none d-md-block" (click)="onSomeAction()">
+                <i class="bi bi-cart-plus"></i> 加入購物車
+              </button>
+            </div>
           </div>
         </div>
       </div>

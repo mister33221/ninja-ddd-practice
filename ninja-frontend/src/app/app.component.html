@@ -13,10 +13,14 @@
             <i class="bi bi-list-ul"></i> 商品列表
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            <i class="bi bi-box-seam"></i> 補貨系統
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-box-seam"></i> 商品與庫存系統
           </a>
+          <ul class="dropdown-menu dropdown-menu-start dropdown-menu-dark" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" [routerLink]="['/product-invetory']"><i class="bi bi-person"></i> 商品清單與庫存</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-receipt"></i> 補貨訂單</a></li>
+          </ul>
         </li>
       </ul>
       <ul class="navbar-nav">
@@ -26,7 +30,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">
+          <a class="nav-link" [routerLink]="['/shopping-cart']">
             <i class="bi bi-cart3"></i> 購物車
           </a>
         </li>
@@ -34,7 +38,7 @@
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-gear"></i> 用戶中心
           </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> 個人資料</a></li>
             <li><a class="dropdown-item" href="#"><i class="bi bi-receipt"></i> 我的訂單</a></li>
             <li><hr class="dropdown-divider"></li>

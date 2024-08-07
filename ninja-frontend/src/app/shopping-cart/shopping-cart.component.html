@@ -1,0 +1,55 @@
+<div class="container mt-5">
+  <h2 class="mb-4">購物車</h2>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-3" *ngFor="let item of cartItems">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 col-4">
+              <img [src]="item.image" class="img-fluid rounded" [alt]="item.name">
+            </div>
+            <div class="col-md-9 col-8">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="card-title mb-0">{{ item.name }}</h5>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [(ngModel)]="item.selected" [id]="'check' + item.id">
+                  <label class="form-check-label" [for]="'check' + item.id">
+                    選擇
+                  </label>
+                </div>
+              </div>
+              <p class="card-text">價格: ${{ item.price }}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-secondary" (click)="decrementQuantity(item)">
+                    <i class="bi bi-dash"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" disabled>
+                    {{ item.quantity }}
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" (click)="incrementQuantity(item)">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+                <button class="btn btn-danger" (click)="removeItem(item)">
+                  <i class="bi bi-trash"></i> 移除
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">訂單摘要</h5>
+          <p class="card-text">總計: ${{ getTotalPrice() }}</p>
+          <button class="btn btn-primary w-100" (click)="checkout()">
+            <i class="bi bi-cart-check"></i> 結帳
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

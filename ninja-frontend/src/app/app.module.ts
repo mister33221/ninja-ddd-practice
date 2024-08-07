@@ -10,13 +10,17 @@ import { ProductListComponent } from './product-list/product-list.component';
 import { LoginModalComponent } from './login-modal/login-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RegistrationComponent } from './registration/registration.component';
+import { ShoppingCartComponent } from './shopping-cart/shopping-cart.component';
+import { ProductInventoryComponent } from './product-inventory/product-inventory.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     ProductListComponent,
     LoginModalComponent,
-    RegistrationComponent
+    RegistrationComponent,
+    ShoppingCartComponent,
+    ProductInventoryComponent
   ],
   imports: [
     BrowserModule,
