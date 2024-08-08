@@ -1,108 +1,76 @@
 <div class="container mt-5">
   <h2 class="mb-4">商品庫存管理</h2>
-  <div class="row row-cols-1 row-cols-md-3 g-4">
-    <div class="col" *ngFor="let product of products">
-      <div class="card h-100" [class.border-danger]="isLowStock(product)">
-        <img [src]="product.image" class="card-img-top" [alt]="product.name" />
-        <div class="card-body">
-          <h5 class="card-title">{{ product.name }}</h5>
-          <p class="card-text">
-            庫存: {{ product.stockQuantity }}
-            <span class="badge bg-danger" *ngIf="isLowStock(product)"
-              >庫存不足</span
-            >
-          </p>
-          <button
-            class="btn btn-primary"
-            (click)="openModal(productModal, product)"
-          >
-            <i class="bi bi-info-circle"></i> 詳細資訊
-          </button>
+  <div class="list-group">
+    <div class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let product of products"
+         [class.list-group-item-danger]="isLowStock(product)">
+      <div class="d-flex align-items-center">
+        <img [src]="product.image" alt="{{ product.name }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover;">
+        <div>
+          <h5 class="mb-0">{{ product.name }}</h5>
+          <small>庫存: {{ product.stockQuantity }}</small>
+          <span class="badge bg-danger ms-2" *ngIf="isLowStock(product)">庫存不足</span>
         </div>
       </div>
+      <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#productOffcanvas"
+              (click)="openOffcanvas(product)">
+        <i class="bi bi-info-circle"></i> 詳細資訊
+      </button>
     </div>
   </div>
 </div>
 
-<ng-template #productModal>
-  <div class="modal-header">
-    <h4 class="modal-title pull-left">{{ selectedProduct?.name }}</h4>
-    <button
-      type="button"
-      class="btn-close close pull-right"
-      aria-label="Close"
-      (click)="closeModal()"
-    >
-      <span aria-hidden="true" class="visually-hidden">&times;</span>
-    </button>
+<div class="offcanvas offcanvas-bottom show-full-content h-auto" tabindex="-1" id="productOffcanvas" #offcanvas>
+  <div class="offcanvas-header border-bottom">
+    <h4 class="offcanvas-title">{{ selectedProduct?.name }}</h4>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-  <div class="modal-body">
-    <form>
-      <div class="mb-3">
-        <label for="productDescription" class="form-label">商品描述</label>
-        <textarea
-          class="form-control"
-          id="productDescription"
-          rows="3"
-          [(ngModel)]="selectedProduct!.description"
-          name="description"
-          [disabled]="!isEditing"
-        ></textarea>
+  <div class="offcanvas-body d-flex flex-column" *ngIf="selectedProduct">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="mb-4">
+          <label for="productImage" class="form-label">商品圖片</label>
+          <div class="d-flex align-items-center">
+            <img [src]="selectedProduct.image" alt="{{ selectedProduct.name }}" class="me-3" style="width: 100px; height: 100px; object-fit: cover;">
+            <div class="form-control-file">
+              <input type="file" class="form-control-file" id="productImage" (change)="onFileChange($event)">
+              <label for="productImage" class="btn btn-primary" *ngIf="isEditing">
+                <i class="bi bi-upload"></i> 上傳圖片
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="productSpecifications" class="form-label">商品規格</label>
+          <textarea class="form-control" id="productSpecifications" rows="5"
+                    [(ngModel)]="selectedProduct.specifications" name="specifications"
+                    [disabled]="!isEditing" [ngClass]="{'bg-light': isEditing}"></textarea>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="productSpecifications" class="form-label">商品規格</label>
-        <textarea
-          class="form-control"
-          id="productSpecifications"
-          rows="3"
-          [(ngModel)]="selectedProduct!.specifications"
-          name="specifications"
-          [disabled]="!isEditing"
-        ></textarea>
+      <div class="col-md-6">
+        <div class="mb-4">
+          <label for="productDescription" class="form-label">商品描述</label>
+          <textarea class="form-control" id="productDescription" rows="3"
+                    [(ngModel)]="selectedProduct.description" name="description"
+                    [disabled]="!isEditing" [ngClass]="{'bg-light': isEditing}"></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="safetyStockLevel" class="form-label">最低安全庫存量</label>
+          <input type="number" class="form-control" id="safetyStockLevel"
+                 [(ngModel)]="selectedProduct.safetyStockLevel" name="safetyStockLevel"
+                 [disabled]="!isEditing" [ngClass]="{'bg-light': isEditing}">
+        </div>
+        <div class="mb-4">
+          <label for="stockQuantity" class="form-label">當前庫存數量</label>
+          <input type="number" class="form-control" id="stockQuantity"
+                 [(ngModel)]="selectedProduct.stockQuantity" name="stockQuantity"
+                 [disabled]="!isEditing" [ngClass]="{'bg-light': isEditing}">
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="safetyStockLevel" class="form-label">最低安全庫存量</label>
-        <input
-          type="number"
-          class="form-control"
-          id="safetyStockLevel"
-          [(ngModel)]="selectedProduct!.safetyStockLevel"
-          name="safetyStockLevel"
-          [disabled]="!isEditing"
-        />
-      </div>
-      <div class="mb-3">
-        <label for="stockQuantity" class="form-label">當前庫存數量</label>
-        <input
-          type="number"
-          class="form-control"
-          id="stockQuantity"
-          [(ngModel)]="selectedProduct!.stockQuantity"
-          name="stockQuantity"
-          disabled
-        />
-      </div>
-    </form>
+    </div>
+    <div class="d-flex justify-content-end">
+      <button *ngIf="!isEditing" type="button" class="btn btn-primary me-2 shadow-sm" (click)="toggleEdit()">編輯</button>
+      <button *ngIf="isEditing" type="button" class="btn btn-success me-2 shadow-sm" (click)="saveChanges()">保存</button>
+      <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="offcanvas">關閉</button>
+    </div>
   </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="closeModal()">
-      關閉
-    </button>
-    <button
-      *ngIf="!isEditing"
-      type="button"
-      class="btn btn-primary"
-      (click)="toggleEdit()"
-    >
-      編輯
-    </button>
-    <button
-      *ngIf="isEditing"
-      type="button"
-      class="btn btn-success"
-      (click)="saveChanges()"
-    >
-      保存
-    </button>
-  </div>
-</ng-template>
+</div>
