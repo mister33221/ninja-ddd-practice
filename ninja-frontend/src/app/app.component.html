@@ -19,7 +19,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-start dropdown-menu-dark" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" [routerLink]="['/product-invetory']"><i class="bi bi-person"></i> 商品清單與庫存</a></li>
-            <li><a class="dropdown-item" href="#"><i class="bi bi-receipt"></i> 補貨訂單</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/supplier-order-list']"><i class="bi bi-receipt"></i> 補貨訂單</a></li>
           </ul>
         </li>
       </ul>
@@ -40,7 +40,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> 個人資料</a></li>
-            <li><a class="dropdown-item" href="#"><i class="bi bi-receipt"></i> 我的訂單</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/order-list']" ><i class="bi bi-receipt"></i> 我的訂單</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> 登出</a></li>
           </ul>

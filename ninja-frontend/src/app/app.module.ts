@@ -13,6 +13,9 @@ import { RegistrationComponent } from './registration/registration.component';
 import { ShoppingCartComponent } from './shopping-cart/shopping-cart.component';
 import { ProductInventoryComponent } from './product-inventory/product-inventory.component';
 import { OrderListComponent } from './order-list/order-list.component';
+import { AccordionModule } from 'ngx-bootstrap/accordion';
+import { SupplierOrderListComponent } from './supplier-order-list/supplier-order-list.component';
+
 
 @NgModule({
   declarations: [
@@ -22,7 +25,9 @@ import { OrderListComponent } from './order-list/order-list.component';
     RegistrationComponent,
     ShoppingCartComponent,
     ProductInventoryComponent,
-    OrderListComponent
+    OrderListComponent,
+    SupplierOrderListComponent,
+
   ],
   imports: [
     BrowserModule,
@@ -33,6 +38,7 @@ import { OrderListComponent } from './order-list/order-list.component';
     // example: <form [formGroup]="form" (ngSubmit)="onSubmit()">
     TooltipModule.forRoot(),
     ModalModule.forRoot(),
+    AccordionModule.forRoot(),
   ],
   providers: [],
   bootstrap: [AppComponent]
