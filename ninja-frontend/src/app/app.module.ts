@@ -12,6 +12,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RegistrationComponent } from './registration/registration.component';
 import { ShoppingCartComponent } from './shopping-cart/shopping-cart.component';
 import { ProductInventoryComponent } from './product-inventory/product-inventory.component';
+import { OrderListComponent } from './order-list/order-list.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { ProductInventoryComponent } from './product-inventory/product-inventory
     LoginModalComponent,
     RegistrationComponent,
     ShoppingCartComponent,
-    ProductInventoryComponent
+    ProductInventoryComponent,
+    OrderListComponent
   ],
   imports: [
     BrowserModule,
