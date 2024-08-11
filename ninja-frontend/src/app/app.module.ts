@@ -15,6 +15,7 @@ import { ProductInventoryComponent } from './product-inventory/product-inventory
 import { OrderListComponent } from './order-list/order-list.component';
 import { AccordionModule } from 'ngx-bootstrap/accordion';
 import { SupplierOrderListComponent } from './supplier-order-list/supplier-order-list.component';
+import { ProfileComponent } from './profile/profile.component';
 
 
 @NgModule({
@@ -27,6 +28,7 @@ import { SupplierOrderListComponent } from './supplier-order-list/supplier-order
     ProductInventoryComponent,
     OrderListComponent,
     SupplierOrderListComponent,
+    ProfileComponent,
 
   ],
   imports: [

@@ -6,6 +6,7 @@ import { ShoppingCartComponent } from './shopping-cart/shopping-cart.component';
 import { ProductInventoryComponent } from './product-inventory/product-inventory.component';
 import { OrderListComponent } from './order-list/order-list.component';
 import { SupplierOrderListComponent } from './supplier-order-list/supplier-order-list.component';
+import { ProfileComponent } from './profile/profile.component';
 
 const routes: Routes = [
   {
@@ -34,6 +35,10 @@ const routes: Routes = [
   {
     path: 'supplier-order-list',
     component: SupplierOrderListComponent
+  },
+  {
+    path: 'profile',
+    component: ProfileComponent
   }
 ];
 
