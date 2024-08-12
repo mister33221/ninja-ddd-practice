@@ -12,8 +12,9 @@ spring:
       enabled: true # enable H2 console, this console can be accessed by http://localhost:8080/h2-console
       path: /h2-console
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
 #    ddl- auto has 5 options: none, validate, update, create, create-drop
 #    none: 不做任何操作。
 #    validate: 驗證 DB schema 是否和 Hibernate 的 Entity schema 一致。如果不一致的話，會丟出一個異常。通常會用於生 production 環境。
@@ -23,5 +24,9 @@ spring:
     show-sql: true # 當有 SQL 執行時，會在 console 顯示 SQL 語句
     open-in-view: false # 用於延長 Hibernate Session 的生命週期，使其在 View 中仍然有效，避免 LazyInitializationException。但這會導致性能問題，所以建議設置為 false。
     generate-ddl: false # 與 ddl-auto 一樣，但是 ddl-auto 提供了更細的顆粒度控制。hibernate.ddl-auto 通常會覆蓋 spring.jpa.generate-ddl。這裡因為用了 ddl-auto，所以設置為 false。
+    defer-datasource-initialization: true
 
-
+# swagger
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

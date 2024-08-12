@@ -1,15 +1,17 @@
 package com.kai.ninja_ddd_practice.domainLayer.aggregations.order.valueObjects;
 
 public enum OrderStatus {
-    PENDING("待處理"),
-    PAID("已支付"),
-    SHIPPED("已發貨"),
-    DELIVERED("已送達"),
-    CANCELLED("已取消");
+    PENDING("PENDING", "待處理"),
+    PAID("PAID", "已支付"),
+    SHIPPED("SHIPPED", "已發貨"),
+    DELIVERED("DELIVERED", "已送達"),
+    CANCELLED("CANCELLED", "已取消");
 
+    private final String status;
     private final String statusDescription;
 
-    OrderStatus(String statusDescription) {
+    OrderStatus(String status, String statusDescription) {
+        this.status = status;
         this.statusDescription = statusDescription;
     }
 

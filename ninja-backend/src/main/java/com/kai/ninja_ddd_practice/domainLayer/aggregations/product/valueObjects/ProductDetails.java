@@ -18,8 +18,8 @@ public class ProductDetails {
     @Column(length = 1000)
     private String description;
 
-    @ElementCollection
-    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "image_url")
-    private List<String> images;
+//    @ElementCollection
+//    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+//    @Column(name = "image_url")
+//    private List<String> images;
 }

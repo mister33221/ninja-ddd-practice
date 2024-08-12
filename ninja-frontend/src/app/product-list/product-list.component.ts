@@ -1,6 +1,14 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../core/auth/auth.service';
 
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string;
+}
+
+
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',

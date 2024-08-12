@@ -1,16 +1,14 @@
 package com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot;
 
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.Image;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.ProductDetails;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Entity // 標記一個類為JPA實體。表示這個類將被映射到 DB 的一個 table。
-@Table(name = "products") // 指定實體對應的 table 名稱。
+@Table(name = "product") // 指定實體對應的 table 名稱。
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,15 +31,19 @@ public class Product {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
-    @Embedded
-    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
+//    這樣會導致你的 enum 中有幾個參數，就會有幾個 column，我的有 status，還有 statusDescription。
+//    但我只想要 status，所以改成直接用 String
+//    @Embedded
+//    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
+//    @Column(nullable = false)
+//    private ProductStatus productStatus;
     @Column(nullable = false)
-    private ProductStatus productStatus;
+    private String status;
 
-    @ElementCollection
-    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-//    @Column(name = "image_url")
-    private List<Image> images;
+//    @ElementCollection
+//    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "image_url")
+    private String image_url;
 
     public void updateDetails(ProductDetails newDetails) {  }
     public void updatePrice(BigDecimal newPrice) {  }

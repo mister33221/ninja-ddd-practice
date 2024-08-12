@@ -584,6 +584,85 @@
         - 此時，我們的大白板上應該會呈現出一個完成的流程，包含了事件、命令、聚合、策略等。
         - 將事件風暴的結果整理成文檔，並且與參與者確認。
         - 這份文檔將作為我們設計領域模型的參考。
+        - 產出 ERD 圖，確認資料庫表的關係。
+            ```mermaid
+            erDiagram
+                USERS ||--o{ SHOPPING_CARTS : has
+                USERS ||--o{ ORDERS : places
+                SHOPPING_CARTS ||--|{ CART_ITEMS : contains
+                ORDERS ||--|{ ORDER_ITEMS : includes
+                PRODUCTS ||--o{ ORDER_ITEMS : "ordered as"
+                PRODUCTS ||--o{ CART_ITEMS : "added to"
+                PRODUCTS ||--o{ INVENTORY_ITEMS : has
+                PRODUCT_CATEGORIES ||--o{ PRODUCTS : categorizes
+
+                USERS {
+                    Long id PK
+                    String username UK
+                    String fullName
+                    String email UK
+                    String phoneNumber
+                    LocalDate dateOfBirth
+                    String address
+                    String hashedPassword
+                    LocalDateTime lastLoginTime
+                }
+
+                SHOPPING_CARTS {
+                    Long id PK
+                    Long userId FK
+                }
+
+                CART_ITEMS {
+                    Long id PK
+                    Long cartId FK
+                    Long productId FK
+                    int quantity
+                    BigDecimal price
+                }
+
+                ORDERS {
+                    Long id PK
+                    Long userId FK
+                    String status
+                    BigDecimal totalAmount
+                    String paymentMethod
+                    String transactionId
+                    LocalDateTime paymentTime
+                }
+
+                ORDER_ITEMS {
+                    Long id PK
+                    Long orderId FK
+                    Long productId FK
+                    int quantity
+                    BigDecimal price
+                }
+
+                PRODUCTS {
+                    Long id PK
+                    String name
+                    String description
+                    BigDecimal price
+                    int stockQuantity
+                    Long categoryId FK
+                    String status
+                    String image_url
+                }
+
+                PRODUCT_CATEGORIES {
+                    Long id PK
+                    String name UK
+                    String description
+                }
+
+                INVENTORY_ITEMS {
+                    Long productId PK, FK
+                    int quantity
+                    int reorderThreshold
+                }
+            ```
+    
 
 ## 3. 環境、後端基礎設置與架構
 
@@ -722,7 +801,7 @@ src
     │               │   │           └── UserCredentials.java
     │               │   ├── domainEvents
     │               │   ├── domainServices
-    │               │   └── repositoryInterfaces
+    │               │   └── repositoryInterfaces (repositoryInterfaces 放在 domain layer 是因為 repository 是 domain 的一部分)
     |               |       ├── OrderRepository.java
     |               |       ├── ProductRepository.java
     |               |       ├── ProductCategoryRepository.java
@@ -732,7 +811,7 @@ src
     │               ├── infrastructureLayer
     │               │   ├── config
     │               │   ├── externalServices
-    │               │   ├── repositoryImplementations
+    │               │   ├── repositoryImplementations (repositoryImplementations 放在 infrastructure layer 更有彈性，易於更換不同的持久技術)
     │               │   │   ├── OrderRepository.java
     │               │   │   ├── ProductRepository.java
     │               │   │   ├── ProductCategoryRepository.java
@@ -742,7 +821,7 @@ src
     │               │   └── utilities
     │               └── interfacesLayer
     │                   ├── apiModels
-    │                   ├── controllers
+    │                   ├── controllers (controller 依照限界上下文分類)
     │                   │   ├── OrderController.java
     │                   │   ├── ProductController.java
     │                   │   ├── ProductCategoryController.java
