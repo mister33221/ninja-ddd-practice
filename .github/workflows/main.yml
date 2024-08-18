@@ -23,6 +23,8 @@ jobs:
       run: |
         pwd 
         cd ./ninja-backend/  
+        pwd
+        ll
         chmod +x mvnw
         ./mvnw clean package -DskipTests
     
