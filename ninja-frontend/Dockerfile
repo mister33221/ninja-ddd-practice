@@ -1,7 +1,7 @@
 # 使用Node.js作為基礎鏡像
 FROM node:19.4.0 as build
 
-# 設置工作目錄
+# 設置工作的目錄
 WORKDIR /app
 
 # 複製package.json和package-lock.json
