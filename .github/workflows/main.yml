@@ -22,6 +22,7 @@ jobs:
     - name: Build ninja-backend
       run: |
         cd ninja-backend  # 後端程式碼在ninja-backend目錄
+        chmod +x mvnw
         ./mvnw clean package -DskipTests
     
     - name: Set up Node.js
