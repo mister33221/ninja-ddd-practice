@@ -47,11 +47,11 @@ jobs:
       with:
         context: ./ninja-backend
         push: true
-        tags: vincentkai/backend:latest
+        tags: vincentkai/ninja-backend:latest
     
     - name: Build and push frontend Docker image
       uses: docker/build-push-action@v2
       with:
         context: ./ninja-frontend
         push: true
-        tags: vincentkai/frontend:latest
+        tags: vincentkai/ninja-frontend:latest
