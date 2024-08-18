@@ -7,8 +7,10 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
     
     steps:
     - uses: actions/checkout@v2
@@ -41,6 +43,26 @@ jobs:
         npm install --legacy-peer-deps
         npm run build -- --configuration production
     
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: |
+          ninja-backend/target
+          ninja-frontend/dist
+
+  push:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -54,7 +76,7 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-backend:latest
-          vincentkai/ninja-backend:${{ steps.version.outputs.VERSION }}
+          vincentkai/ninja-backend:${{ needs.build.outputs.version }}
     
     - name: Build and push frontend Docker image
       uses: docker/build-push-action@v2
@@ -63,8 +85,14 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-frontend:latest
-          vincentkai/ninja-frontend:${{ steps.version.outputs.VERSION }}
+          vincentkai/ninja-frontend:${{ needs.build.outputs.version }}
 
+  notify:
+    needs: [build, push]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
     - name: Send email notification
       uses: dawidd6/action-send-mail@v2
       with:
@@ -76,9 +104,11 @@ jobs:
         body: |
           Job in ${{github.repository}} finished with status ${{job.status}}.
           
+          Build job status: ${{ needs.build.result }}
+          Push job status: ${{ needs.push.result }}
+          
           Commit message: ${{ github.event.head_commit.message }}
           
           See details here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         to: mister33221@gmail.com
         from: GitHub Actions
-      if: always()
