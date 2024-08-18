@@ -18,11 +18,11 @@ jobs:
       with:
         java-version: '17'
         distribution: 'adopt'
-    # chmod +x mvnw ??
+    
     - name: Build ninja-backend
       run: |
         cd ./ninja-backend/  
-        
+        chmod +x mvnw
         ./mvnw clean package -DskipTests
     
     - name: Set up Node.js
