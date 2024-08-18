@@ -64,3 +64,20 @@ jobs:
         tags: |
           vincentkai/ninja-frontend:latest
           vincentkai/ninja-frontend:${{ steps.version.outputs.VERSION }}
+          - name: Send email notification
+          uses: dawidd6/action-send-mail@v2
+          with:
+            server_address: smtp.gmail.com
+            server_port: 465
+            username: ${{secrets.EMAIL_USER}}
+            password: ${{secrets.EMAIL_PASS}}
+            subject: GitHub Actions job result for ${{github.repository}}
+            body: |
+              Job in ${{github.repository}} finished with status ${{job.status}}.
+              
+              Commit message: ${{ github.event.head_commit.message }}
+              
+              See details here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            to: mister33221@gmail.com
+            from: GitHub Actions
+          if: always()
