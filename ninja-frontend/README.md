@@ -6,8 +6,8 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 - npm: 8.19.1
 - node: v19.4.0
-- Angular CLI: 15.2.11
-- Angular: 15.2.10
+- @angular/cli: 16.2.14
+- Angular: 16.2.12
 - Bootstrap: 5.0.1 [Bootstrap](https://www.npmjs.com/package/bootstrap/v/5.0.1)
 - ngx-bootstrap: 10.2.0 [ngx-bootstrap](https://www.npmjs.com/package/ngx-bootstrap/v/10.2.0)
 - bootstrap-icons: 1.11.3 [bootstrap-icons](https://www.npmjs.com/package/ngx-bootstrap-icons)
