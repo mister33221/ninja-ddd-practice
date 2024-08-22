@@ -16,7 +16,7 @@ COPY . .
 # 構建應用
 # RUN npm run build -- --prod # 不太確定，但好像這個指令是舊版的
 # 新版的指令
-RUN npm run build -- --configuration production
+RUN npm run build -- --configuration development
 
 # 使用nginx作為最終鏡像
 FROM nginx:stable-alpine

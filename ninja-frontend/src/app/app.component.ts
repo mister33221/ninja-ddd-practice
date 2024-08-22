@@ -1,5 +1,5 @@
-import { Component, TemplateRef } from '@angular/core';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { HttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -10,5 +10,13 @@ export class AppComponent {
   title = '木葉村忍具店';
   isLoggedIn = false; // 這應該根據實際的登錄狀態來設置
   userName = '鳴人'; // 這應該是實際登錄用戶的名字
+
+  constructor(private httpClient: HttpClient) { }
+
+  test(){
+    this.httpClient.get('https://ninja-backend.onrender.com/hello/world').subscribe((res) => {
+      alert(res);
+    });
+  }
 
 }
