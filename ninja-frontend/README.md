@@ -24,6 +24,14 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 > `npm install @types/bootstrap`
 > types/bootstrap 是用來讓 typescript 能夠認識 bootstrap 的型別。使用 Bootstrap 的 JavaScript 插件：如果你在 TypeScript 項目中使用了 Bootstrap 的 JavaScript 插件（如模態框、工具提示等），類型定義文件可以幫助你正確地使用這些插件。
 
+
+<!-- 
+nvm install 18.13.0
+nvm use 18.13.0
+
+npm install -g npm@8.19.3
+ -->
+
 ## Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
