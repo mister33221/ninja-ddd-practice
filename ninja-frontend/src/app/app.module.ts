@@ -17,6 +17,7 @@ import { AccordionModule } from 'ngx-bootstrap/accordion';
 import { SupplierOrderListComponent } from './supplier-order-list/supplier-order-list.component';
 import { ProfileComponent } from './profile/profile.component';
 import { HttpClientModule } from '@angular/common/http';
+import { AlertModule } from 'ngx-bootstrap/alert';
 
 
 @NgModule({
@@ -42,7 +43,8 @@ import { HttpClientModule } from '@angular/common/http';
     TooltipModule.forRoot(),
     ModalModule.forRoot(),
     AccordionModule.forRoot(),
-    HttpClientModule // 添加 HttpClientModule 才能使用 HttpClient
+    HttpClientModule, // 添加 HttpClientModule 才能使用 HttpClient
+    AlertModule.forRoot(),
   ],
   providers: [],
   bootstrap: [AppComponent]

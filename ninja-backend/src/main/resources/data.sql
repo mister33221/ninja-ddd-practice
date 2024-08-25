@@ -14,10 +14,10 @@
 
 -- 插入初始用户数据
 INSERT INTO users (id, username, hashed_password, last_login_time, full_name, email, phone_number, date_of_birth, address)
-VALUES (1, 'user1', 'hashed_password1', NULL, 'Full Name 1', 'user1@example.com', '1234567890', '1990-01-01', '123 Main St');
+VALUES (9999, 'user1', 'hashed_password1', NULL, 'Full Name 1', 'user1@example.com', '1234567890', '1990-01-01', '123 Main St');
 
 INSERT INTO users (id, username, hashed_password, last_login_time, full_name, email, phone_number, date_of_birth, address)
-VALUES (2, 'user2', 'hashed_password2', NULL, 'Full Name 2', 'user2@example.com', '0987654321', '1991-02-02', '456 Elm St');
+VALUES (8888, 'user2', 'hashed_password2', NULL, 'Full Name 2', 'user2@example.com', '0987654321', '1991-02-02', '456 Elm St');
 
 -- 插入初始产品类别数据
 INSERT INTO product_categories (id, name, description)

@@ -33,7 +33,7 @@
             ]
           },
           "configurations": {
-            "production": {
+            "development": {
               "budgets": [
                 {
                   "type": "initial",
@@ -48,7 +48,7 @@
               ],
               "outputHashing": "all"
             },
-            "development": {
+            "production": {
               "buildOptimizer": false,
               "optimization": false,
               "vendorChunk": true,
@@ -58,12 +58,12 @@
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.development.ts"
+                  "with": "src/environments/environment.production.ts"
                 }
               ]
             }
           },
-          "defaultConfiguration": "production"
+          "defaultConfiguration": "development"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",

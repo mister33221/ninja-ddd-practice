@@ -682,8 +682,8 @@ src
     │               │   ├── dtos
     │               │   ├── eventHandlers (Optional)
     │               │   ├── mappers
-    │               │   ├── queries (Optional) (將 query 獨立於 command 之外，是為了讓其他更複雜的業務邏輯可以獨立出來，更好維護，本專案就不特別分出來了。)
-    │               │   └── services
+    │               │   ├── queries (Optional) (將 query 獨立於 command 之外，是為了讓其他更複雜的業務邏輯可以獨立出來，更好維護。)
+    │               │   └── services (applicatoin 層中的 service 職責在於協調領域物件，不包含業務邏輯，例如處裡訂單業務，可能會涉及到訂單、商品、用戶等多個領域物件，那麼這個 service 就是用來協調這些物件的。)
     │               ├── domainLayer
     │               │   ├── aggregates
     │               │   │   ├── order
@@ -718,7 +718,7 @@ src
     │               │   │           ├── UserProfile.java
     │               │   │           └── UserCredentials.java
     │               │   ├── domainEvents
-    │               │   ├── domainServices
+    │               │   ├── domainServices ( domain 層中的 service 職責在於處理業務邏輯，不屬於任何特定的實體或值物件，保持高內聚、低耦合的特性。)
     │               │   └── repositoryInterfaces
     |               |       ├── OrderRepository.java
     |               |       ├── ProductRepository.java
@@ -730,12 +730,12 @@ src
     │               │   ├── config
     │               │   ├── externalServices
     │               │   ├── repositoryImplementations
-    │               │   │   ├── OrderRepository.java
-    │               │   │   ├── ProductRepository.java
-    │               │   │   ├── ProductCategoryRepository.java
-    │               │   │   ├── ShoppingCartRepository.java
-    │               │   │   ├── UserRepository.java
-    │               │   │   └── InventoryRepository.java
+    │               │   │   ├── OrderRepositoryImpl.java
+    │               │   │   ├── ProductRepositoryImpl.java
+    │               │   │   ├── ProductCategoryRepositoryImpl.java
+    │               │   │   ├── ShoppingCartRepositoryImpl.java
+    │               │   │   ├── UserRepositoryImpl.java
+    │               │   │   └── InventoryRepositoryImpl.java
     │               │   └── utilities
     │               └── interfacesLayer
     │                   ├── apiModels
