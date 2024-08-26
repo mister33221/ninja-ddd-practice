@@ -37,4 +37,10 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+jwt:
+    secret: secret
+    expiration: 86400000
+    token-prefix: Bearer
+    header-string: Authorization
+
 

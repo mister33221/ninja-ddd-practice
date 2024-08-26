@@ -816,6 +816,15 @@ src
 
 
 
+1. registration 功能
+    1. 使用 @ControllerAdvice 處理全域的異常
+    2. 完成註冊功能
+2. 製作登入功能
+    1. 建立 jwt util
+    2. 完成登入功能
+    3. 客製 annotation @CurrentUser，用來取得當前登入的使用者
+    4. 克制 annotation @ValidateJwt，用來驗證 jwt
+    5. 在需要驗證 jwt 的地方使用 @ValidateJwt
 
 
 
