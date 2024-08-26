@@ -1,5 +1,8 @@
 package com.kai.ninja_ddd_practice.applicationLayer.exception;
 
+import lombok.Getter;
+
+@Getter
 public class ApplicationException extends RuntimeException {
     private final ApplicationErrorCode errorCode;
 
@@ -13,7 +16,4 @@ public class ApplicationException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
-    public ApplicationErrorCode getErrorCode() {
-        return errorCode;
-    }
 }

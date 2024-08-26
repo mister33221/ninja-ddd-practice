@@ -21,8 +21,8 @@ public class UserController {
     @PostMapping("/registry")
     @Operation(summary = "Register a new user", description = "Register a new user", tags = {"User"})
     public ResponseEntity<RegistryResponse> registry(@RequestBody RegistryRequest request) {
-        String registryMessage = userService.registry(request);
-        return ResponseEntity.ok(RegistryResponse.builder().registryMessage(registryMessage).build());
+        String message = userService.registry(request);
+        return ResponseEntity.ok(RegistryResponse.builder().message(message).build());
     }
 
 }

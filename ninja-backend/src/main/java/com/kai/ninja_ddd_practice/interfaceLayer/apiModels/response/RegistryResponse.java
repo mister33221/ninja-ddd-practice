@@ -9,6 +9,6 @@ import lombok.*;
 @ToString
 public class RegistryResponse {
 
-    private String registryMessage;
+    private String message;
 
 }

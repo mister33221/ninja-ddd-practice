@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import * as bcrypt from 'bcryptjs';
 import { RegistrationHttpService } from '../core/http-service/registration.http.service';
 import { Router } from '@angular/router';
+import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 
 type ExampleAlertType = { type: string; msg: string; timeout: number };
 
@@ -13,12 +14,17 @@ type ExampleAlertType = { type: string; msg: string; timeout: number };
 })
 export class RegistrationComponent implements OnInit {
   registerForm: FormGroup = new FormGroup({});
+  modalRef?: BsModalRef;
+  @ViewChild('template', { static: true }) template!: TemplateRef<void>;
+  modalTitle: string = '';
+  modalContent: string = '';
 
   constructor(
     private formBuilder: FormBuilder,
     private registrationHttpSvc: RegistrationHttpService,
     // 導頁服務
-    private router: Router
+    private router: Router,
+    private modalService: BsModalService
   ) {}
 
   ngOnInit(): void {
@@ -64,33 +70,23 @@ export class RegistrationComponent implements OnInit {
       // 將密碼加密後的資料送出
       this.registrationHttpSvc.register(formData).subscribe({
         next: (response) => {
-          console.log('Registration response:', response);
+          this.openModal('Success', response.message);
+          this.router.navigate(['/product-list']);
         },
         error: (error) => {
-          console.error('Registration error:', error);
+          this.openModal('Error', error.error.message);
         },
       });
     }
   }
 
 
-  alerts: ExampleAlertType[] = [
-    {
-      type: 'success',
-      msg: `Well done! You successfully read this important alert message. (added: ${new Date().toLocaleTimeString()})`,
-      timeout: 5000
-    }
-  ];
-
-  add(): void {
-    this.alerts.push({
-      type: 'info',
-      msg: `This alert will be closed in 5 seconds (added: ${new Date().toLocaleTimeString()})`,
-      timeout: 5000
+  openModal(title: string, content: string) {
+    this.modalTitle = title;
+    this.modalContent = content;
+    this.modalRef = this.modalService.show(this.template, {
+      ariaDescribedby: 'my-modal-description',
+      ariaLabelledBy: 'my-modal-title'
     });
-  }
-
-  onClosed(dismissedAlert: ExampleAlertType): void {
-    this.alerts = this.alerts.filter((alert) => alert !== dismissedAlert);
   }
 }

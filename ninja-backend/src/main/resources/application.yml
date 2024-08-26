@@ -25,8 +25,16 @@ spring:
     open-in-view: false # 用於延長 Hibernate Session 的生命週期，使其在 View 中仍然有效，避免 LazyInitializationException。但這會導致性能問題，所以建議設置為 false。
     generate-ddl: false # 與 ddl-auto 一樣，但是 ddl-auto 提供了更細的顆粒度控制。hibernate.ddl-auto 通常會覆蓋 spring.jpa.generate-ddl。這裡因為用了 ddl-auto，所以設置為 false。
     defer-datasource-initialization: true
+#  我使用 @ControllerAdvicer 拋出異常後，不知為何她又重複打我的api去找靜態資源，倒置org.springframework.web.servlet.NoHandlerFoundException，最後我在application.yaml裡面加了以下內容才消除這個狀況。但很奇怪的是，這個配置設定已經是背棄用的。
+#  mvc:
+#    throw-exception-if-no-handler-found: false
+#  web:
+#    resources:
+#      add-mappings: false
 
 # swagger
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+
