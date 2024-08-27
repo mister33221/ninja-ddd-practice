@@ -1,6 +1,7 @@
 package com.kai.ninja_ddd_practice.interfaceLayer.controllers;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class HelloController {
 
-    @RequestMapping("/world")
+    @GetMapping("/world")
     public String helloWorld() {
         return "Hello World!";
     }
