@@ -18,4 +18,9 @@ public class UserCredentials {
 
     @Column(name = "last_login_time")
     private LocalDateTime lastLoginTime;
+
+    @Column(name = "random_salt", nullable = false)
+    private String randomSalt;
+
+
 }

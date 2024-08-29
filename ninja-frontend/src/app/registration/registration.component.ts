@@ -6,7 +6,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, AbstractControlOptions } from '@angular/forms';
-import * as bcrypt from 'bcryptjs';
 import { RegistrationHttpService } from '../core/http-service/registration.http.service';
 import { Router } from '@angular/router';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
@@ -70,18 +69,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     if (this.registerForm.valid) {
       const formData = { ...this.registerForm.value };
 
-      // salting 加鹽
-      const salt = bcrypt.genSaltSync(10);
-      formData.password = bcrypt.hashSync(
-        this.registerForm.value.password,
-        salt
-      );
-      formData.confirmPassword = bcrypt.hashSync(
-        this.registerForm.value.confirmPassword,
-        salt
-      );
-
-      // 將密碼加密後的資料送出
       this.registrationHttpSvc
         .register(formData)
         .pipe(takeUntil(this.destroy$))
