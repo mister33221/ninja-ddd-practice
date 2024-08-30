@@ -3,21 +3,28 @@ package com.kai.ninja_ddd_practice.applicationLayer.applicationService;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserMapper;
+import com.kai.ninja_ddd_practice.applicationLayer.util.JwtUtil;
 import com.kai.ninja_ddd_practice.applicationLayer.util.PasswordEncryptionUtil;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.UserRepository;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class UserApplicationService {
 
     private final UserRepository userRepository;
     private final PasswordEncryptionUtil passwordEncryptionUtil;
+    private final JwtUtil jwtUtil;
 
-    public UserApplicationService(UserRepository userRepository, PasswordEncryptionUtil passwordEncryptionUtil) {
+    public UserApplicationService(UserRepository userRepository, PasswordEncryptionUtil passwordEncryptionUtil, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncryptionUtil = passwordEncryptionUtil;
+        this.jwtUtil = jwtUtil;
     }
 
     public String registry(RegistryRequest request) {
@@ -42,4 +49,20 @@ public class UserApplicationService {
         return "User registered successfully!";
     }
 
+    public String login(LoginRequest request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncryptionUtil.verifyPassword(request.getPassword(), user.getCredentials().getRandomSalt(), user.getCredentials().getHashedPassword())) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_PASSWORD);
+        }
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        claims.put("username", user.getUsername());
+        claims.put("email", user.getProfile().getEmail());
+
+        return jwtUtil.generateToken(claims);
+
+    }
 }

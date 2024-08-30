@@ -2,9 +2,11 @@ import { Router, Routes } from '@angular/router';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs/internal/Subject';
-import { LoginHttpService } from '../core/http-service/login.http.service';
 import { Form, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/internal/operators/takeUntil';
+import { LoginHttpService } from '../core/http-service/login.http.service';
+import { AlertService } from '../core/components/alert/service/alert.service';
+import { AuthService } from '../core/auth/auth.service';
 
 @Component({
   selector: 'app-login-modal',
@@ -19,7 +21,9 @@ export class LoginModalComponent implements OnInit, OnDestroy {
     // 路由
     private router: Router,
     private loginHttpSvc: LoginHttpService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private alertService: AlertService,
+    private authService: AuthService
   ) {}
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({
@@ -34,25 +38,40 @@ export class LoginModalComponent implements OnInit, OnDestroy {
   }
 
   onSubmit() {
-    this.loginHttpSvc
+    this.authService
       .login(this.loginForm.value)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
           if (res) {
+            this.alertService.showAlert(
+              'success',
+              '登入成功！',
+              3000
+            );
+            this.saveTokenCookie(res.token);
             this.modalRef.hide();
             this.router.navigate(['/']);
           }
         },
         error: (err) => {
-          console.log(err);
+          this.alertService.showAlert('danger', '登入失敗！', 3000);
         },
       });
   }
 
-  // 導向註冊頁面
+  /**
+   *
+   */
   redirectToRegistration() {
     this.modalRef.hide();
     this.router.navigate(['/registration']);
+  }
+
+  /**
+   * 將 token 存入 cookie
+   */
+  saveTokenCookie(token: string) {
+    document.cookie = `token=${token}`;
   }
 }

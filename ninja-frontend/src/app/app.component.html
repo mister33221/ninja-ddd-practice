@@ -41,8 +41,9 @@
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" [routerLink]="['/profile']"><i class="bi bi-person"></i> 個人資料</a></li>
             <li><a class="dropdown-item" [routerLink]="['/order-list']" ><i class="bi bi-receipt"></i> 我的訂單</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> 登出</a></li>
+            <li *ngIf="isLoggedIn$|async"><a class="dropdown-item" [routerLink]="['/registration']"><i class="bi bi-key"></i> 註冊</a></li>
+            <li *ngIf="!(isLoggedIn$|async)"><hr class="dropdown-divider"></li>
+            <li *ngIf="!(isLoggedIn$|async)"><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> 登出</a></li>
           </ul>
         </li>
       </ul>
@@ -54,3 +55,5 @@
 <button (click)="test()">Test</button>
 
 <router-outlet></router-outlet>
+
+<app-alert></app-alert>

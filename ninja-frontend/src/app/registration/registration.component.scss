@@ -18,3 +18,16 @@
   transform: translateY(-2px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+
+.floating-alerts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1050;
+  max-width: 300px;
+}
+
+.floating-alerts alert {
+  display: block;
+  margin-bottom: 10px;
+}

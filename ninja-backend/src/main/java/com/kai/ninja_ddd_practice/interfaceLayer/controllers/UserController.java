@@ -1,7 +1,9 @@
 package com.kai.ninja_ddd_practice.interfaceLayer.controllers;
 
 import com.kai.ninja_ddd_practice.applicationLayer.applicationService.UserApplicationService;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.LoginResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.RegistryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
@@ -25,4 +27,10 @@ public class UserController {
         return ResponseEntity.ok(RegistryResponse.builder().message(message).build());
     }
 
+    @PostMapping("/login")
+    @Operation(summary = "Login", description = "Login", tags = {"User"})
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        String message = userService.login(request);
+        return ResponseEntity.ok(LoginResponse.builder().token(message).build());
+    }
 }

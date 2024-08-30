@@ -18,6 +18,7 @@ import { SupplierOrderListComponent } from './supplier-order-list/supplier-order
 import { ProfileComponent } from './profile/profile.component';
 import { HttpClientModule } from '@angular/common/http';
 import { AlertModule } from 'ngx-bootstrap/alert';
+import { AlertComponent } from './core/components/alert/alert.component';
 
 
 @NgModule({
@@ -31,6 +32,7 @@ import { AlertModule } from 'ngx-bootstrap/alert';
     OrderListComponent,
     SupplierOrderListComponent,
     ProfileComponent,
+    AlertComponent,
 
   ],
   imports: [

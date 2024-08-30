@@ -5,12 +5,18 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { FormGroup, FormBuilder, Validators, AbstractControlOptions } from '@angular/forms';
+import {
+  FormGroup,
+  FormBuilder,
+  Validators,
+  AbstractControlOptions,
+} from '@angular/forms';
 import { RegistrationHttpService } from '../core/http-service/registration.http.service';
 import { Router } from '@angular/router';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs/internal/Subject';
 import { takeUntil } from 'rxjs/internal/operators/takeUntil';
+import { AlertService } from '../core/components/alert/service/alert.service';
 
 type ExampleAlertType = { type: string; msg: string; timeout: number };
 
@@ -24,15 +30,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   registerForm: FormGroup = new FormGroup({});
   modalRef?: BsModalRef;
   @ViewChild('template', { static: true }) template!: TemplateRef<void>;
-  modalTitle: string = '';
-  modalContent: string = '';
 
   constructor(
     private formBuilder: FormBuilder,
     private registrationHttpSvc: RegistrationHttpService,
     // 導頁服務
     private router: Router,
-    private modalService: BsModalService
+    private alertService: AlertService
   ) {}
 
   ngOnDestroy(): void {
@@ -74,22 +78,14 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
-            this.openModal('Success', response.message);
+            this.alertService.showAlert('success', '註冊成功！請重新登入', 3000);
             this.router.navigate(['/product-list']);
           },
           error: (error) => {
-            this.openModal('Error', error.error.message);
+            this.alertService.showAlert('danger', error.error.message, 3000);
           },
         });
     }
   }
 
-  openModal(title: string, content: string) {
-    this.modalTitle = title;
-    this.modalContent = content;
-    this.modalRef = this.modalService.show(this.template, {
-      ariaDescribedby: 'my-modal-description',
-      ariaLabelledBy: 'my-modal-title',
-    });
-  }
 }
