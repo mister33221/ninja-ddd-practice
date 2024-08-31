@@ -5,6 +5,7 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import { LoginModalComponent } from 'src/app/login-modal/login-modal.component';
 import { environment } from 'src/environments/environment';
 import { AlertService, AlertType } from '../components/alert/service/alert.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +17,8 @@ export class AuthService {
   constructor(
     private modalService: BsModalService,
     private httpClient: HttpClient,
+    private alertService: AlertService,
+    private router: Router,
   ) {
     this.checkInitialLoginStatus();
   }
@@ -70,6 +73,9 @@ export class AuthService {
     // 發送一個事件，告訴應用程序用戶已經登出
     this.isLoggedInSubject.next(false);
     // 重定向到首頁
-    window.location.href = '/';
+    // window.location.href = '/';
+    this.router.navigate(['/product-list']);
+    // 顯示一個提示消息
+    this.alertService.showAlert(AlertType.SUCCESS, '您已登出', 3000);
   }
 }

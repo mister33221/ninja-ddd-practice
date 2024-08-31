@@ -43,7 +43,6 @@ export class AppComponent {
 
   logout() {
     this.authService.logout();
-    // 顯示一個提示消息
-    this.alertService.showAlert(AlertType.SUCCESS, '您已登出', 3000);
+    // this.alertService.showAlert(AlertType.SUCCESS, '您已登出', 3000);
   }
 }
