@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs/internal/Subject';
 
+export enum AlertType {
+  SUCCESS = 'success',
+  ERROR = 'error',
+  WARNING = 'warning',
+  INFO = 'info'
+}
+
 @Injectable({
   providedIn: 'root'
 })

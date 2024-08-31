@@ -49,7 +49,6 @@ export class LoginModalComponent implements OnInit, OnDestroy {
               '登入成功！',
               3000
             );
-            this.saveTokenCookie(res.token);
             this.modalRef.hide();
             this.router.navigate(['/']);
           }
@@ -68,10 +67,4 @@ export class LoginModalComponent implements OnInit, OnDestroy {
     this.router.navigate(['/registration']);
   }
 
-  /**
-   * 將 token 存入 cookie
-   */
-  saveTokenCookie(token: string) {
-    document.cookie = `token=${token}`;
-  }
 }

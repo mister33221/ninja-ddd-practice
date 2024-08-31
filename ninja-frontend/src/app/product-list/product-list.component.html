@@ -10,11 +10,11 @@
             <span class="text-muted">{{product.price | currency : 'TWD' : 'symbol' : '1.0-0'}}</span>
             <div>
               <!-- 手機版顯示圖標 -->
-              <button class="btn btn-outline-primary btn-sm d-md-none" (click)="onSomeAction()">
+              <button class="btn btn-outline-primary btn-sm d-md-none" (click)="addToCart()">
                 <i class="bi bi-cart-plus"></i>
               </button>
               <!-- 桌面版顯示文字和圖標 -->
-              <button class="btn btn-outline-primary btn-sm d-none d-md-block" (click)="onSomeAction()">
+              <button class="btn btn-outline-primary btn-sm d-none d-md-block" (click)="addToCart()">
                 <i class="bi bi-cart-plus"></i> 加入購物車
               </button>
             </div>

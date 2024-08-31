@@ -38,18 +38,7 @@ export class ProductListComponent implements OnInit, OnDestroy  {
    *
    * @description async 關鍵字用於定義一個函數是異步的。
    */
-  async onSomeAction() {
-    // this.authService.isLoggedIn$.subscribe(isLoggedIn => {
-    //   if (!isLoggedIn) {
-    //     this.authService.showLoginModal().subscribe(() => {
-    //       // 登錄模態框關閉後的操作
-    //       this.performActionIfLoggedIn();
-    //     });
-    //   } else {
-    //     this.performActionIfLoggedIn();
-    //   }
-    // });
-
+  async addToCart() {
     const isLoggedIn = await firstValueFrom(this.authService.isLoggedIn$);
 
     if (!isLoggedIn) {

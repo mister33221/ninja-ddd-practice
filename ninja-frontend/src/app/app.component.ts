@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { AuthService } from './core/auth/auth.service';
+import { AlertService, AlertType } from './core/components/alert/service/alert.service';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +16,8 @@ export class AppComponent {
 
   constructor(
     private httpClient: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private alertService: AlertService
   ) {}
 
   // https://ninja-backend.onrender.com/hello/world
@@ -33,5 +35,15 @@ export class AppComponent {
           console.error(error);
         },
       });
+  }
+
+  openLoginModal() {
+    this.authService.showLoginModal();
+  }
+
+  logout() {
+    this.authService.logout();
+    // 顯示一個提示消息
+    this.alertService.showAlert(AlertType.SUCCESS, '您已登出', 3000);
   }
 }
