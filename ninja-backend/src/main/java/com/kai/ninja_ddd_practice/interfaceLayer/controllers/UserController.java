@@ -2,7 +2,9 @@ package com.kai.ninja_ddd_practice.interfaceLayer.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kai.ninja_ddd_practice.applicationLayer.applicationService.UserApplicationService;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.LoginResponse;
@@ -37,7 +39,16 @@ public class UserController {
     @PostMapping("/login")
     @Operation(summary = "Login", description = "Login", tags = {"User"})
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        String message = userService.login(request);
+//        轉換為 application layer 的 dto
+        LoginDto loginDto = objectMapper.convertValue(request, LoginDto.class);
+        String message = userService.login(loginDto);
         return ResponseEntity.ok(LoginResponse.builder().token(message).build());
+    }
+
+    @GetMapping("/test/get/{id}")
+    @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
+    public ResponseEntity<User> getUserById(@PathVariable String id) {
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 }

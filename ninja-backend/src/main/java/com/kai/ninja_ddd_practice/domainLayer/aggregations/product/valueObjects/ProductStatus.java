@@ -17,4 +17,7 @@ public enum ProductStatus {
     public String getStatusDescription() {
         return statusDescription;
     }
+    public String getStatus() {
+        return status;
+    }
 }

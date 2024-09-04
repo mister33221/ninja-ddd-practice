@@ -1,15 +1,14 @@
 package com.kai.ninja_ddd_practice.applicationLayer.applicationService;
 
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
-import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserMapper;
+import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserApplicationMapper;
 import com.kai.ninja_ddd_practice.applicationLayer.util.JwtUtil;
 import com.kai.ninja_ddd_practice.applicationLayer.util.PasswordEncryptionUtil;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.UserRepository;
-import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
-import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -41,7 +40,7 @@ public class UserApplicationService {
         String encryptedPassword = passwordEncryptionUtil.encryptPassword(registryDto.getPassword(), salt);
 
 //        建立使用者
-        User user = UserMapper.convertRegistryRequestToUser(registryDto);
+        User user = UserApplicationMapper.convertRegistryDtoToUser(registryDto);
         user.getCredentials().setRandomSalt(salt);
         user.getCredentials().setHashedPassword(encryptedPassword);
 
@@ -50,7 +49,7 @@ public class UserApplicationService {
         return "User registered successfully!";
     }
 
-    public String login(LoginRequest request) {
+    public String login(LoginDto request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
 
@@ -65,5 +64,10 @@ public class UserApplicationService {
 
         return jwtUtil.generateToken(claims);
 
+    }
+
+    public User getUserById(String id) {
+        return userRepository.findById(Long.parseLong(id))
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
     }
 }
