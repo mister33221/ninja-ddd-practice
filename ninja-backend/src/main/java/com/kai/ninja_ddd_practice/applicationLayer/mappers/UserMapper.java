@@ -1,6 +1,7 @@
 package com.kai.ninja_ddd_practice.applicationLayer.mappers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserCredentials;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserProfile;
@@ -16,7 +17,7 @@ public class UserMapper {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
-    public static User convertRegistryRequestToUser(RegistryRequest object) {
+    public static User convertRegistryDtoToUser(RegistryDto object) {
         new User();
         new UserProfile();
         new UserCredentials();

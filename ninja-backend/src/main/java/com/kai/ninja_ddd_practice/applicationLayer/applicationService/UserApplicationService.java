@@ -1,5 +1,6 @@
 package com.kai.ninja_ddd_practice.applicationLayer.applicationService;
 
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserMapper;
@@ -27,20 +28,20 @@ public class UserApplicationService {
         this.jwtUtil = jwtUtil;
     }
 
-    public String registry(RegistryRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
+    public String registry(RegistryDto registryDto) {
+        if (userRepository.existsByUsername(registryDto.getUsername())) {
             throw new ApplicationException(ApplicationErrorCode.USERNAME_ALREADY_EXISTS);
         }
-        if (userRepository.existsByProfile_Email(request.getEmail())) {
+        if (userRepository.existsByProfile_Email(registryDto.getEmail())) {
             throw new ApplicationException(ApplicationErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
 //        產生隨機鹽值與加密密碼
         String salt = passwordEncryptionUtil.generateSalt();
-        String encryptedPassword = passwordEncryptionUtil.encryptPassword(request.getPassword(), salt);
+        String encryptedPassword = passwordEncryptionUtil.encryptPassword(registryDto.getPassword(), salt);
 
 //        建立使用者
-        User user = UserMapper.convertRegistryRequestToUser(request);
+        User user = UserMapper.convertRegistryRequestToUser(registryDto);
         user.getCredentials().setRandomSalt(salt);
         user.getCredentials().setHashedPassword(encryptedPassword);
 
