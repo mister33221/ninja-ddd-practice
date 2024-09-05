@@ -2,9 +2,8 @@ package com.kai.ninja_ddd_practice.interfaceLayer.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kai.ninja_ddd_practice.applicationLayer.applicationService.ProductApplicationService;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot.Product;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.GetProductCardsDto;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetProductsResponse;
-import com.kai.ninja_ddd_practice.interfaceLayer.mapper.ProductControllerMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,13 +27,13 @@ public class ProductController {
 //        this.productControllerMapper = productControllerMapper;
     }
 
-    @GetMapping("/product-list")
-    @Operation(summary = "Get product list", description = "Get product list", tags = {"Product"})
+    @GetMapping("/get-product-cards")
+    @Operation(summary = "Get product cards", description = "Get product cards", tags = {"product"})
     public List<GetProductsResponse> getProductList() {
 
-        List<Product> productList = productApplicationService.getProductList();
+        List<GetProductCardsDto> productCardsDtos = productApplicationService.getProductCards();
 
-        return productList.stream().map(product -> objectMapper.convertValue(product, GetProductsResponse.class)).toList();
+        return productCardsDtos.stream().map(product -> objectMapper.convertValue(product, GetProductsResponse.class)).toList();
     }
 
 }

@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AuthService } from '../core/auth/auth.service';
 import { ProductHttpService } from '../core/http-service/prdocut/product.http.service';
-import { Product } from './model/product';
 import { firstValueFrom, Observable, Subscription } from 'rxjs';
+import { ProductCard } from './model/productCard';
 
 @Component({
   selector: 'app-product-list',
@@ -11,7 +11,7 @@ import { firstValueFrom, Observable, Subscription } from 'rxjs';
 })
 export class ProductListComponent implements OnInit, OnDestroy  {
 
-  products: Product[] = [];
+  productCards: ProductCard[] = [];
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -62,9 +62,9 @@ export class ProductListComponent implements OnInit, OnDestroy  {
    * @returns Product[]
    */
   private getProducts(): void {
-    this.productHttpService.getProducts().subscribe({
-      next: products => {
-        this.products = products;
+    this.productHttpService.getProductCards().subscribe({
+      next: productCards => {
+        this.productCards = productCards;
       },
       error: error => {
         console.error('There was an error!', error);

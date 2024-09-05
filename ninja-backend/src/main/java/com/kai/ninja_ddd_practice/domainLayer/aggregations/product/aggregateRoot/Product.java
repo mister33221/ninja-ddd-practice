@@ -43,7 +43,7 @@ public class Product {
 //    @ElementCollection
 //    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
-    private String image_url;
+    private String imageUrl;
 
     public void updateDetails(ProductDetails newDetails) {  }
     public void updatePrice(BigDecimal newPrice) {  }

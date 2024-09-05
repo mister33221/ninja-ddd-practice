@@ -1,19 +1,21 @@
-package com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response;
+package com.kai.ninja_ddd_practice.applicationLayer.dtos;
 
 import lombok.*;
+
+import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @ToString
-public class GetProductsResponse {
+public class GetProductCardsDto {
 
     private Long id;
     private String name;
     private String description;
     private String imageUrl;
-    private Long price;
+    private BigDecimal price;
     private String category;
 
 }
