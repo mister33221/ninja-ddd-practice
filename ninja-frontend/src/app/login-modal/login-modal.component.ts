@@ -20,7 +20,6 @@ export class LoginModalComponent implements OnInit, OnDestroy {
     public modalRef: BsModalRef,
     // 路由
     private router: Router,
-    private loginHttpSvc: LoginHttpService,
     private formBuilder: FormBuilder,
     private alertService: AlertService,
     private authService: AuthService

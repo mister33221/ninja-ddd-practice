@@ -32,80 +32,80 @@ VALUES (2, 'Books', 'Books category');
 
 -- 插入初始產品資訊
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (1, 'Kunai', 'A small throwing knife used by ninjas', 10.99, 100, 1, 'PULL_ON_SHELVES', 'kunai.jpg');
+VALUES (9999, 'Kunai', 'A small throwing knife used by ninjas', 10.99, 100, 1, 'PULL_ON_SHELVES', 'kunai.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (2, 'Shuriken', 'A star-shaped throwing weapon', 5.99, 200, 1, 'PULL_ON_SHELVES', 'shuriken.jpg');
+VALUES (8888, 'Shuriken', 'A star-shaped throwing weapon', 5.99, 200, 1, 'PULL_ON_SHELVES', 'shuriken.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (3, 'Explosive Tag', 'A paper tag that explodes after a set time', 15.99, 50, 1, 'PULL_ON_SHELVES', 'explosive_tag.jpg');
+VALUES (7777, 'Explosive Tag', 'A paper tag that explodes after a set time', 15.99, 50, 1, 'PULL_ON_SHELVES', 'explosive_tag.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (4, 'Smoke Bomb', 'A bomb that releases smoke to obscure vision', 7.99, 75, 1, 'PULL_ON_SHELVES', 'smoke_bomb.jpg');
+VALUES (6666, 'Smoke Bomb', 'A bomb that releases smoke to obscure vision', 7.99, 75, 1, 'PULL_ON_SHELVES', 'smoke_bomb.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (5, 'Ninja Sword', 'A short sword used by ninjas', 49.99, 30, 1, 'PULL_ON_SHELVES', 'ninja_sword.jpg');
+VALUES (5555, 'Ninja Sword', 'A short sword used by ninjas', 49.99, 30, 1, 'PULL_ON_SHELVES', 'ninja_sword.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (6, 'Chakra Blade', 'A blade that can channel chakra', 99.99, 20, 1, 'PULL_ON_SHELVES', 'chakra_blade.jpg');
+VALUES (4444, 'Chakra Blade', 'A blade that can channel chakra', 99.99, 20, 1, 'PULL_ON_SHELVES', 'chakra_blade.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (7, 'Senbon', 'A needle-like weapon used for precise attacks', 2.99, 300, 1, 'PULL_ON_SHELVES', 'senbon.jpg');
+VALUES (3333, 'Senbon', 'A needle-like weapon used for precise attacks', 2.99, 300, 1, 'PULL_ON_SHELVES', 'senbon.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (8, 'Paper Bomb Kunai', 'A kunai with an explosive tag attached', 12.99, 60, 1, 'PULL_ON_SHELVES', 'paper_bomb_kunai.jpg');
+VALUES (2222, 'Paper Bomb Kunai', 'A kunai with an explosive tag attached', 12.99, 60, 1, 'PULL_ON_SHELVES', 'paper_bomb_kunai.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (9, 'Windmill Shuriken', 'A large shuriken that can be folded', 29.99, 40, 1, 'PULL_ON_SHELVES', 'windmill_shuriken.jpg');
+VALUES (1111, 'Windmill Shuriken', 'A large shuriken that can be folded', 29.99, 40, 1, 'PULL_ON_SHELVES', 'windmill_shuriken.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (10, 'Ninja Wire', 'A thin, strong wire used for traps and binding', 3.99, 150, 1, 'PULL_ON_SHELVES', 'ninja_wire.jpg');
+VALUES (99999, 'Ninja Wire', 'A thin, strong wire used for traps and binding', 3.99, 150, 1, 'PULL_ON_SHELVES', 'ninja_wire.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (11, 'Poison', 'A vial of poison for coating weapons', 19.99, 25, 1, 'PULL_ON_SHELVES', 'poison.jpg');
+VALUES (88888, 'Poison', 'A vial of poison for coating weapons', 19.99, 25, 1, 'PULL_ON_SHELVES', 'poison.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (12, 'Flash Bomb', 'A bomb that emits a bright flash to blind enemies', 8.99, 80, 1, 'PULL_ON_SHELVES', 'flash_bomb.jpg');
+VALUES (77777, 'Flash Bomb', 'A bomb that emits a bright flash to blind enemies', 8.99, 80, 1, 'PULL_ON_SHELVES', 'flash_bomb.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (13, 'Ninja Scroll', 'A scroll containing ninja techniques', 24.99, 10, 1, 'PULL_ON_SHELVES', 'ninja_scroll.jpg');
+VALUES (66666, 'Ninja Scroll', 'A scroll containing ninja techniques', 24.99, 10, 1, 'PULL_ON_SHELVES', 'ninja_scroll.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (14, 'Giant Fan', 'A large fan used for wind-based attacks', 59.99, 5, 1, 'PULL_ON_SHELVES', 'giant_fan.jpg');
+VALUES (55555, 'Giant Fan', 'A large fan used for wind-based attacks', 59.99, 5, 1, 'PULL_ON_SHELVES', 'giant_fan.jpg');
 
 INSERT INTO product (id, name, description, price, stock_quantity, category_id, status, image_url)
-VALUES (15, 'Ninja Armor', 'Protective armor worn by ninjas', 149.99, 15, 1, 'PULL_ON_SHELVES', 'ninja_armor.jpg');
+VALUES (44444, 'Ninja Armor', 'Protective armor worn by ninjas', 149.99, 15, 1, 'PULL_ON_SHELVES', 'ninja_armor.jpg');
 -- 插入初始购物车資訊
 INSERT INTO shopping_carts (id, user_id)
-VALUES (1, 1);
+VALUES (9999, 9999);
 
 INSERT INTO shopping_carts (id, user_id)
-VALUES (2, 2);
+VALUES (8888, 8888);
 
 -- 插入初始购物车项目資訊
 INSERT INTO cart_items (id, product_id, cart_id, quantity, price)
-VALUES (1, 1, 1, 2, 49.99);
+VALUES (9999, 9999, 9999, 2, 49.99);
 
 INSERT INTO cart_items (id, product_id, cart_id, quantity, price)
-VALUES (2, 2, 2, 1, 999.99);
+VALUES (8888, 8888, 8888, 1, 999.99);
 
 -- 插入初始订单資訊
 INSERT INTO orders (id, user_id, total_amount, status, payment_time)
-VALUES (1, 1, 99.98, 'PENDING', CURRENT_TIMESTAMP());
+VALUES (9999, 1, 99.98, 'PENDING', CURRENT_TIMESTAMP());
 
 INSERT INTO orders (id, user_id, total_amount, status, payment_time)
-VALUES (2, 2, 999.99, 'PAID', CURRENT_TIMESTAMP());
+VALUES (8888, 2, 999.99, 'PAID', CURRENT_TIMESTAMP());
 
 -- 插入初始订单项目資訊
 INSERT INTO order_items (id, product_id, quantity, price, order_id)
-VALUES (1, 1, 2, 49.99, 1);
+VALUES (9999, 9999, 2, 49.99, 9999);
 
 INSERT INTO order_items (id, product_id, quantity, price, order_id)
-VALUES (2, 2, 1, 999.99, 2);
+VALUES (8888, 8888, 1, 999.99, 8888);
 
 -- 插入初始库存資訊
 INSERT INTO inventory_items (product_id, quantity, reorder_threshold)
-VALUES (1, 50, 10);
+VALUES (9999, 50, 10);
 
 INSERT INTO inventory_items (product_id, quantity, reorder_threshold)
-VALUES (2, 10, 5);
+VALUES (8888, 10, 5);

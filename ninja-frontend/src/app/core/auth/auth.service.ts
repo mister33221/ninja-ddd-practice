@@ -4,7 +4,10 @@ import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { LoginModalComponent } from 'src/app/login-modal/login-modal.component';
 import { environment } from 'src/environments/environment';
-import { AlertService, AlertType } from '../components/alert/service/alert.service';
+import {
+  AlertService,
+  AlertType,
+} from '../components/alert/service/alert.service';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -18,7 +21,7 @@ export class AuthService {
     private modalService: BsModalService,
     private httpClient: HttpClient,
     private alertService: AlertService,
-    private router: Router,
+    private router: Router
   ) {
     this.checkInitialLoginStatus();
   }
@@ -59,7 +62,7 @@ export class AuthService {
       .pipe(
         map((res) => {
           if (res && res.token) {
-            localStorage.setItem('jwt', res.token);
+            this.parseJwt(res.token);
             this.isLoggedInSubject.next(true);
           }
           return res;
@@ -77,5 +80,33 @@ export class AuthService {
     this.router.navigate(['/product-list']);
     // 顯示一個提示消息
     this.alertService.showAlert(AlertType.SUCCESS, '您已登出', 3000);
+  }
+
+  /**
+   * 解析 JWT，並把解析出來的資訊及jwt都存到 localStorage
+   */
+  parseJwt(token: string): void {
+    const jwtPayload = JSON.parse(atob(token.split('.')[1]));
+    alert(JSON.stringify(jwtPayload));
+    localStorage.setItem('jwt', token);
+    localStorage.setItem('jwtPayload', JSON.stringify(jwtPayload));
+  }
+
+  /**
+   * 從 localStorage 中獲取 JWT
+   */
+  getJwt(): string | null {
+    return localStorage.getItem('jwt');
+  }
+
+  /**
+   * 從 localStorage 中的 JWT Payload 獲取特定的屬性(id, username, email)
+   */
+  getJwtPayloadAttr(attr: string): string | null {
+    const jwtPayload = localStorage.getItem('jwtPayload');
+    if (jwtPayload) {
+      return JSON.parse(jwtPayload)[attr];
+    }
+    return null;
   }
 }

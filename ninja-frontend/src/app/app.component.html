@@ -24,7 +24,7 @@
         </li>
       </ul>
       <ul class="navbar-nav">
-        <li class="nav-item" *ngIf="isLoggedIn">
+        <li class="nav-item" *ngIf="isLoggedIn$|async">
           <a class="nav-link" href="#">
             <i class="bi bi-person-circle"></i> 歡迎，{{userName}}
           </a>
