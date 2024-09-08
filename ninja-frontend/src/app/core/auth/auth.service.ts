@@ -10,12 +10,32 @@ import {
 } from '../components/alert/service/alert.service';
 import { Router } from '@angular/router';
 
+export enum UserInfo{
+  ID = 'id',
+  USERNAME = 'username',
+  EMAIL = 'email'
+}
+
+export interface JwtPayload {
+  id: string;
+  username: string;
+  email: string;
+  exp: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   isLoggedIn$ = this.isLoggedInSubject.asObservable();
+  // 將這個值設定為 private，讓其他元件無法直接修改這個值
+  // BehaviorSubject 會保存最新的值，並且當有新的訂閱者時，會立即發送這個值給新的訂閱者
+  private userNameSubject$ = new BehaviorSubject<string>('');
+  // 這格變數是公開得，讓其他元件可以訂閱這個值，而不是直接修改這個值
+  // 這樣可以確保這個值只能在這個服務中被修改
+  userName$ = this.userNameSubject$.asObservable();
+
 
   constructor(
     private modalService: BsModalService,
@@ -24,6 +44,7 @@ export class AuthService {
     private router: Router
   ) {
     this.checkInitialLoginStatus();
+
   }
 
   private checkInitialLoginStatus() {
@@ -31,7 +52,9 @@ export class AuthService {
     const jwt = this.getJwtFromLocalStorage();
     if (jwt && !this.isTokenExpired(jwt)) {
       this.isLoggedInSubject.next(true);
+      this.userNameSubject$.next(this.getJwtPayloadAttr(UserInfo.USERNAME) || '');
     }
+
   }
 
   private isTokenExpired(token: string): boolean {
@@ -64,6 +87,7 @@ export class AuthService {
           if (res && res.token) {
             this.parseJwt(res.token);
             this.isLoggedInSubject.next(true);
+            this.userNameSubject$.next(this.getJwtPayloadAttr(UserInfo.USERNAME) || '');
           }
           return res;
         })
@@ -87,7 +111,6 @@ export class AuthService {
    */
   parseJwt(token: string): void {
     const jwtPayload = JSON.parse(atob(token.split('.')[1]));
-    alert(JSON.stringify(jwtPayload));
     localStorage.setItem('jwt', token);
     localStorage.setItem('jwtPayload', JSON.stringify(jwtPayload));
   }
