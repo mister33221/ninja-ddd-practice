@@ -10,13 +10,12 @@ import { AlertService, AlertType } from './core/components/alert/service/alert.s
 })
 export class AppComponent {
   title = '木葉村忍具店';
-  userName = '鳴人'; // 這應該是實際登錄用戶的名字
+  userName$ = this.authService.userName$;
   isLoggedIn$ = this.authService.isLoggedIn$;
 
   constructor(
     private httpClient: HttpClient,
     private authService: AuthService,
-    private alertService: AlertService
   ) {}
 
   // https://ninja-backend.onrender.com/hello/world
