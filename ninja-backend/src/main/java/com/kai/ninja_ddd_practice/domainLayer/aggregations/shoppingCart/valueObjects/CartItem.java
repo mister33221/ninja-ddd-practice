@@ -17,6 +17,9 @@ public class CartItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "cart_id", nullable = false)
+    private Long cartId;
+
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
@@ -25,4 +28,20 @@ public class CartItem {
 
     @Column(nullable = false)
     private BigDecimal price;
+
+    public CartItem(Long cardId, Long productId, int quantity, BigDecimal price) {
+        this.cartId = cardId;
+        this.productId = productId;
+        this.quantity = quantity;
+        this.price = price;
+    }
+
+    public void incrementQuantity(int amount, BigDecimal price) {
+        this.quantity += amount;
+        this.price = this.price.add(price);
+    }
+
+    public BigDecimal getTotalPrice() {
+        return price.multiply(BigDecimal.valueOf(quantity));
+    }
 }

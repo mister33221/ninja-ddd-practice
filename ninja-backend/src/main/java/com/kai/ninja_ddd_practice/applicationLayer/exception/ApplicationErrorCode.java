@@ -12,8 +12,8 @@ public enum ApplicationErrorCode {
     EXPIRED_JWT_TOKEN("ERR_0007", HttpStatus.UNAUTHORIZED.value(), "Expired JWT token"),
     UNSUPPORTED_JWT_TOKEN("ERR_0008", HttpStatus.UNAUTHORIZED.value(), "Unsupported JWT token"),
     ILLIGAL_ARGUMENT("ERR_0009", HttpStatus.BAD_REQUEST.value(), "Illegal argument"),
-    INVALID_PASSWORD("ERR_0010", HttpStatus.UNAUTHORIZED.value(), "Invalid password");
-
+    INVALID_PASSWORD("ERR_0010", HttpStatus.UNAUTHORIZED.value(), "Invalid password"),
+    PRODUCT_NOT_FOUND("ERR_0011", HttpStatus.NOT_FOUND.value(), "Product not found");
 
     private final String customCode;
     private final Integer httpStatusCode;

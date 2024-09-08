@@ -1,22 +1,32 @@
+import { ShoppingCartHttpService } from './../core/http-service/shopping-cart.http.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AuthService } from '../core/auth/auth.service';
 import { ProductHttpService } from '../core/http-service/prdocut/product.http.service';
-import { firstValueFrom, Observable, Subscription } from 'rxjs';
+import {
+  firstValueFrom,
+  Observable,
+  Subject,
+  Subscription,
+  take,
+  takeUntil,
+} from 'rxjs';
 import { ProductCard } from './model/productCard';
+import { AlertService } from '../core/components/alert/service/alert.service';
 
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',
-  styleUrls: ['./product-list.component.scss']
+  styleUrls: ['./product-list.component.scss'],
 })
-export class ProductListComponent implements OnInit, OnDestroy  {
-
+export class ProductListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  isLoggedIn$ = this.authService.isLoggedIn$;
   productCards: ProductCard[] = [];
-  private subscriptions: Subscription[] = [];
 
   constructor(
     private authService: AuthService,
-    private productHttpService: ProductHttpService
+    private productHttpService: ProductHttpService,
+    private alertService: AlertService,
   ) {}
   ngOnInit(): void {
     this.getProducts();
@@ -30,7 +40,8 @@ export class ProductListComponent implements OnInit, OnDestroy  {
      * 如果記憶體洩漏，可能會導致應用程式變慢，甚至崩潰
      * 所以在元件被銷毀時，應該取消所有訂閱
      */
-    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -38,23 +49,45 @@ export class ProductListComponent implements OnInit, OnDestroy  {
    *
    * @description async 關鍵字用於定義一個函數是異步的。
    */
-  async addToCart() {
-    const isLoggedIn = await firstValueFrom(this.authService.isLoggedIn$);
+  async addToCart(productId: number): Promise<void> {
+    if (await firstValueFrom(this.isLoggedIn$)) {
+      const addToCartRequest: { userId: number; productId: number } = {
+        userId: Number(this.authService.getJwtPayloadAttr('id')),
+        productId,
+      };
 
-    if (!isLoggedIn) {
-      const loginModalSubscription = this.authService.showLoginModal().subscribe(() => {
-        this.performActionIfLoggedIn();
-        loginModalSubscription.unsubscribe();
-      });
-      this.subscriptions.push(loginModalSubscription);
+      this.productHttpService.addToCart(addToCartRequest)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (res) => {
+            this.alertService.showAlert(
+              'success',
+              '登入成功！　' + '???????????',
+              3000
+            );
+          },
+          error: (err) => {
+            this.alertService.showAlert('danger',
+              '登入失敗！　' + err,
+              3000
+            );
+          },
+        });
     } else {
-      this.performActionIfLoggedIn();
+      this.showLoginModal();
     }
   }
 
-  performActionIfLoggedIn() {
-    // 執行需要登錄的操作
-    console.log('Performing action for logged in user');
+  /**
+   * 執行需要登錄的操作
+   */
+  showLoginModal(): void {
+    const loginModalSubscription = this.authService
+      .showLoginModal()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        loginModalSubscription.unsubscribe();
+      });
   }
 
   /**
@@ -62,13 +95,16 @@ export class ProductListComponent implements OnInit, OnDestroy  {
    * @returns Product[]
    */
   private getProducts(): void {
-    this.productHttpService.getProductCards().subscribe({
-      next: productCards => {
-        this.productCards = productCards;
-      },
-      error: error => {
-        console.error('There was an error!', error);
-      }
-    });
+    this.productHttpService
+      .getProductCards()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (productCards) => {
+          this.productCards = productCards;
+        },
+        error: (error) => {
+          console.error('There was an error!', error);
+        },
+      });
   }
 }

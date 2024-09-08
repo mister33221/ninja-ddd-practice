@@ -17,24 +17,8 @@ public class UserApplicationMapper {
     }
 
     public static User convertRegistryDtoToUser(RegistryDto object) {
-//        new User();
-//        new UserProfile();
-//        new UserCredentials();
-//        return User.builder()
-//                .username(object.getUsername())
-//                .profile(UserProfile.builder()
-//                        .fullName(object.getFullName())
-//                        .email(object.getEmail())
-//                        .phoneNumber(object.getPhoneNumber())
-//                        .dateOfBirth(object.getDateOfBirth())
-//                        .address(object.getAddress())
-//                        .build())
-//                .credentials(UserCredentials.builder()
-//                        .hashedPassword(object.getPassword())
-//                        .build())
-//                .build();
-        return objectMapper.convertValue(object, User.class);
 
+        return objectMapper.convertValue(object, User.class);
 
     }
 

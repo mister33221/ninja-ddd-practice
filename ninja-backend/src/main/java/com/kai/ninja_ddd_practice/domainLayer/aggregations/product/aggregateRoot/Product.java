@@ -1,7 +1,7 @@
 package com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot;
 
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.ProductDetails;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.ProductStatus;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.ProductCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,8 +28,11 @@ public class Product {
     @Column(name = "stock_quantity", nullable = false)
     private int stockQuantity;
 
-    @Column(name = "category_id", nullable = false)
-    private Long categoryId;
+//    @Column(name = "category_id", nullable = false)
+//    private Long categoryId;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private ProductCategory category;
 
 //    這樣會導致你的 enum 中有幾個參數，就會有幾個 column，我的有 status，還有 statusDescription。
 //    但我只想要 status，所以改成直接用 String
@@ -45,7 +48,26 @@ public class Product {
     @Column(name = "image_url")
     private String imageUrl;
 
-    public void updateDetails(ProductDetails newDetails) {  }
-    public void updatePrice(BigDecimal newPrice) {  }
-    public void updateCategoryId(Long newCategoryId) {  }
+    public Product(ProductDetails details, BigDecimal price, int stockQuantity, ProductCategory category, String status, String imageUrl) {
+        this.details = details;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.category = category;
+        this.status = status;
+        this.imageUrl = imageUrl;
+    }
+
+    public void updateStock(int quantity) {
+        if (this.stockQuantity + quantity < 0) {
+            throw new IllegalArgumentException("Insufficient stock");
+        }
+        this.stockQuantity += quantity;
+    }
+
+    public void updatePrice(BigDecimal newPrice) {
+        if (newPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Price must be positive");
+        }
+        this.price = newPrice;
+    }
 }
