@@ -62,13 +62,13 @@ export class ProductListComponent implements OnInit, OnDestroy {
           next: (res) => {
             this.alertService.showAlert(
               'success',
-              '登入成功！　' + '???????????',
+              '商品已加入購物車！',
               3000
             );
           },
           error: (err) => {
             this.alertService.showAlert('danger',
-              '登入失敗！　' + err,
+              '商品加入購物車失敗！　' + err.error.message,
               3000
             );
           },
