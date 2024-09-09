@@ -26,7 +26,4 @@ public class User {
     @Embedded
     private UserCredentials credentials;
 
-    public void register(String username, String password, String email) {  }
-    public void login(String username, String password) {  }
-    public void updateProfile(UserProfile newProfile) {  }
 }

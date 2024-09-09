@@ -7,8 +7,10 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetUserInfoByIdResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.LoginResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.RegistryResponse;
+import com.kai.ninja_ddd_practice.interfaceLayer.mapper.UserControllerMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,9 +47,16 @@ public class UserController {
         return ResponseEntity.ok(LoginResponse.builder().token(message).build());
     }
 
+    @GetMapping("/get-user-info-by-id/{id}")
+    @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
+    public ResponseEntity<GetUserInfoByIdResponse> getUserById(@PathVariable String id) {
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(UserControllerMapper.convertUserToGetUserInfoByIdResponse(user));
+    }
+
     @GetMapping("/test/get/{id}")
     @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
-    public ResponseEntity<User> getUserById(@PathVariable String id) {
+    public ResponseEntity<User> getUserByIdTest(@PathVariable String id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
