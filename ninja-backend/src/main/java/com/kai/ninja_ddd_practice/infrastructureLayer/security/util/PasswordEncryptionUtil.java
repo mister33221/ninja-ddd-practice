@@ -1,4 +1,4 @@
-package com.kai.ninja_ddd_practice.applicationLayer.util;
+package com.kai.ninja_ddd_practice.infrastructureLayer.security.util;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;

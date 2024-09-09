@@ -5,6 +5,7 @@ import com.kai.ninja_ddd_practice.applicationLayer.applicationService.ProductApp
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.AddToCartDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.GetProductCardsDto;
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.ProductApplicationMapper;
+import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.JwtValidation;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.AddToCartRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetProductsResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +37,7 @@ public class ProductController {
 
     @PostMapping("/add-to-cart")
     @Operation(summary = "Add product to cart", description = "Add product to cart", tags = {"product"})
+    @JwtValidation
     public void addProductToCart(@RequestBody AddToCartRequest addToCartRequest) {
 
         AddToCartDto addToCartDto = ProductApplicationMapper.convertAddToCartRequestToDto(addToCartRequest);
