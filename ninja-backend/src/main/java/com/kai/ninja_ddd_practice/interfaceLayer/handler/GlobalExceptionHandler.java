@@ -2,6 +2,7 @@ package com.kai.ninja_ddd_practice.interfaceLayer.handler;
 
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
 import com.kai.ninja_ddd_practice.domainLayer.exception.DomainException;
+import com.kai.ninja_ddd_practice.infrastructureLayer.security.exception.InfraSecurityException;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.ErrorResponse;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<ErrorResponse> handleApplicationException(ApplicationException e) {
+        return ResponseEntity.status(e.getErrorCode().getHttpStatusCode()).body(ErrorResponse.builder().customCode(e.getErrorCode().getCustomCode()).httpStatus(e.getErrorCode().getHttpStatusCode()).message(e.getMessage()).build());
+    }
+
+    @ExceptionHandler(InfraSecurityException.class)
+    public ResponseEntity<ErrorResponse> handleInfraSecurityException(InfraSecurityException e) {
         return ResponseEntity.status(e.getErrorCode().getHttpStatusCode()).body(ErrorResponse.builder().customCode(e.getErrorCode().getCustomCode()).httpStatus(e.getErrorCode().getHttpStatusCode()).message(e.getMessage()).build());
     }
 

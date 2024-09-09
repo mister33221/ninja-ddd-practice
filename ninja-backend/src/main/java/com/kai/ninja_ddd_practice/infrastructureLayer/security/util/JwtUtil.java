@@ -1,4 +1,4 @@
-package com.kai.ninja_ddd_practice.applicationLayer.util;
+package com.kai.ninja_ddd_practice.infrastructureLayer.security.util;
 
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
