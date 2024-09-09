@@ -1,7 +1,6 @@
 import { ShoppingCartHttpService } from './../core/http-service/shopping-cart.http.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AuthService } from '../core/auth/auth.service';
-import { ProductHttpService } from '../core/http-service/prdocut/product.http.service';
 import {
   firstValueFrom,
   Observable,
@@ -12,6 +11,7 @@ import {
 } from 'rxjs';
 import { ProductCard } from './model/productCard';
 import { AlertService } from '../core/components/alert/service/alert.service';
+import { ProductHttpService } from '../core/http-service/product.http.service';
 
 @Component({
   selector: 'app-product-list',

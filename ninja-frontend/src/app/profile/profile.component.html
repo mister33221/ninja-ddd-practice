@@ -51,26 +51,26 @@
               </div>
             </div>
             <div class="mb-3">
-              <label for="fullname" class="form-label">
+              <label for="fullName" class="form-label">
                 <i class="bi bi-person-badge"></i> 全名
               </label>
-              <input type="text" class="form-control" id="fullname" formControlName="fullname" placeholder="請輸入全名">
+              <input type="text" class="form-control" id="fullName" formControlName="fullName" placeholder="請輸入全名">
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="phonenumber" class="form-label">
+                <label for="phoneNumber" class="form-label">
                   <i class="bi bi-telephone"></i> 電話號碼
                 </label>
-                <input type="tel" class="form-control" id="phonenumber" formControlName="phonenumber" placeholder="請輸入電話號碼">
-                <div *ngIf="editForm.get('phonenumber')?.invalid && editForm.get('phonenumber')?.touched" class="text-danger">
+                <input type="tel" class="form-control" id="phoneNumber" formControlName="phoneNumber" placeholder="請輸入電話號碼">
+                <div *ngIf="editForm.get('phoneNumber')?.invalid && editForm.get('phoneNumber')?.touched" class="text-danger">
                   請輸入有效的10位電話號碼
                 </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="dateofbirth" class="form-label">
+                <label for="dateOfBirth" class="form-label">
                   <i class="bi bi-calendar"></i> 出生日期
                 </label>
-                <input type="date" class="form-control" id="dateofbirth" formControlName="dateofbirth">
+                <input type="date" class="form-control" id="dateOfBirth" formControlName="dateOfBirth">
               </div>
             </div>
             <div class="mb-3">
