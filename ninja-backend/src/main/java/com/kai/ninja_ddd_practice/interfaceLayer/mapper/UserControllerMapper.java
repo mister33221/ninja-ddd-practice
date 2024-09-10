@@ -2,8 +2,11 @@ package com.kai.ninja_ddd_practice.interfaceLayer.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInfoRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetUserInfoByIdResponse;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.time.LocalDate;
 
@@ -31,5 +34,9 @@ public class UserControllerMapper {
 //        另外，在 GetUserInfoByIdResponse 中的 dateOfBirth 要加上 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") 才能正確轉換，不然他會變成一個陣列物件
         response.setDateOfBirth(LocalDate.parse(jsonNode.get("dateOfBirth").asText()));
         return response;
+    }
+
+    public static UpdateUserInfoDto covertUpdateUserInfoRequestToDto(UpdateUserInfoRequest reques) {
+        return objectMapper.convertValue(reques, UpdateUserInfoDto.class);
     }
 }

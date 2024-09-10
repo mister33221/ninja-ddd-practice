@@ -10,10 +10,9 @@ import { GetUserProfileResponse } from './models/GetUserProfileResponse';
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  styleUrls: ['./profile.component.scss'],
 })
 export class ProfileComponent implements OnInit, OnDestroy {
-
   private destroy$ = new Subject<void>();
   isLoggedIn$ = this.authService.isLoggedIn$;
   editForm: FormGroup = new FormGroup({});
@@ -24,7 +23,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private alertService: AlertService,
     private userHttpService: UserHttpService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -39,24 +38,47 @@ export class ProfileComponent implements OnInit, OnDestroy {
   initForm(): void {
     this.editForm = this.formBuilder.group({
       email: [{ value: '', disabled: true }],
-      username: [{ value: '', disabled: true }, [Validators.required, Validators.minLength(3)]],
+      username: [
+        { value: '', disabled: true },
+        [Validators.required, Validators.minLength(3)],
+      ],
       fullName: [{ value: '', disabled: true }, Validators.required],
-      phoneNumber: [{ value: '', disabled: true }, [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      phoneNumber: [
+        { value: '', disabled: true },
+        [Validators.required, Validators.pattern(/^\d{10}$/)],
+      ],
       dateOfBirth: [{ value: '', disabled: true }, Validators.required],
-      address: [{ value: '', disabled: true }, Validators.required]
+      address: [{ value: '', disabled: true }, Validators.required],
     });
   }
 
   setDataToForm(userProfile: GetUserProfileResponse): void {
-    this.editForm = this.formBuilder.group({
-      email: [{ value: userProfile.email, disabled: true }],
-      username: [{ value: userProfile.username, disabled: true }, [Validators.required, Validators.minLength(3)]],
-      fullName: [{ value: userProfile.fullName, disabled: true }, Validators.required],
-      phoneNumber: [{ value: userProfile.phoneNumber, disabled: true }, [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      dateOfBirth: [{ value: userProfile.dateOfBirth, disabled: true }, Validators.required],
-      address: [{ value: userProfile.address, disabled: true }, Validators.required]
-    }, { validator: this.passwordMatchValidator });
-
+    this.editForm = this.formBuilder.group(
+      {
+        email: [{ value: userProfile.email, disabled: true }],
+        username: [
+          { value: userProfile.username, disabled: true },
+          [Validators.required, Validators.minLength(3)],
+        ],
+        fullName: [
+          { value: userProfile.fullName, disabled: true },
+          Validators.required,
+        ],
+        phoneNumber: [
+          { value: userProfile.phoneNumber, disabled: true },
+          [Validators.required, Validators.pattern(/^\d{10}$/)],
+        ],
+        dateOfBirth: [
+          { value: userProfile.dateOfBirth, disabled: true },
+          Validators.required,
+        ],
+        address: [
+          { value: userProfile.address, disabled: true },
+          Validators.required,
+        ],
+      },
+      { validator: this.passwordMatchValidator }
+    );
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -84,29 +106,53 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onSubmit(): void {
     if (this.editForm.valid) {
-      console.log(this.editForm.value);
-      // 這裡可以調用您的更新服務
-      // 更新成功後可以調用 this.getUserData() 來獲取最新數據
-      // const updatedData = this.getUserData();
-      // this.initForm(updatedData);
+      this.userHttpService
+        .updateUserInfo(this.editForm.value)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            this.alertService.showAlert(
+              'success',
+              '用戶信息更新成功！　',
+              3000
+            );
+          },
+          error: (error) => {
+            this.alertService.showAlert(
+              'danger',
+              '用戶信息更新失敗！　' + error.error.message,
+              3000
+            );
+            this.getUserData();
+          },
+        });
     }
   }
 
   getUserData(): void {
-    const userId = this.authService.getJwtPayloadAttr(UserInfo.ID)
+    const userId = this.authService.getAuthorizationPayloadAttr(UserInfo.ID);
     if (!userId) {
-      this.alertService.showAlert('danger', '用戶ID無效，無法獲取用戶數據！　', 3000);
+      this.alertService.showAlert(
+        'danger',
+        '用戶ID無效，無法獲取用戶數據！　',
+        3000
+      );
       return;
     }
-    this.userHttpService.getUserInfoById(userId)
-    .pipe(takeUntil(this.destroy$))
-    .subscribe({
-      next: (getUserInfoResponse) => {
-        this.setDataToForm(getUserInfoResponse);
-      },
-      error: (error) => {
-        this.alertService.showAlert('danger', '獲取用戶數據失敗！　' + error.error.message, 3000);
-      },
-    });
+    this.userHttpService
+      .getUserInfoById(userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (getUserInfoResponse) => {
+          this.setDataToForm(getUserInfoResponse);
+        },
+        error: (error) => {
+          this.alertService.showAlert(
+            'danger',
+            '獲取用戶數據失敗！　' + error.error.message,
+            3000
+          );
+        },
+      });
   }
 }

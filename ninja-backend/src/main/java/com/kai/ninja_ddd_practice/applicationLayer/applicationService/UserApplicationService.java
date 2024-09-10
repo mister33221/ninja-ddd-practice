@@ -2,6 +2,7 @@ package com.kai.ninja_ddd_practice.applicationLayer.applicationService;
 
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserApplicationMapper;
@@ -69,5 +70,16 @@ public class UserApplicationService {
     public User getUserById(String id) {
         return userRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
+    }
+
+    public void updateUserInfo(UpdateUserInfoDto updateUserInfoDto, String token) {
+        Long userId = jwtUtil.extractUserId(token);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
+
+//        將更新的方法放在領域內，這樣可以確保領域內的邏輯是正確的
+        user.updateUserInfo(updateUserInfoDto);
+
+        userRepository.save(user);
     }
 }

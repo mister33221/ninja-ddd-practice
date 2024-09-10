@@ -105,4 +105,9 @@ public class JwtUtil {
         System.out.println("prefix: " + prefix);
         System.out.println("headerString: " + headerString);
     }
+
+    public Long extractUserId(String token) {
+        Claims claims = extractAllClaims(removePrefix(token));
+        return Long.parseLong(claims.get("id").toString());
+    }
 }

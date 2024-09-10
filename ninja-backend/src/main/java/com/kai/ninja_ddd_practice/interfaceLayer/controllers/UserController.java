@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kai.ninja_ddd_practice.applicationLayer.applicationService.UserApplicationService;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInfoRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetUserInfoByIdResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.LoginResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.RegistryResponse;
@@ -52,6 +54,17 @@ public class UserController {
     public ResponseEntity<GetUserInfoByIdResponse> getUserById(@PathVariable String id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(UserControllerMapper.convertUserToGetUserInfoByIdResponse(user));
+    }
+
+    @PutMapping("/update-user-info")
+    @Operation(summary = "Update user info", description = "Update user info", tags = {"User"})
+    public ResponseEntity<?> updateUserInfo(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateUserInfoRequest request
+    ) {
+        UpdateUserInfoDto updateUserInfoDto = UserControllerMapper.covertUpdateUserInfoRequestToDto(request);
+        userService.updateUserInfo(updateUserInfoDto, token);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/test/get/{id}")
