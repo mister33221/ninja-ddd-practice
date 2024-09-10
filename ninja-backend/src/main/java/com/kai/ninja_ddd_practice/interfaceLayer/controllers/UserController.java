@@ -6,6 +6,7 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
+import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.AuthorizationValidation;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInfoRequest;
@@ -51,6 +52,7 @@ public class UserController {
 
     @GetMapping("/get-user-info-by-id/{id}")
     @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
+    @AuthorizationValidation
     public ResponseEntity<GetUserInfoByIdResponse> getUserById(@PathVariable String id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(UserControllerMapper.convertUserToGetUserInfoByIdResponse(user));
@@ -58,6 +60,7 @@ public class UserController {
 
     @PutMapping("/update-user-info")
     @Operation(summary = "Update user info", description = "Update user info", tags = {"User"})
+    @AuthorizationValidation
     public ResponseEntity<?> updateUserInfo(
             @RequestHeader("Authorization") String token,
             @RequestBody UpdateUserInfoRequest request

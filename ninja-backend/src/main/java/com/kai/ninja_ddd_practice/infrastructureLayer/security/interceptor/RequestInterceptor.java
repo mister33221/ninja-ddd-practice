@@ -1,6 +1,6 @@
 package com.kai.ninja_ddd_practice.infrastructureLayer.security.interceptor;
 
-import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.JwtValidation;
+import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.AuthorizationValidation;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.exception.InfraSecurityErrorCode;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.exception.InfraSecurityException;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
@@ -36,10 +36,10 @@ public class RequestInterceptor implements HandlerInterceptor {
 
         HandlerMethod handlerMethod = (HandlerMethod) handler;
 
-//        2. 確認該 method 是否有 @JwtValidation annotation，如果沒有就 return true 直接放行
+//        2. 確認該 method 是否有 @AuthorizationValidation annotation，如果沒有就 return true 直接放行
         Method method = handlerMethod.getMethod();
         if (!checkJwtValidationAnnotation(method)) {
-            log.info("Method: " + method.getName() + " does not have JwtValidation annotation.");
+            log.info("Method: " + method.getName() + " does not have AuthorizationValidation annotation.");
             return true;
         }
 
@@ -73,7 +73,7 @@ public class RequestInterceptor implements HandlerInterceptor {
     }
 
     private boolean checkJwtValidationAnnotation (Method method) {
-        return method.isAnnotationPresent(JwtValidation.class);
+        return method.isAnnotationPresent(AuthorizationValidation.class);
     }
 
     private boolean checkToken (String token) {
