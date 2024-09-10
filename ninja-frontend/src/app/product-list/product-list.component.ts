@@ -52,7 +52,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   async addToCart(productId: number): Promise<void> {
     if (await firstValueFrom(this.isLoggedIn$)) {
       const addToCartRequest: { userId: number; productId: number } = {
-        userId: Number(this.authService.getJwtPayloadAttr('id')),
+        userId: Number(this.authService.getAuthorizationPayloadAttr('id')),
         productId,
       };
 

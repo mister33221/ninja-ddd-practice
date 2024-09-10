@@ -27,6 +27,7 @@ export interface JwtPayload {
   providedIn: 'root',
 })
 export class AuthService {
+
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   isLoggedIn$ = this.isLoggedInSubject.asObservable();
   // 將這個值設定為 private，讓其他元件無法直接修改這個值
@@ -49,21 +50,21 @@ export class AuthService {
 
   private checkInitialLoginStatus() {
     // 檢查 cookie 中是否有有效的 JWT
-    const jwt = this.getJwtFromLocalStorage();
-    if (jwt && !this.isTokenExpired(jwt)) {
+    const jwt = this.getAuthorizationFromLocalStorage();
+    if (jwt && !this.isAuthorizationExpired(jwt)) {
       this.isLoggedInSubject.next(true);
-      this.userNameSubject$.next(this.getJwtPayloadAttr(UserInfo.USERNAME) || '');
+      this.userNameSubject$.next(this.getAuthorizationPayloadAttr(UserInfo.USERNAME) || '');
     }
 
   }
 
-  private isTokenExpired(token: string): boolean {
+  private isAuthorizationExpired(token: string): boolean {
     const jwtPayload = JSON.parse(atob(token.split('.')[1]));
     return jwtPayload.exp * 1000 < Date.now();
   }
 
-  private getJwtFromLocalStorage(): string | null {
-    return localStorage.getItem('jwt');
+  private getAuthorizationFromLocalStorage(): string | null {
+    return localStorage.getItem('Authorization');
   }
 
   showLoginModal(): Observable<any> {
@@ -87,7 +88,7 @@ export class AuthService {
           if (res && res.token) {
             this.parseJwt(res.token);
             this.isLoggedInSubject.next(true);
-            this.userNameSubject$.next(this.getJwtPayloadAttr(UserInfo.USERNAME) || '');
+            this.userNameSubject$.next(this.getAuthorizationPayloadAttr(UserInfo.USERNAME) || '');
           }
           return res;
         })
@@ -118,18 +119,29 @@ export class AuthService {
   /**
    * 從 localStorage 中獲取 JWT
    */
-  getJwt(): string | null {
-    return localStorage.getItem('jwt');
+  getAuthorization(): string | null {
+    return localStorage.getItem('Authorization');
   }
 
   /**
    * 從 localStorage 中的 JWT Payload 獲取特定的屬性(id, username, email)
    */
-  getJwtPayloadAttr(attr: string): string | null {
+  getAuthorizationPayloadAttr(attr: string): string | null {
     const jwtPayload = localStorage.getItem('jwtPayload');
     if (jwtPayload) {
       return JSON.parse(jwtPayload)[attr];
     }
     return null;
+  }
+
+  /**
+   * 每次應用程序啟動時，從 localStorage 中檢查是否有有效的 JWT
+   */
+  checkAuth() {
+    const authorization = this.getAuthorization();
+    if (authorization && !this.isAuthorizationExpired(authorization)) {
+      this.isLoggedInSubject.next(true);
+      this.userNameSubject$.next(this.getAuthorizationPayloadAttr(UserInfo.USERNAME) || '');
+    }
   }
 }
