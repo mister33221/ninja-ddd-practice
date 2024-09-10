@@ -18,7 +18,7 @@
                 <label for="email" class="form-label">
                   <i class="bi bi-envelope"></i> 電子郵件
                 </label>
-                <input type="email" class="form-control" id="email" formControlName="email" placeholder="請輸入電子郵件" readonly>
+                <input type="text" class="form-control" id="email" formControlName="email" placeholder="請輸入電子郵件" readonly>
               </div>
               <div class="col-md-6 mb-3">
                 <label for="username" class="form-label">
@@ -27,26 +27,6 @@
                 <input type="text" class="form-control" id="username" formControlName="username" placeholder="請輸入用戶名">
                 <div *ngIf="editForm.get('username')?.invalid && editForm.get('username')?.touched" class="text-danger">
                   用戶名至少需要3個字符
-                </div>
-              </div>
-            </div>
-            <div class="row" *ngIf="isEditing">
-              <div class="col-md-6 mb-3">
-                <label for="password" class="form-label">
-                  <i class="bi bi-lock"></i> 密碼
-                </label>
-                <input type="password" class="form-control" id="password" formControlName="password" placeholder="請輸入新密碼">
-                <div *ngIf="editForm.get('password')?.invalid && editForm.get('password')?.touched" class="text-danger">
-                  密碼至少需要6個字符
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="confirmPassword" class="form-label">
-                  <i class="bi bi-lock-fill"></i> 確認密碼
-                </label>
-                <input type="password" class="form-control" id="confirmPassword" formControlName="confirmPassword" placeholder="請再次輸入新密碼">
-                <div *ngIf="editForm.hasError('mismatch') && editForm.get('confirmPassword')?.touched" class="text-danger">
-                  密碼不匹配
                 </div>
               </div>
             </div>

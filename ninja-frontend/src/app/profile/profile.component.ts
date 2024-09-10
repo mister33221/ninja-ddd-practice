@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { UserHttpService } from '../core/http-service/user.http.service';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { takeUntil } from 'rxjs';
 import { Subject } from 'rxjs/internal/Subject';
 import { AuthService, UserInfo } from '../core/auth/auth.service';
 import { AlertService } from '../core/components/alert/service/alert.service';
-import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
-import { take, takeUntil } from 'rxjs';
+import { UserHttpService } from '../core/http-service/user.http.service';
 import { GetUserProfileResponse } from './models/GetUserProfileResponse';
 
 @Component({
@@ -28,6 +27,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.initForm();
     this.getUserData();
   }
 
@@ -36,17 +36,27 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  initForm(userProfile: GetUserProfileResponse): void {
+  initForm(): void {
     this.editForm = this.formBuilder.group({
-      email: [{ value: 123, disabled: true }],
-      password: ['', [Validators.minLength(6)]],
-      confirmPassword: [''],
-      username: [{ value: 123, disabled: true }, [Validators.required, Validators.minLength(3)]],
+      email: [{ value: '', disabled: true }],
+      username: [{ value: '', disabled: true }, [Validators.required, Validators.minLength(3)]],
+      fullName: [{ value: '', disabled: true }, Validators.required],
+      phoneNumber: [{ value: '', disabled: true }, [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      dateOfBirth: [{ value: '', disabled: true }, Validators.required],
+      address: [{ value: '', disabled: true }, Validators.required]
+    });
+  }
+
+  setDataToForm(userProfile: GetUserProfileResponse): void {
+    this.editForm = this.formBuilder.group({
+      email: [{ value: userProfile.email, disabled: true }],
+      username: [{ value: userProfile.username, disabled: true }, [Validators.required, Validators.minLength(3)]],
       fullName: [{ value: userProfile.fullName, disabled: true }, Validators.required],
       phoneNumber: [{ value: userProfile.phoneNumber, disabled: true }, [Validators.required, Validators.pattern(/^\d{10}$/)]],
       dateOfBirth: [{ value: userProfile.dateOfBirth, disabled: true }, Validators.required],
       address: [{ value: userProfile.address, disabled: true }, Validators.required]
     }, { validator: this.passwordMatchValidator });
+
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -92,8 +102,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.destroy$))
     .subscribe({
       next: (getUserInfoResponse) => {
-        alert('getUserInfoResponse: ' + JSON.stringify(getUserInfoResponse));
-        this.initForm(getUserInfoResponse);
+        this.setDataToForm(getUserInfoResponse);
       },
       error: (error) => {
         this.alertService.showAlert('danger', '獲取用戶數據失敗！　' + error.error.message, 3000);
