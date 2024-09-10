@@ -96,7 +96,7 @@ export class AuthService {
 
   logout() {
     // 清除 local storage 中的 JWT
-    localStorage.removeItem('jwt');
+    localStorage.removeItem('Authorization');
     // 發送一個事件，告訴應用程序用戶已經登出
     this.isLoggedInSubject.next(false);
     // 重定向到首頁
@@ -111,7 +111,7 @@ export class AuthService {
    */
   parseJwt(token: string): void {
     const jwtPayload = JSON.parse(atob(token.split('.')[1]));
-    localStorage.setItem('jwt', token);
+    localStorage.setItem('Authorization', token);
     localStorage.setItem('jwtPayload', JSON.stringify(jwtPayload));
   }
 

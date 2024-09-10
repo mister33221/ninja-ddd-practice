@@ -16,9 +16,10 @@ import { OrderListComponent } from './order-list/order-list.component';
 import { AccordionModule } from 'ngx-bootstrap/accordion';
 import { SupplierOrderListComponent } from './supplier-order-list/supplier-order-list.component';
 import { ProfileComponent } from './profile/profile.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AlertModule } from 'ngx-bootstrap/alert';
 import { AlertComponent } from './core/components/alert/alert.component';
+import { AuthInterceptor } from './core/interceptor/auth.interceptor';
 
 
 @NgModule({
@@ -48,7 +49,9 @@ import { AlertComponent } from './core/components/alert/alert.component';
     HttpClientModule, // 添加 HttpClientModule 才能使用 HttpClient
     AlertModule.forRoot(),
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
