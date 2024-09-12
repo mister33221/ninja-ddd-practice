@@ -35,14 +35,4 @@ public class ProductController {
         return productCardsDtos.stream().map(product -> objectMapper.convertValue(product, GetProductsResponse.class)).toList();
     }
 
-    @PostMapping("/add-to-cart")
-    @Operation(summary = "Add product to cart", description = "Add product to cart", tags = {"product"})
-    @AuthorizationValidation
-    public void addProductToCart(@RequestBody AddToCartRequest addToCartRequest) {
-
-        AddToCartDto addToCartDto = ProductApplicationMapper.convertAddToCartRequestToDto(addToCartRequest);
-
-        productApplicationService.addProductToCart(addToCartDto);
-    }
-
 }

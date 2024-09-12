@@ -24,7 +24,7 @@ export class ProductHttpService {
     userId: number;
     productId: number;
   }): Observable<any> {
-    return this.http.post<any>(environment.BASE_URL + '/product/add-to-cart', {
+    return this.http.post<any>(environment.BASE_URL + '/shopping-cart/add-to-cart', {
       userId: addToCartRequest.userId,
       productId: addToCartRequest.productId,
     });

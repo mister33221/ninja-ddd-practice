@@ -41,37 +41,4 @@ public class ProductApplicationService {
                 .toList()).orElseGet(List::of);
 
     }
-
-    @Transactional
-    public void addProductToCart(AddToCartDto addToCartDto) {
-        ShoppingCart cart = getOrCreateShoppingCart(addToCartDto.getUserId());
-        Product product = findProductById(addToCartDto.getProductId());
-
-        cart.addProduct(product, 1);
-        shoppingCartRepository.save(cart);
-    }
-
-    private ShoppingCart getOrCreateShoppingCart(Long userId) {
-        return shoppingCartRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    ShoppingCart newCart = new ShoppingCart(userId);
-                    return shoppingCartRepository.save(newCart);
-                });
-    }
-
-    private Product findProductById(Long productId) {
-        return productRepository.findById(productId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PRODUCT_NOT_FOUND));
-    }
-
-    public void removeProductFromCart(Long userId, Long productId) {
-        ShoppingCart cart = getOrCreateShoppingCart(userId);
-        cart.removeProduct(productId);
-        shoppingCartRepository.save(cart);
-    }
-
-    public BigDecimal getCartTotalPrice(Long userId) {
-        ShoppingCart cart = getOrCreateShoppingCart(userId);
-        return cart.getTotalPrice();
-    }
 }
