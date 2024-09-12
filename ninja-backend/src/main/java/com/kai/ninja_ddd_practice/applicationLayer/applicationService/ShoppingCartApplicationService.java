@@ -4,22 +4,32 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.AddToCartDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.GetShoppingCartDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
+import com.kai.ninja_ddd_practice.applicationLayer.mappers.ShoppingCartApplicationLayerMapper;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot.Product;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.aggregateRoot.ShoppingCart;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ProductRepository;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ShoppingCartRepository;
+import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.UserRepository;
+import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 public class ShoppingCartApplicationService {
 
     private final ProductRepository productRepository;
     private final ShoppingCartRepository shoppingCartRepository;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
-    public ShoppingCartApplicationService(ProductRepository productRepository, ShoppingCartRepository shoppingCartRepository) {
+    public ShoppingCartApplicationService(ProductRepository productRepository, ShoppingCartRepository shoppingCartRepository, UserRepository userRepository, JwtUtil jwtUtil) {
         this.productRepository = productRepository;
         this.shoppingCartRepository = shoppingCartRepository;
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
@@ -44,7 +54,11 @@ public class ShoppingCartApplicationService {
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PRODUCT_NOT_FOUND));
     }
 
-    public GetShoppingCartDto getShoppingCart() {
-        return null;
+    public GetShoppingCartDto getShoppingCart( String token) {
+        Long userId = jwtUtil.extractUserId(token);
+        ShoppingCart cart = shoppingCartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SHOPPING_CART_NOT_FOUND));
+
+        return ShoppingCartApplicationLayerMapper.covertShoppingCartToGetShoppingCartDto(cart);
     }
 }

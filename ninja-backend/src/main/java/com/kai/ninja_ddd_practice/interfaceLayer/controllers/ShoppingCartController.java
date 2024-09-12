@@ -24,7 +24,7 @@ public class ShoppingCartController {
     }
 
     @PostMapping("/add-to-cart")
-    @Operation(summary = "Add product to cart", description = "Add product to cart", tags = {"product"})
+    @Operation(summary = "Add product to cart", description = "Add product to cart", tags = {"shopping-cart"})
     @AuthorizationValidation
     public void addProductToCart(@RequestBody AddToCartRequest addToCartRequest) {
 
@@ -34,10 +34,10 @@ public class ShoppingCartController {
     }
 
     @GetMapping("/get-shopping-cart")
-    @Operation(summary = "Get shopping cart", description = "Get shopping cart", tags = {"product"})
+    @Operation(summary = "Get shopping cart", description = "Get shopping cart", tags = {"shopping-cart"})
     @AuthorizationValidation
-    public GetShoppingCartResponse getShoppingCart() {
-        GetShoppingCartDto getShoppingCartDto = productApplicationService.getShoppingCart();
+    public GetShoppingCartResponse getShoppingCart(@RequestHeader("Authorization") String token) {
+        GetShoppingCartDto getShoppingCartDto = productApplicationService.getShoppingCart(token);
         return ShoppingCartInterfaceLayerMapper.convertGetShoppingCartDtoToResponse(getShoppingCartDto);
     }
 
