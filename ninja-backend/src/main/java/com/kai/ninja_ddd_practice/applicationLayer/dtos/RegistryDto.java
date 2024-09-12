@@ -8,7 +8,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString
 public class RegistryDto {
 
     private String username;

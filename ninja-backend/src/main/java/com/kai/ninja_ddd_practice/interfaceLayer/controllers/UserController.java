@@ -13,7 +13,7 @@ import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInf
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetUserInfoByIdResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.LoginResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.RegistryResponse;
-import com.kai.ninja_ddd_practice.interfaceLayer.mapper.UserControllerMapper;
+import com.kai.ninja_ddd_practice.interfaceLayer.mapper.UserInterfaceLayerMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -55,7 +55,7 @@ public class UserController {
     @AuthorizationValidation
     public ResponseEntity<GetUserInfoByIdResponse> getUserById(@PathVariable String id) {
         User user = userService.getUserById(id);
-        return ResponseEntity.ok(UserControllerMapper.convertUserToGetUserInfoByIdResponse(user));
+        return ResponseEntity.ok(UserInterfaceLayerMapper.convertUserToGetUserInfoByIdResponse(user));
     }
 
     @PutMapping("/update-user-info")
@@ -65,13 +65,13 @@ public class UserController {
             @RequestHeader("Authorization") String token,
             @RequestBody UpdateUserInfoRequest request
     ) {
-        UpdateUserInfoDto updateUserInfoDto = UserControllerMapper.covertUpdateUserInfoRequestToDto(request);
+        UpdateUserInfoDto updateUserInfoDto = UserInterfaceLayerMapper.covertUpdateUserInfoRequestToDto(request);
         userService.updateUserInfo(updateUserInfoDto, token);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/test/get/{id}")
-    @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
+    @Operation(summary = "Get user by id", description = "Get user by id", tags = {"test"})
     public ResponseEntity<User> getUserByIdTest(@PathVariable String id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user);

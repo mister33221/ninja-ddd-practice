@@ -1,6 +1,7 @@
 package com.kai.ninja_ddd_practice.applicationLayer.applicationService;
 
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.AddToCartDto;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.GetShoppingCartDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot.Product;
@@ -43,4 +44,7 @@ public class ShoppingCartApplicationService {
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PRODUCT_NOT_FOUND));
     }
 
+    public GetShoppingCartDto getShoppingCart() {
+        return null;
+    }
 }
