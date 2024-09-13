@@ -4,11 +4,11 @@ import org.springframework.http.HttpStatus;
 
 public enum DomainErrorCode {
 
-    USER_NOT_FOUND("ERR_0001", HttpStatus.NOT_FOUND.value(), "User not found"),
-    USERNAME_ALREADY_EXISTS("ERR_0002", HttpStatus.BAD_REQUEST.value(), "Username already exists"),
-    EMAIL_ALREADY_EXISTS("ERR_0003", HttpStatus.BAD_REQUEST.value(), "Email already exists"),
-    INVALID_INPUT("ERR_0004", HttpStatus.BAD_REQUEST.value(), "Invalid input"),
-    INTERNAL_SERVER_ERROR("ERR_0005", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error");
+    USER_NOT_FOUND("ERR_DOMAIN_0001", HttpStatus.NOT_FOUND.value(), "User not found"),
+    USERNAME_ALREADY_EXISTS("ERR_DOMAIN_0002", HttpStatus.BAD_REQUEST.value(), "Username already exists"),
+    EMAIL_ALREADY_EXISTS("ERR_DOMAIN_0003", HttpStatus.BAD_REQUEST.value(), "Email already exists"),
+    INVALID_INPUT("ERR_DOMAIN_0004", HttpStatus.BAD_REQUEST.value(), "Invalid input"),
+    INTERNAL_SERVER_ERROR("ERR_DOMAIN_0005", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error");
 
     private final String customCode;
     private final Integer httpStatusCode;
