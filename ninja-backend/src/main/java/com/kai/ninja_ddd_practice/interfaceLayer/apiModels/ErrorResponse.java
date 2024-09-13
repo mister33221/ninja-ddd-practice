@@ -9,6 +9,4 @@ public class ErrorResponse  {
     private String customCode;
     private Integer httpStatus;
     private String message;
-
-//
 }

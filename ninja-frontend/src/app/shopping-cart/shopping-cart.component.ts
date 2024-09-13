@@ -84,18 +84,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (shoppingCart: GetShoppingCartResponse) => {
-          // alert(JSON.stringify(shoppingCart));
           this.shoppingCart = shoppingCart;
-          console.log('success');
-        },
-        error: (error) => {
-          console.log('error');
-          // alert(JSON.stringify(error));
-          this.alertService.showAlert(
-            AlertType.DANGER,
-            '取得購物車失敗 ' + error.error.message,
-            3000);
-          // alert('取得購物車失敗');
         },
       });
   }
