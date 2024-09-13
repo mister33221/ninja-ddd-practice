@@ -10,6 +10,7 @@ import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetShoppingC
 import com.kai.ninja_ddd_practice.interfaceLayer.mapper.ProductInterfaceLayerMapper;
 import com.kai.ninja_ddd_practice.interfaceLayer.mapper.ShoppingCartInterfaceLayerMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,7 +25,12 @@ public class ShoppingCartController {
     }
 
     @PostMapping("/add-to-cart")
-    @Operation(summary = "Add product to cart", description = "Add product to cart", tags = {"shopping-cart"})
+    @Operation(
+            summary = "Add product to cart",
+            description = "Add product to cart",
+            tags = {"shopping-cart"},
+            security = @SecurityRequirement(name = "Authorized")
+    )
     @AuthorizationValidation
     public void addProductToCart(@RequestBody AddToCartRequest addToCartRequest) {
 
@@ -34,7 +40,12 @@ public class ShoppingCartController {
     }
 
     @GetMapping("/get-shopping-cart")
-    @Operation(summary = "Get shopping cart", description = "Get shopping cart", tags = {"shopping-cart"})
+    @Operation(
+            summary = "Get shopping cart",
+            description = "Get shopping cart",
+            tags = {"shopping-cart"},
+            security = @SecurityRequirement(name = "Authorized")
+    )
     @AuthorizationValidation
     public GetShoppingCartResponse getShoppingCart(@RequestHeader("Authorization") String token) {
         GetShoppingCartDto getShoppingCartDto = productApplicationService.getShoppingCart(token);

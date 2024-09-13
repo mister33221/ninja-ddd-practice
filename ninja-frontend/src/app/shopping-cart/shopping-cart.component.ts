@@ -35,42 +35,42 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.getShoppingCart();
-    this.shoppingCart = {
-      shoppingCartId: 1,
-      userId: 1,
-      cartItems: [
-        {
-          id: 1,
-          cartId: 1,
-          productId: 1,
-          productName: 'Apple',
-          productImageURL: 'https://via.placeholder.com/150',
-          quantity: 1,
-          price: 10,
-          selected: true,
-        },
-        {
-          id: 2,
-          cartId: 1,
-          productId: 2,
-          productName: 'Banana',
-          productImageURL: 'https://via.placeholder.com/150',
-          quantity: 2,
-          price: 5,
-          selected: true,
-        },
-        {
-          id: 3,
-          cartId: 1,
-          productId: 3,
-          productName: 'Orange',
-          productImageURL: 'https://via.placeholder.com/150',
-          quantity: 3,
-          price: 3,
-          selected: true,
-        },
-      ],
-    };
+    // this.shoppingCart = {
+    //   shoppingCartId: 1,
+    //   userId: 1,
+    //   cartItems: [
+    //     {
+    //       id: 1,
+    //       cartId: 1,
+    //       productId: 1,
+    //       productName: 'Apple',
+    //       productImageURL: 'https://via.placeholder.com/150',
+    //       quantity: 1,
+    //       price: 10,
+    //       selected: true,
+    //     },
+    //     {
+    //       id: 2,
+    //       cartId: 1,
+    //       productId: 2,
+    //       productName: 'Banana',
+    //       productImageURL: 'https://via.placeholder.com/150',
+    //       quantity: 2,
+    //       price: 5,
+    //       selected: true,
+    //     },
+    //     {
+    //       id: 3,
+    //       cartId: 1,
+    //       productId: 3,
+    //       productName: 'Orange',
+    //       productImageURL: 'https://via.placeholder.com/150',
+    //       quantity: 3,
+    //       price: 3,
+    //       selected: true,
+    //     },
+    //   ],
+    // };
   }
 
   ngOnDestroy(): void {
@@ -83,11 +83,19 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
       .getShoppingCart()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (shoppingCartItem: GetShoppingCartResponse) => {
-          alert(JSON.stringify(shoppingCartItem));
+        next: (shoppingCart: GetShoppingCartResponse) => {
+          // alert(JSON.stringify(shoppingCart));
+          this.shoppingCart = shoppingCart;
+          console.log('success');
         },
         error: (error) => {
-          this.alertService.showAlert(AlertType.ERROR, '取得購物車失敗', error);
+          console.log('error');
+          // alert(JSON.stringify(error));
+          this.alertService.showAlert(
+            AlertType.DANGER,
+            '取得購物車失敗 ' + error.error.message,
+            3000);
+          // alert('取得購物車失敗');
         },
       });
   }
@@ -120,16 +128,19 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
   }
 
   getTotalPrice(): number {
+    if (!this.shoppingCart.cartItems) {
+      return 0;
+    }
     return this.shoppingCart.cartItems
       .filter((item) => item.selected)
       .reduce((acc, item) => acc + item.price * item.quantity, 0);
   }
 
   checkout(): void {
-    const selectedItems = this.shoppingCart.cartItems.filter(
-      (item) => item.selected
-    );
-    alert(`結帳: ${JSON.stringify(selectedItems)}`);
+    // const selectedItems = this.shoppingCart.cartItems.filter(
+    //   (item) => item.selected
+    // );
+    // alert(`結帳: ${JSON.stringify(selectedItems)}`);
     // 這裡可以實現跳轉到結帳頁面或打開結帳 modal 的邏輯
   }
 }

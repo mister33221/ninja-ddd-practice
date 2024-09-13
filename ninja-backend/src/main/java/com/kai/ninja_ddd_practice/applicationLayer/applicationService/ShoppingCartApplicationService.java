@@ -7,6 +7,7 @@ import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationExceptio
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.ShoppingCartApplicationLayerMapper;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot.Product;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.aggregateRoot.ShoppingCart;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.CartItem;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ProductRepository;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ShoppingCartRepository;
@@ -15,6 +16,7 @@ import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -54,10 +56,12 @@ public class ShoppingCartApplicationService {
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PRODUCT_NOT_FOUND));
     }
 
+    @Transactional
     public GetShoppingCartDto getShoppingCart( String token) {
         Long userId = jwtUtil.extractUserId(token);
         ShoppingCart cart = shoppingCartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SHOPPING_CART_NOT_FOUND));
+
 
         return ShoppingCartApplicationLayerMapper.covertShoppingCartToGetShoppingCartDto(cart);
     }

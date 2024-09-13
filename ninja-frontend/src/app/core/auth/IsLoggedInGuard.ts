@@ -18,7 +18,7 @@ export const authGuard: CanActivateFn = () => {
         return true;
       } else {
         alertService.showAlert(
-          AlertType.ERROR,
+          AlertType.DANGER,
           'You have no permission to access this page',
           3000
         );

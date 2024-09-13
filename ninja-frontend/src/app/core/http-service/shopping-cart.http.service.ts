@@ -27,6 +27,6 @@ export class ShoppingCartHttpService {
    * 取得購物車(及購物車內的商品)
    */
   getShoppingCart(): Observable<GetShoppingCartResponse> {
-    return this.httpClient.get<GetShoppingCartResponse>(environment.BASE_URL + '/shopping-cart');
+    return this.httpClient.get<GetShoppingCartResponse>(environment.BASE_URL + '/shopping-cart/get-shopping-cart');
   }
 }
