@@ -13,7 +13,8 @@ public enum ApplicationErrorCode {
     UNSUPPORTED_JWT_TOKEN("ERR_0008", HttpStatus.UNAUTHORIZED.value(), "Unsupported JWT token"),
     ILLIGAL_ARGUMENT("ERR_0009", HttpStatus.BAD_REQUEST.value(), "Illegal argument"),
     INVALID_PASSWORD("ERR_0010", HttpStatus.UNAUTHORIZED.value(), "Invalid password"),
-    PRODUCT_NOT_FOUND("ERR_0011", HttpStatus.NOT_FOUND.value(), "Product not found");
+    PRODUCT_NOT_FOUND("ERR_0011", HttpStatus.NOT_FOUND.value(), "Product not found"),
+    SHOPPING_CART_NOT_FOUND("ERR_0012", HttpStatus.NOT_FOUND.value(), "Shopping cart not found");
 
     private final String customCode;
     private final Integer httpStatusCode;

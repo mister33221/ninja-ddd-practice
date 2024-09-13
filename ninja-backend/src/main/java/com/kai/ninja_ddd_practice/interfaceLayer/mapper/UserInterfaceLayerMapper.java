@@ -6,15 +6,14 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInfoRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetUserInfoByIdResponse;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.time.LocalDate;
 
-public class UserControllerMapper {
+public class UserInterfaceLayerMapper {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private UserControllerMapper() {
+    private UserInterfaceLayerMapper() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
@@ -36,7 +35,7 @@ public class UserControllerMapper {
         return response;
     }
 
-    public static UpdateUserInfoDto covertUpdateUserInfoRequestToDto(UpdateUserInfoRequest reques) {
-        return objectMapper.convertValue(reques, UpdateUserInfoDto.class);
+    public static UpdateUserInfoDto covertUpdateUserInfoRequestToDto(UpdateUserInfoRequest request) {
+        return objectMapper.convertValue(request, UpdateUserInfoDto.class);
     }
 }

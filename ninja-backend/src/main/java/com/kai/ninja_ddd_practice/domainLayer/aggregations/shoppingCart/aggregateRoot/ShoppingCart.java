@@ -34,21 +34,13 @@ public class ShoppingCart {
 
     public void addProduct(Product product, int quantity) {
         items.stream()
-                .filter(item -> item.getProductId().equals(product.getId()))
+                .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst()
                 .ifPresentOrElse(
                         item -> item.incrementQuantity(quantity, product.getPrice()),
-                        () -> items.add(new CartItem(this.id, product.getId(), quantity, product.getPrice()))
+                        () -> items.add(new CartItem(this.id, product, quantity, product.getPrice()))
                 );
     }
 
-    public void removeProduct(Long productId) {
-        items.removeIf(item -> item.getProductId().equals(productId));
-    }
 
-    public BigDecimal getTotalPrice() {
-        return items.stream()
-                .map(CartItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 }

@@ -5,7 +5,7 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
-import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserApplicationMapper;
+import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserApplicationLayerMapper;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.PasswordEncryptionUtil;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
@@ -41,7 +41,7 @@ public class UserApplicationService {
         String encryptedPassword = passwordEncryptionUtil.encryptPassword(registryDto.getPassword(), salt);
 
 //        建立使用者
-        User user = UserApplicationMapper.convertRegistryDtoToUser(registryDto);
+        User user = UserApplicationLayerMapper.convertRegistryDtoToUser(registryDto);
         user.getCredentials().setRandomSalt(salt);
         user.getCredentials().setHashedPassword(encryptedPassword);
 

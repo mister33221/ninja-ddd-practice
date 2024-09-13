@@ -17,6 +17,11 @@ export const authGuard: CanActivateFn = () => {
       if (isLoggedIn) {
         return true;
       } else {
+        alertService.showAlert(
+          AlertType.DANGER,
+          'You have no permission to access this page',
+          3000
+        );
         return router.createUrlTree(['/product-list']);
       }
     })

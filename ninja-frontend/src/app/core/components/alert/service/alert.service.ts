@@ -3,7 +3,7 @@ import { Subject } from 'rxjs/internal/Subject';
 
 export enum AlertType {
   SUCCESS = 'success',
-  ERROR = 'error',
+  DANGER = 'danger',
   WARNING = 'warning',
   INFO = 'info'
 }
