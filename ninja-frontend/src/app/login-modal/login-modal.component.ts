@@ -51,10 +51,7 @@ export class LoginModalComponent implements OnInit, OnDestroy {
             this.modalRef.hide();
             this.router.navigate(['/']);
           }
-        },
-        error: (err) => {
-          this.alertService.showAlert('danger', '登入失敗！', 3000);
-        },
+        }
       });
   }
 
