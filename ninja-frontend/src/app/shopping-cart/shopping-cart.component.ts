@@ -1,22 +1,12 @@
-import { takeUntil } from 'rxjs/internal/operators/takeUntil';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BsModalService } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
-import { ShoppingCartHttpService } from '../core/http-service/shopping-cart.http.service';
-import { GetShoppingCartResponse } from './models/GetShoppingCartResponse';
+import { takeUntil } from 'rxjs/internal/operators/takeUntil';
 import {
   AlertService,
-  AlertType,
+  AlertType
 } from '../core/components/alert/service/alert.service';
-
-// interface CartItem {
-//   id: number;
-//   name: string;
-//   price: number;
-//   quantity: number;
-//   image: string;
-//   selected: boolean;
-// }
+import { ShoppingCartHttpService } from '../core/http-service/shopping-cart.http.service';
+import { GetShoppingCartResponse } from './models/GetShoppingCartResponse';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -35,42 +25,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.getShoppingCart();
-    // this.shoppingCart = {
-    //   shoppingCartId: 1,
-    //   userId: 1,
-    //   cartItems: [
-    //     {
-    //       id: 1,
-    //       cartId: 1,
-    //       productId: 1,
-    //       productName: 'Apple',
-    //       productImageURL: 'https://via.placeholder.com/150',
-    //       quantity: 1,
-    //       price: 10,
-    //       selected: true,
-    //     },
-    //     {
-    //       id: 2,
-    //       cartId: 1,
-    //       productId: 2,
-    //       productName: 'Banana',
-    //       productImageURL: 'https://via.placeholder.com/150',
-    //       quantity: 2,
-    //       price: 5,
-    //       selected: true,
-    //     },
-    //     {
-    //       id: 3,
-    //       cartId: 1,
-    //       productId: 3,
-    //       productName: 'Orange',
-    //       productImageURL: 'https://via.placeholder.com/150',
-    //       quantity: 3,
-    //       price: 3,
-    //       selected: true,
-    //     },
-    //   ],
-    // };
   }
 
   ngOnDestroy(): void {
@@ -85,6 +39,14 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (shoppingCart: GetShoppingCartResponse) => {
           this.shoppingCart = shoppingCart;
+          console.log('success');
+        },
+        error: (error) => {
+          console.log('error');
+          this.alertService.showAlert(
+            AlertType.DANGER,
+            '取得購物車失敗 ' + error.error.message,
+            3000);
         },
       });
   }
@@ -95,6 +57,14 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     );
     if (foundItem) {
       foundItem.quantity++;
+      this.shoppingCartHttpService.updateCartItemQuantity(foundItem).subscribe({
+        next: () => {
+          this.alertService.showAlert(
+            AlertType.SUCCESS,
+            '更新購物車成功',
+            3000);
+        }
+      });
     }
   }
 
@@ -104,15 +74,32 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     );
     if (foundItem && foundItem.quantity > 1) {
       foundItem.quantity--;
+      this.shoppingCartHttpService.updateCartItemQuantity(foundItem).subscribe({
+        next: () => {
+          this.alertService.showAlert(
+            AlertType.SUCCESS,
+            '更新購物車成功',
+            3000);
+        }
+      });
     }
   }
 
-  removeItem(productId: number): void {
+  removeItem(cartItemId: number): void {
     const index = this.shoppingCart.cartItems.findIndex(
-      (i) => i.productId === productId
+      (i) => i.id === cartItemId
     );
+    // 如果找不到該商品，就會回傳 -1，所以是如果有找到，就執行以下內容，沒找到就不執行
     if (index !== -1) {
-      this.shoppingCart.cartItems.splice(index, 1);
+      this.shoppingCartHttpService.removeCartItem(cartItemId).subscribe({
+        next: () => {
+          this.shoppingCart.cartItems.splice(index, 1);
+          this.alertService.showAlert(
+            AlertType.SUCCESS,
+            '移除商品成功',
+            3000);
+        }
+      });
     }
   }
 
@@ -126,10 +113,12 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
   }
 
   checkout(): void {
-    // const selectedItems = this.shoppingCart.cartItems.filter(
-    //   (item) => item.selected
-    // );
-    // alert(`結帳: ${JSON.stringify(selectedItems)}`);
-    // 這裡可以實現跳轉到結帳頁面或打開結帳 modal 的邏輯
+    const selectedItems = this.shoppingCart.cartItems.filter(
+      (item) => item.selected
+    );
+  }
+
+  isEmptyCart(): boolean {
+    return this.shoppingCart.cartItems?.length === 0;
   }
 }

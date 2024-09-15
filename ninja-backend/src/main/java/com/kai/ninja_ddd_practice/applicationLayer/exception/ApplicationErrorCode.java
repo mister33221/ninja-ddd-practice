@@ -14,7 +14,8 @@ public enum ApplicationErrorCode {
     ILLIGAL_ARGUMENT("ERR_APPLICATION_0009", HttpStatus.BAD_REQUEST.value(), "Illegal argument"),
     INVALID_PASSWORD("ERR_APPLICATION_0010", HttpStatus.UNAUTHORIZED.value(), "Invalid password"),
     PRODUCT_NOT_FOUND("ERR_APPLICATION_0011", HttpStatus.NOT_FOUND.value(), "Product not found"),
-    SHOPPING_CART_NOT_FOUND("ERR_APPLICATION_0012", HttpStatus.NOT_FOUND.value(), "Shopping cart not found");
+    SHOPPING_CART_NOT_FOUND("ERR_APPLICATION_0012", HttpStatus.NOT_FOUND.value(), "Shopping cart not found"),
+    CART_ITEM_NOT_FOUND("ERR_APPLICATION_0013", HttpStatus.NOT_FOUND.value(), "Cart item not found");
 
     private final String customCode;
     private final Integer httpStatusCode;

@@ -8,6 +8,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "shopping_carts")
@@ -43,4 +44,9 @@ public class ShoppingCart {
     }
 
 
+    public Optional<CartItem> getCartItemById(Long id) {
+        return items.stream()
+                .filter(item -> item.getId().equals(id))
+                .findFirst();
+    }
 }

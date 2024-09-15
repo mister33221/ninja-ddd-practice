@@ -12,5 +12,5 @@ export interface CartItem {
   productImageURL: string;
   quantity: number;
   price: number;
-  selected: boolean;
+  selected?: boolean;
 }
