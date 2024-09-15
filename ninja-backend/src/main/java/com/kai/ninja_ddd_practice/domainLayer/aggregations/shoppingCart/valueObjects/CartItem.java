@@ -49,4 +49,8 @@ public class CartItem {
     public BigDecimal getTotalPrice() {
         return price.multiply(BigDecimal.valueOf(quantity));
     }
+
+    public void updateQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
 }

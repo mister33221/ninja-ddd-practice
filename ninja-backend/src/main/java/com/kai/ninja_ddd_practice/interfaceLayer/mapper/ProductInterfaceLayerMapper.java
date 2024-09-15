@@ -2,8 +2,10 @@ package com.kai.ninja_ddd_practice.interfaceLayer.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.AddToCartDto;
+import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateCartItemQuantityDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot.Product;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.AddToCartRequest;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdaateCartItemQuantityRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetProductsResponse;
 
 import java.util.List;
@@ -25,4 +27,5 @@ public class ProductInterfaceLayerMapper {
     public static AddToCartDto convertAddToCartRequestToDto(AddToCartRequest addToCartRequest) {
         return objectMapper.convertValue(addToCartRequest, AddToCartDto.class);
     }
+
 }
