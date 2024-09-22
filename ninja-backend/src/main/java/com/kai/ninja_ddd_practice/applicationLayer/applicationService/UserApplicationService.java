@@ -6,6 +6,8 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationErrorCode;
 import com.kai.ninja_ddd_practice.applicationLayer.exception.ApplicationException;
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.UserApplicationLayerMapper;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.aggregateRoot.ShoppingCart;
+import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ShoppingCartRepository;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.PasswordEncryptionUtil;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
@@ -19,11 +21,13 @@ import java.util.Map;
 public class UserApplicationService {
 
     private final UserRepository userRepository;
+    private final ShoppingCartRepository shoppingCartRepository;
     private final PasswordEncryptionUtil passwordEncryptionUtil;
     private final JwtUtil jwtUtil;
 
-    public UserApplicationService(UserRepository userRepository, PasswordEncryptionUtil passwordEncryptionUtil, JwtUtil jwtUtil) {
+    public UserApplicationService(UserRepository userRepository, ShoppingCartRepository shoppingCartRepository, PasswordEncryptionUtil passwordEncryptionUtil, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
+        this.shoppingCartRepository = shoppingCartRepository;
         this.passwordEncryptionUtil = passwordEncryptionUtil;
         this.jwtUtil = jwtUtil;
     }
@@ -36,16 +40,19 @@ public class UserApplicationService {
             throw new ApplicationException(ApplicationErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-//        產生隨機鹽值與加密密碼
+//        1. 產生隨機鹽值與加密密碼
         String salt = passwordEncryptionUtil.generateSalt();
         String encryptedPassword = passwordEncryptionUtil.encryptPassword(registryDto.getPassword(), salt);
 
-//        建立使用者
+//        2. 建立使用者
         User user = UserApplicationLayerMapper.convertRegistryDtoToUser(registryDto);
         user.getCredentials().setRandomSalt(salt);
         user.getCredentials().setHashedPassword(encryptedPassword);
 
-        userRepository.save(user);
+        User newUser = userRepository.save(user);
+
+//       3. 建立購物車
+        shoppingCartRepository.save( new ShoppingCart(newUser.getId()));
 
         return "User registered successfully!";
     }

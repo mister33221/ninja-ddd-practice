@@ -7,6 +7,7 @@ import {
 } from '../core/components/alert/service/alert.service';
 import { ShoppingCartHttpService } from '../core/http-service/shopping-cart.http.service';
 import { GetShoppingCartResponse } from './models/GetShoppingCartResponse';
+import { CheckoutRequest } from './models/CheckoutRequest';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -113,9 +114,31 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
   }
 
   checkout(): void {
-    const selectedItems = this.shoppingCart.cartItems.filter(
-      (item) => item.selected
-    );
+    const shoppingCartWithSelectedItems: CheckoutRequest = {
+      shoppingCartId: this.shoppingCart.shoppingCartId,
+      userId: this.shoppingCart.userId,
+      cartItems: this.shoppingCart.cartItems.filter((item) => item.selected),
+    };
+
+    if (shoppingCartWithSelectedItems.cartItems.length === 0) {
+      this.alertService.showAlert(
+        AlertType.WARNING,
+        '請選擇商品',
+        3000);
+      return;
+    }
+
+    this.shoppingCartHttpService.checkout(shoppingCartWithSelectedItems).subscribe({
+      next: () => {
+        this.shoppingCart.cartItems = this.shoppingCart.cartItems.filter(
+          (item) => !item.selected
+        );
+        this.alertService.showAlert(
+          AlertType.SUCCESS,
+          '結帳成功',
+          3000);
+      }
+    });
   }
 
   isEmptyCart(): boolean {
