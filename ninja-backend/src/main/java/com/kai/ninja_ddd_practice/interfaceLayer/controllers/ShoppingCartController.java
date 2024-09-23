@@ -90,7 +90,7 @@ public class ShoppingCartController {
     )
     @AuthorizationValidation
     public void checkout(@RequestHeader("Authorization") String token, @RequestBody CheckoutRequest checkoutRequest) {
-        System.out.println("checkoutRequest = " + checkoutRequest);
+        CheckoutDto checkoutDto = ShoppingCartInterfaceLayerMapper.convertCheckoutRequestToDto(checkoutRequest);
         shoppingCartApplicationService.checkout(token, checkoutRequest);
     }
 

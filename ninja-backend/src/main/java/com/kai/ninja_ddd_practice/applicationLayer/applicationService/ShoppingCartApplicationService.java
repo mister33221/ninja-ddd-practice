@@ -103,20 +103,11 @@ public class ShoppingCartApplicationService {
         }
 
 //        3. 目前已有的資料: 原本在 cart 中藥 checkout 的 item、checkout request 中要 checkout 的 item
-//        4. 比對兩者，更新 cart 中的 item
+//        4. 比對兩者，移除要 checkout 的 item 及數量，如果數量為 0，則移除整個 item
         List<CartItem> cartItems = cart.getCartItems();
-        for (CartItem cartItem : cartItems) {
-            Optional<CheckoutRequest.CartItem> checkoutItemOptional = checkoutRequest.getCartItems().stream()
-                    .filter(checkoutItem -> checkoutItem.getId().equals(cartItem.getId()))
-                    .findFirst();
-
-            if (checkoutItemOptional.isPresent()) {
-                CheckoutRequest.CartItem checkoutItem = checkoutItemOptional.get();
-                cartItem.updateQuantity(checkoutItem.getQuantity());
-            } else {
-                cartItemRepository.delete(cartItem);
-            }
-        }
+        List<Long> cartItemIds = checkoutRequest.getCartItems().stream()
+                .map(CheckoutRequest.CartItem::getId)
+                .toList();
 
 //        5. 將 cart 存回資料庫
         shoppingCartRepository.save(cart);

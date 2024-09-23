@@ -82,4 +82,8 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_NUM_PARTITIONS: 1
+#      預設的 kafka offsets topic replication factor 是 3，但是我們只有一個 broker，所以我們需要將 replication factor 設置為 1。
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      Kafka 可以將錯誤訊息提交到 Confluent 的支援服務，這裡我們將這個功能關閉。
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
 
