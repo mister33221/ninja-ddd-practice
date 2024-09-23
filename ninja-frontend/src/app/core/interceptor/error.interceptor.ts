@@ -29,7 +29,7 @@ export class ErrorInterceptor implements HttpInterceptor {
 
         this.alertService.showAlert(AlertType.DANGER, errorMessage, 3000);
 
-        return throwError(errorMessage);
+        return throwError(() => new Error(errorMessage));
       })
     );
   }
