@@ -41,9 +41,6 @@
     實時庫存追踪
     與供應商的接口
 
-5. 多語言支持
-    支持不同忍村的語言    
-
 以下是我之後有空再擴展的功能：
 
 1. 搜索和過濾
@@ -219,7 +216,11 @@
                     ```java
                     @Entity
                     @Table(name = "users")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class User {
                         @Id
                         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -242,7 +243,11 @@
                     - 值對象:
                     ```java
                     @Embeddable
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class UserProfile {
                         @Column(name = "full_name")
                         private String fullName;
@@ -255,16 +260,27 @@
 
                         @Column(name = "date_of_birth")
                         private LocalDate dateOfBirth;
+
+                        @Column(name = "address")
+                        private String address;
                     }
 
                     @Embeddable
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class UserCredentials {
                         @Column(name = "hashed_password", nullable = false)
                         private String hashedPassword;
 
                         @Column(name = "last_login_time")
                         private LocalDateTime lastLoginTime;
+
+                        @Column(name = "random_salt", nullable = false)
+                        private String randomSalt;
+
                     }
                     ```
                     - 設計思路:
@@ -283,8 +299,12 @@
                     - 聚合根: Product
                     ```java
                     @Entity // 標記一個類為JPA實體。表示這個類將被映射到 DB 的一個 table。
-                    @Table(name = "products") // 指定實體對應的 table 名稱。
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Table(name = "product") // 指定實體對應的 table 名稱。
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class Product {
                         @Id // 標記一個屬性為主鍵。也就是這個屬性，將會作為這個 table 的主鍵。
                         @GeneratedValue(strategy = GenerationType.IDENTITY) // 定義主鍵的生成策略。IDENTITY 表示自動增長。
@@ -299,13 +319,25 @@
                         @Column(name = "stock_quantity", nullable = false)
                         private int stockQuantity;
 
-                        @Column(name = "category_id", nullable = false)
-                        private Long categoryId;
+                    //    @Column(name = "category_id", nullable = false)
+                    //    private Long categoryId;
+                        @ManyToOne
+                        @JoinColumn(name = "category_id")
+                        private ProductCategory category;
 
-                        @ElementCollection
-                        @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+                    //    這樣會導致你的 enum 中有幾個參數，就會有幾個 column，我的有 status，還有 statusDescription。
+                    //    但我只想要 status，所以改成直接用 String
+                    //    @Embedded
+                    //    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
+                    //    @Column(nullable = false)
+                    //    private ProductStatus productStatus;
+                        @Column(nullable = false)
+                        private String status;
+
+                    //    @ElementCollection
+                    //    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
                         @Column(name = "image_url")
-                        private List<Image> images;
+                        private String imageUrl;
 
                         public void updateDetails(ProductDetails newDetails) { ... }
                         public void updatePrice(BigDecimal newPrice) { ... }
@@ -315,66 +347,26 @@
                     - 值對象:
                     ```java
                     @Embeddable
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class ProductDetails {
                         @Column(nullable = false)
                         private String name;
 
                         @Column(length = 1000)
                         private String description;
-
-                        @ElementCollection
-                        @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-                        @Column(name = "image_url")
-                        private List<String> images;
                     }
 
-                    @Embeddable
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-                    public class Image {
-                        @Column(nullable = false)
-                        private String url;
-
-                        // 其他屬性和方法
-                    }
-                    ```
-                    - 列舉
-                    ```java
-                    public enum ProductStatus {
-                        PULL_ON_SHELVES("上架"),
-                        PULL_OFF_SHELVES("下架"),
-                        OUT_OF_STOCK("缺貨"),
-                        DISCONTINUED("停產");
-
-                        private final String statusDescription;
-
-                        ProductStatus(String statusDescription) {
-                            this.statusDescription = statusDescription;
-                        }
-
-                        public String getStatusDescription() {
-                            return statusDescription;
-                        }
-                    }
-                    ```
-                    - 設計思路:
-                        Product 作為聚合根，管理商品的所有相關信息。
-                        ProductDetails 和 ProductCategory 作為值對象，提供了商品的詳細信息和分類。
-                        方法設計允許更新商品的各個方面，包括詳情、分類、價格和庫存。
-
-            - 商品類別聚合 (Product Category Aggregate)
-
-                - **聚合根**：ProductCategory
-                - **包含的實體/值對象**：CategoryDetails
-                - **設計思路**：
-                    - 商品類別是系統中的輔助實體，主要用於分類和組織商品。
-                - **支持的命令**：添加類別、更新類別信息、刪除類別。
-                - **程式碼**：
-                    - 聚合根: ProductCategory
-                    ```java
                     @Entity
                     @Table(name = "product_categories")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class ProductCategory {
                         @Id
                         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -386,9 +378,35 @@
                         private String description;
                     }
                     ```
+                    - 列舉
+                    ```java
+                    public enum ProductStatus {
+                        PULL_ON_SHELVES("PULL_ON_SHELVES", "上架"),
+                        PULL_OFF_SHELVES("PULL_OFF_SHELVES", "下架"),
+                        OUT_OF_STOCK("OUT_OF_STOCK", "缺貨"),
+                        DISCONTINUED("DISCONTINUED", "停產");
+
+                        private final String status;
+                        private final String statusDescription;
+
+                        ProductStatus(String status, String statusDescription) {
+                            this.status = status;
+                            this.statusDescription = statusDescription;
+                        }
+
+                        public String getStatusDescription() {
+                            return statusDescription;
+                        }
+                        public String getStatus() {
+                            return status;
+                        }
+                    }
+
+                    ```
                     - 設計思路:
-                        ProductCategory 作為聚合根，管理商品類別的基本信息。
-                        方法設計支持添加、更新和刪除商品類別。
+                        Product 作為聚合根，管理商品的所有相關信息。
+                        ProductDetails 和 ProductCategory 作為值對象，提供了商品的詳細信息和分類。
+                        方法設計允許更新商品的各個方面，包括詳情、分類、價格和庫存。
 
             -  購物車聚合 (ShoppingCart Aggregate)
 
@@ -404,7 +422,11 @@
                     ```java
                     @Entity
                     @Table(name = "shopping_carts")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class ShoppingCart {
                         @Id
                         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -416,6 +438,10 @@
                         @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
                         @JoinColumn(name = "cart_id")
                         private List<CartItem> items = new ArrayList<>();
+
+                        public ShoppingCart(Long userId) {
+                            this.userId = userId;
+                        }
                         
                         public void addItem(ProductId productId, int quantity) { ... }
                         public void removeItem(ProductId productId) { ... }
@@ -427,14 +453,25 @@
                     ```java
                     @Entity
                     @Table(name = "cart_items")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+                    @Getter
+                    @Setter
+                    @NoArgsConstructor
+                    @AllArgsConstructor
+                    @Builder
                     public class CartItem {
                         @Id
                         @GeneratedValue(strategy = GenerationType.IDENTITY)
                         private Long id;
 
-                        @Column(name = "product_id", nullable = false)
-                        private Long productId;
+                        @Column(name = "cart_id", nullable = false)
+                        private Long cartId;
+
+                    //    @Column(name = "product_id", nullable = false)
+                    //    private Long productId;
+
+                        @ManyToOne
+                        @JoinColumn(name = "product_id", referencedColumnName = "id")
+                        private Product product;
 
                         @Column(nullable = false)
                         private int quantity;
@@ -474,10 +511,12 @@
                         @JoinColumn(name = "order_id")
                         private List<OrderItem> items = new ArrayList<>();
 
-                        @Embedded
-                        @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
+                    //    @Embedded
+                    //    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
+                    //    @Column(nullable = false)
+                    //    private OrderStatus status;
                         @Column(nullable = false)
-                        private OrderStatus status;
+                        private String status;
 
                         @Column(name = "total_amount", nullable = false)
                         private BigDecimal totalAmount;
