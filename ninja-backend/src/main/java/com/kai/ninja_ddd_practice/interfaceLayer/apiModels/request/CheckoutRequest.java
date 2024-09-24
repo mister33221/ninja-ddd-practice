@@ -14,24 +14,6 @@ import java.util.List;
 @Builder
 public class CheckoutRequest {
 
-//    export interface CheckoutRequest {
-//        shoppingCartId: number;
-//        userId: number;
-//        cartItems: CartItem[];
-//    }
-//
-//    export interface CartItem {
-//        id: number;
-//        cartId: number;
-//        productId: number;
-//        productName: string;
-//        productImageURL: string;
-//        quantity: number;
-//        price: number;
-//        selected?: boolean;
-//    }
-
-
     private Long shoppingCartId;
     private Long userId;
     private List<CartItem> cartItems;
