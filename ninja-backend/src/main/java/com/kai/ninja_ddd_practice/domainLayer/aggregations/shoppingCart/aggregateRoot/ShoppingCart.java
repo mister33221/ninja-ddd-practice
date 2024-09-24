@@ -49,4 +49,8 @@ public class ShoppingCart {
                 .filter(item -> item.getId().equals(id))
                 .findFirst();
     }
+
+    public List<CartItem> getCartItems() {
+        return items;
+    }
 }

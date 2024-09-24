@@ -15,6 +15,8 @@ import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ProductReposi
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ShoppingCartRepository;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.UserRepository;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.CheckoutRequest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +29,14 @@ public class ShoppingCartApplicationService {
     private final ProductRepository productRepository;
     private final ShoppingCartRepository shoppingCartRepository;
     private final CartItemRepository cartItemRepository;
-    private final UserRepository userRepository;
+    private KafkaTemplate<String, String> kafkaTemplate;
     private final JwtUtil jwtUtil;
 
-    public ShoppingCartApplicationService(ProductRepository productRepository, ShoppingCartRepository shoppingCartRepository, CartItemRepository cartItemRepository, UserRepository userRepository, JwtUtil jwtUtil) {
+    public ShoppingCartApplicationService(ProductRepository productRepository, ShoppingCartRepository shoppingCartRepository, CartItemRepository cartItemRepository, KafkaTemplate<String, String> kafkaTemplate, JwtUtil jwtUtil) {
         this.productRepository = productRepository;
         this.shoppingCartRepository = shoppingCartRepository;
         this.cartItemRepository = cartItemRepository;
-        this.userRepository = userRepository;
+        this.kafkaTemplate = kafkaTemplate;
         this.jwtUtil = jwtUtil;
     }
 
@@ -85,5 +87,32 @@ public class ShoppingCartApplicationService {
     @Transactional
     public void removeCartItem(Long cartItemId) {
         cartItemRepository.deleteById(cartItemId);
+    }
+
+    @Transactional
+    public void checkout(String token, CheckoutRequest checkoutRequest) {
+
+//        1. 取得使用者購物車
+        Long userId = jwtUtil.extractUserId(token);
+        ShoppingCart cart = shoppingCartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SHOPPING_CART_NOT_FOUND));
+
+//        2. 檢查購物車跟請求是否一致
+        if (cart.getId() != checkoutRequest.getShoppingCartId()) {
+            throw new ApplicationException(ApplicationErrorCode.SHOPPING_CART_NOT_FOUND);
+        }
+
+//        3. 目前已有的資料: 原本在 cart 中藥 checkout 的 item、checkout request 中要 checkout 的 item
+//        4. 比對兩者，移除要 checkout 的 item 及數量，如果數量為 0，則移除整個 item
+        List<CartItem> cartItems = cart.getCartItems();
+        List<Long> cartItemIds = checkoutRequest.getCartItems().stream()
+                .map(CheckoutRequest.CartItem::getId)
+                .toList();
+
+//        5. 將 cart 存回資料庫
+        shoppingCartRepository.save(cart);
+
+//        6. 發送訂單建立事件
+        kafkaTemplate.send("order-created", "Order created");
     }
 }

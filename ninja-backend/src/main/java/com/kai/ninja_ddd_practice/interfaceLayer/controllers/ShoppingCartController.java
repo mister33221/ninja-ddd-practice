@@ -7,6 +7,7 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateCartItemQuantityDt
 import com.kai.ninja_ddd_practice.applicationLayer.mappers.ProductApplicationLayerMapper;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.AuthorizationValidation;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.AddToCartRequest;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.CheckoutRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdaateCartItemQuantityRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetShoppingCartResponse;
 import com.kai.ninja_ddd_practice.interfaceLayer.mapper.ProductInterfaceLayerMapper;
@@ -20,10 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class ShoppingCartController {
 
-    private final ShoppingCartApplicationService productApplicationService;
+    private final ShoppingCartApplicationService shoppingCartApplicationService;
 
-    public ShoppingCartController(ShoppingCartApplicationService productApplicationService) {
-        this.productApplicationService = productApplicationService;
+    public ShoppingCartController(ShoppingCartApplicationService shoppingCartApplicationService) {
+        this.shoppingCartApplicationService = shoppingCartApplicationService;
     }
 
     @PostMapping("/add-to-cart")
@@ -38,7 +39,7 @@ public class ShoppingCartController {
 
         AddToCartDto addToCartDto = ProductInterfaceLayerMapper.convertAddToCartRequestToDto(addToCartRequest);
 
-        productApplicationService.addProductToCart(addToCartDto);
+        shoppingCartApplicationService.addProductToCart(addToCartDto);
     }
 
     @GetMapping("/get-shopping-cart")
@@ -50,7 +51,7 @@ public class ShoppingCartController {
     )
     @AuthorizationValidation
     public GetShoppingCartResponse getShoppingCart(@RequestHeader("Authorization") String token) {
-        GetShoppingCartDto getShoppingCartDto = productApplicationService.getShoppingCart(token);
+        GetShoppingCartDto getShoppingCartDto = shoppingCartApplicationService.getShoppingCart(token);
         return ShoppingCartInterfaceLayerMapper.convertGetShoppingCartDtoToResponse(getShoppingCartDto);
     }
 
@@ -65,7 +66,7 @@ public class ShoppingCartController {
     public void updateCartItemQuantity(
             @RequestBody UpdaateCartItemQuantityRequest updaateCartItemQuantityRequest) {
         UpdateCartItemQuantityDto updateCartItemQuantityDto = ShoppingCartInterfaceLayerMapper.convertUpdateCartItemQuantityRequestToDto(updaateCartItemQuantityRequest);
-        productApplicationService.updateCartItemQuantity(updateCartItemQuantityDto);
+        shoppingCartApplicationService.updateCartItemQuantity(updateCartItemQuantityDto);
     }
 
     @DeleteMapping("/remove-cart-item/{cartItemId}")
@@ -77,7 +78,20 @@ public class ShoppingCartController {
     )
     @AuthorizationValidation
     public void removeCartItem( @PathVariable Long cartItemId) {
-        productApplicationService.removeCartItem(cartItemId);
+        shoppingCartApplicationService.removeCartItem(cartItemId);
+    }
+
+    @PostMapping("/checkout")
+    @Operation(
+            summary = "Checkout",
+            description = "Checkout",
+            tags = {"shopping-cart"},
+            security = @SecurityRequirement(name = "Authorized")
+    )
+    @AuthorizationValidation
+    public void checkout(@RequestHeader("Authorization") String token, @RequestBody CheckoutRequest checkoutRequest) {
+//        CheckoutDto checkoutDto = ShoppingCartInterfaceLayerMapper.convertCheckoutRequestToDto(checkoutRequest);
+        shoppingCartApplicationService.checkout(token, checkoutRequest);
     }
 
 }

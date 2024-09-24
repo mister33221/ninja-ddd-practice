@@ -53,4 +53,8 @@ public class CartItem {
     public void updateQuantity(Integer quantity) {
         this.quantity = quantity;
     }
+
+    public Object getProductId() {
+        return product.getId();
+    }
 }
