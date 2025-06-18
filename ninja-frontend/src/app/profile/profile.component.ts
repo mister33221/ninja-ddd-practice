@@ -1,7 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { takeUntil } from 'rxjs';
-import { Subject } from 'rxjs/internal/Subject';
 import { AuthService, UserInfo } from '../core/auth/auth.service';
 import { AlertService } from '../core/components/alert/service/alert.service';
 import { UserHttpService } from '../core/http-service/user.http.service';
@@ -12,27 +10,21 @@ import { GetUserProfileResponse } from './models/GetUserProfileResponse';
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
 })
-export class ProfileComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class ProfileComponent implements OnInit {
   isLoggedIn$ = this.authService.isLoggedIn$;
   editForm: FormGroup = new FormGroup({});
   isEditing: boolean = false;
 
   constructor(
-    private formBuilder: FormBuilder,
-    private authService: AuthService,
-    private alertService: AlertService,
-    private userHttpService: UserHttpService
+    private readonly formBuilder: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly alertService: AlertService,
+    private readonly userHttpService: UserHttpService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.getUserData();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   initForm(): void {
@@ -106,26 +98,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onSubmit(): void {
     if (this.editForm.valid) {
-      this.userHttpService
-        .updateUserInfo(this.editForm.value)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            this.alertService.showAlert(
-              'success',
-              '用戶信息更新成功！　',
-              3000
-            );
-          },
-          error: (error) => {
-            this.alertService.showAlert(
-              'danger',
-              '用戶信息更新失敗！　' + error.error.message,
-              3000
-            );
-            this.getUserData();
-          },
-        });
+      this.userHttpService.updateUserInfo(this.editForm.value).subscribe({
+        next: (response) => {
+          this.alertService.showAlert('success', '用戶信息更新成功！　', 3000);
+        },
+        error: (error) => {
+          this.alertService.showAlert(
+            'danger',
+            '用戶信息更新失敗！　' + error.error.message,
+            3000
+          );
+          this.getUserData();
+        },
+      });
     }
   }
 
@@ -139,20 +124,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
       );
       return;
     }
-    this.userHttpService
-      .getUserInfoById(userId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (getUserInfoResponse) => {
-          this.setDataToForm(getUserInfoResponse);
-        },
-        error: (error) => {
-          this.alertService.showAlert(
-            'danger',
-            '獲取用戶數據失敗！　' + error.error.message,
-            3000
-          );
-        },
-      });
+    this.userHttpService.getUserInfoById(userId).subscribe({
+      next: (getUserInfoResponse) => {
+        this.setDataToForm(getUserInfoResponse);
+      },
+      error: (error) => {
+        this.alertService.showAlert(
+          'danger',
+          '獲取用戶數據失敗！　' + error.error.message,
+          3000
+        );
+      },
+    });
   }
 }

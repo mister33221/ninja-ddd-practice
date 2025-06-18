@@ -20,9 +20,7 @@ public class ProductController {
     public ProductController(ProductApplicationService productApplicationService, ObjectMapper objectMapper) {
         this.productApplicationService = productApplicationService;
         this.objectMapper = objectMapper;
-    }
-
-    @GetMapping("/get-product-cards")
+    }    @GetMapping("/get-product-cards")
     @Operation(summary = "Get product cards", description = "Get product cards", tags = {"product"})
     public List<GetProductsResponse> getProductList() {
 

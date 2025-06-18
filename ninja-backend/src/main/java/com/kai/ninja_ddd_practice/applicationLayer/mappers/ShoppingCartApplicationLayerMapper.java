@@ -1,13 +1,9 @@
 package com.kai.ninja_ddd_practice.applicationLayer.mappers;
 
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.GetShoppingCartDto;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.aggregateRoot.ShoppingCart;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.CartItem;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.aggregateRoot.ShoppingCartPure;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.CartItemPure;
+import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetShoppingCartResponse;
 
 /**
  * 在 Application 層中的 Mapper 類別，
@@ -17,32 +13,36 @@ import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObj
  */
 public class ShoppingCartApplicationLayerMapper {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-
     private ShoppingCartApplicationLayerMapper() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
-    public static GetShoppingCartDto covertShoppingCartToGetShoppingCartDto(ShoppingCart shoppingCart) {
-        ObjectNode node = objectMapper.createObjectNode();
-
-        node.put("shoppingCartId", shoppingCart.getId());
-        node.put("userId", shoppingCart.getUserId());
-
-        ArrayNode cartItemsNode = node.putArray("cartItems");
-        for (CartItem cartItem : shoppingCart.getItems()) {
-            ObjectNode cartItemNode = cartItemsNode.addObject();
-            cartItemNode.put("id", cartItem.getId());
-            cartItemNode.put("cartId", cartItem.getCartId());
-            cartItemNode.put("productId", cartItem.getProduct().getId());
-            cartItemNode.put("productName", cartItem.getProduct().getDetails().getName());
-            cartItemNode.put("productImageURL", cartItem.getProduct().getImageUrl());
-            cartItemNode.put("quantity", cartItem.getQuantity());
-            cartItemNode.put("price", cartItem.getPrice());
-            cartItemNode.put("selected", true);
+    public static GetShoppingCartDto covertShoppingCartToGetShoppingCartDto(ShoppingCartPure shoppingCart) {
+        if (shoppingCart == null) {
+            return null;
         }
-
-        return objectMapper.convertValue(node, GetShoppingCartDto.class);
-        }
+        
+        // 轉換購物車項目
+        GetShoppingCartResponse.CartItem[] cartItems = shoppingCart.getItems().stream()
+                .map(ShoppingCartApplicationLayerMapper::convertCartItemToDto)
+                .toArray(GetShoppingCartResponse.CartItem[]::new);
+        
+        return GetShoppingCartDto.builder()
+                .shoppingCartId(shoppingCart.getId() != null ? shoppingCart.getId().getValue() : null)
+                .userId(shoppingCart.getUserId().getValue())
+                .cartItems(cartItems)
+                .build();
+    }
+      private static GetShoppingCartResponse.CartItem convertCartItemToDto(CartItemPure cartItem) {
+        return GetShoppingCartResponse.CartItem.builder()
+                .id(cartItem.getId() != null ? cartItem.getId().getValue() : null)
+                .cartId(null) // Will be set by the response layer if needed
+                .productId(cartItem.getProductId().getValue())
+                .productName(cartItem.getProductName())
+                .productImageURL(cartItem.getProductImageUrl())
+                .quantity(cartItem.getQuantity())
+                .price(cartItem.getUnitPrice().longValue()) // Convert BigDecimal to Long
+                .selected(true) // Default to selected
+                .build();
+    }
 }

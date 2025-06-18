@@ -4,7 +4,6 @@ import com.kai.ninja_ddd_practice.applicationLayer.applicationService.ShoppingCa
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.AddToCartDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.GetShoppingCartDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateCartItemQuantityDto;
-import com.kai.ninja_ddd_practice.applicationLayer.mappers.ProductApplicationLayerMapper;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.AuthorizationValidation;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.AddToCartRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.CheckoutRequest;
@@ -25,9 +24,7 @@ public class ShoppingCartController {
 
     public ShoppingCartController(ShoppingCartApplicationService shoppingCartApplicationService) {
         this.shoppingCartApplicationService = shoppingCartApplicationService;
-    }
-
-    @PostMapping("/add-to-cart")
+    }    @PostMapping("/add-to-cart")
     @Operation(
             summary = "Add product to cart",
             description = "Add product to cart",
@@ -35,11 +32,12 @@ public class ShoppingCartController {
             security = @SecurityRequirement(name = "Authorized")
     )
     @AuthorizationValidation
-    public void addProductToCart(@RequestBody AddToCartRequest addToCartRequest) {
+    public void addProductToCart(@RequestHeader("Authorization") String token, 
+                                @RequestBody AddToCartRequest addToCartRequest) {
 
         AddToCartDto addToCartDto = ProductInterfaceLayerMapper.convertAddToCartRequestToDto(addToCartRequest);
 
-        shoppingCartApplicationService.addProductToCart(addToCartDto);
+        shoppingCartApplicationService.addProductToCart(token, addToCartDto);
     }
 
     @GetMapping("/get-shopping-cart")

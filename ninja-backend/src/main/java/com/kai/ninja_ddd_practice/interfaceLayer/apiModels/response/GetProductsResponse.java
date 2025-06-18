@@ -2,6 +2,8 @@ package com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,7 +14,7 @@ public class GetProductsResponse {
     private String name;
     private String description;
     private String imageUrl;
-    private Long price;
+    private BigDecimal price;
     private String category;
 
 }

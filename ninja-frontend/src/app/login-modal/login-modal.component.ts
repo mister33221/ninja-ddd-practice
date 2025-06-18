@@ -13,16 +13,15 @@ import { AuthService } from '../core/auth/auth.service';
   templateUrl: './login-modal.component.html',
   styleUrls: ['./login-modal.component.scss'],
 })
-export class LoginModalComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class LoginModalComponent implements OnInit {
   loginForm: FormGroup = new FormGroup({});
   constructor(
     public modalRef: BsModalRef,
     // 路由
-    private router: Router,
-    private formBuilder: FormBuilder,
-    private alertService: AlertService,
-    private authService: AuthService
+    private readonly router: Router,
+    private readonly formBuilder: FormBuilder,
+    private readonly alertService: AlertService,
+    private readonly authService: AuthService
   ) {}
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({
@@ -31,36 +30,26 @@ export class LoginModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
+  /**
+   * 登入
+   */
   onSubmit() {
-    this.authService
-      .login(this.loginForm.value)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          if (res) {
-            this.alertService.showAlert(
-              'success',
-              '登入成功！',
-              3000
-            );
-            this.modalRef.hide();
-            this.router.navigate(['/']);
-          }
+    this.authService.login(this.loginForm.value).subscribe({
+      next: (res) => {
+        if (res) {
+          this.alertService.showAlert('success', '登入成功！', 3000);
+          this.modalRef.hide();
+          this.router.navigate(['/']);
         }
-      });
+      },
+    });
   }
 
   /**
-   *
+   * 跳轉到註冊頁面
    */
   redirectToRegistration() {
     this.modalRef.hide();
     this.router.navigate(['/registration']);
   }
-
 }

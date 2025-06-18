@@ -3,7 +3,7 @@ package com.kai.ninja_ddd_practice.interfaceLayer.mapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.UserPure;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInfoRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetUserInfoByIdResponse;
 
@@ -15,9 +15,7 @@ public class UserInterfaceLayerMapper {
 
     private UserInterfaceLayerMapper() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
-    }
-
-    public static GetUserInfoByIdResponse convertUserToGetUserInfoByIdResponse(User user) {
+    }    public static GetUserInfoByIdResponse convertUserToGetUserInfoByIdResponse(UserPure user) {
         ObjectNode jsonNode = objectMapper.createObjectNode();
 
         jsonNode.put("email", user.getProfile().getEmail());

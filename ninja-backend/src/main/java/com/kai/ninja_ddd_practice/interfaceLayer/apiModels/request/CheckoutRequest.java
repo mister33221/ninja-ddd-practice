@@ -1,6 +1,5 @@
 package com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request;
 
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.CartItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -5,7 +5,7 @@ import com.kai.ninja_ddd_practice.applicationLayer.applicationService.UserApplic
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
-import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.User;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.UserPure;
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.AuthorizationValidation;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserApplicationService userService;
-//    jscksin object mapper
+    //    jscksin object mapper
     private final ObjectMapper objectMapper;
 
     public UserController(UserApplicationService userService, ObjectMapper objectMapper) {
@@ -54,7 +54,7 @@ public class UserController {
     @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
     @AuthorizationValidation
     public ResponseEntity<GetUserInfoByIdResponse> getUserById(@PathVariable String id) {
-        User user = userService.getUserById(id);
+        UserPure user = userService.getUserById(id);
         return ResponseEntity.ok(UserInterfaceLayerMapper.convertUserToGetUserInfoByIdResponse(user));
     }
 
@@ -72,8 +72,8 @@ public class UserController {
 
     @GetMapping("/test/get/{id}")
     @Operation(summary = "Get user by id", description = "Get user by id", tags = {"test"})
-    public ResponseEntity<User> getUserByIdTest(@PathVariable String id) {
-        User user = userService.getUserById(id);
+    public ResponseEntity<UserPure> getUserByIdTest(@PathVariable String id) {
+        UserPure user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
 }

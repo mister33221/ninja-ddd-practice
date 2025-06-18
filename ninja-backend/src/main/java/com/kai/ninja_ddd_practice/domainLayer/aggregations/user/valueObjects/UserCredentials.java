@@ -22,5 +22,4 @@ public class UserCredentials {
     @Column(name = "random_salt", nullable = false)
     private String randomSalt;
 
-
 }

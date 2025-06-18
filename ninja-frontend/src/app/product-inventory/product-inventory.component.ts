@@ -1,6 +1,6 @@
-import { Component, ElementRef, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Offcanvas } from 'bootstrap';
+import { Component } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { Offcanvas } from 'bootstrap';
 
 interface Product {
   id: number;
@@ -18,7 +18,7 @@ interface Product {
   styleUrls: ['./product-inventory.component.scss']
 })
 export class ProductInventoryComponent{
-  private offcanvasInstance?: Offcanvas;
+  private readonly offcanvasInstance?: Offcanvas;
 
   products: Product[] = [
     { id: 1, name: '商品 1', image: 'https://picsum.photos/200/200?random=1', stockQuantity: 100, safetyStockLevel: 20, description: '商品 1 的詳細描述', specifications: '商品 1 的規格' },
@@ -31,7 +31,7 @@ export class ProductInventoryComponent{
 
   newImageUrl: SafeUrl | any = null;
 
-  constructor(private sanitizer: DomSanitizer) { }
+  constructor(private readonly sanitizer: DomSanitizer) { }
 
   openOffcanvas(product: Product): void {
     this.selectedProduct = { ...product };

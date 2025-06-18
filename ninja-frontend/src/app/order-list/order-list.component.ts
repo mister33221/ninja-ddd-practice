@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 interface OrderItem {
   productName: string;
@@ -24,7 +24,7 @@ interface Order {
 })
 
 
-export class OrderListComponent implements OnInit {
+export class OrderListComponent {
   orders: Order[] = [
     {
       id: 'ORD-001',
@@ -134,9 +134,6 @@ export class OrderListComponent implements OnInit {
 
 
   constructor() { }
-
-  ngOnInit(): void {
-  }
 
   getOrderItemsSummary(items: OrderItem[]): string {
     return items.map(item => `${item.productName} x ${item.quantity}`).join(', ');

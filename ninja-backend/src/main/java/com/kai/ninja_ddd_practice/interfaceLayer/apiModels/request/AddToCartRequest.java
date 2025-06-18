@@ -8,7 +8,7 @@ import lombok.*;
 @Builder
 public class AddToCartRequest {
 
-    private Long userId;
     private Long productId;
+    private Integer quantity; // 添加數量參數
 
 }

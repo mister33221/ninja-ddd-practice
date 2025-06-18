@@ -1,55 +1,44 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/internal/operators/takeUntil';
+import { Component, OnInit } from '@angular/core';
 import {
   AlertService,
-  AlertType
+  AlertType,
 } from '../core/components/alert/service/alert.service';
 import { ShoppingCartHttpService } from '../core/http-service/shopping-cart.http.service';
-import { GetShoppingCartResponse } from './models/GetShoppingCartResponse';
 import { CheckoutRequest } from './models/CheckoutRequest';
+import { GetShoppingCartResponse } from './models/GetShoppingCartResponse';
 
 @Component({
   selector: 'app-shopping-cart',
   templateUrl: './shopping-cart.component.html',
   styleUrls: ['./shopping-cart.component.scss'],
 })
-export class ShoppingCartComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-
+export class ShoppingCartComponent implements OnInit {
   shoppingCart = {} as GetShoppingCartResponse;
 
   constructor(
-    private shoppingCartHttpService: ShoppingCartHttpService,
-    private alertService: AlertService
+    private readonly shoppingCartHttpService: ShoppingCartHttpService,
+    private readonly alertService: AlertService
   ) {}
 
   ngOnInit(): void {
     this.getShoppingCart();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   getShoppingCart(): void {
-    this.shoppingCartHttpService
-      .getShoppingCart()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (shoppingCart: GetShoppingCartResponse) => {
-          this.shoppingCart = shoppingCart;
-          console.log('success');
-        },
-        error: (error) => {
-          console.log('error');
-          this.alertService.showAlert(
-            AlertType.DANGER,
-            '取得購物車失敗 ' + error.error.message,
-            3000);
-        },
-      });
+    this.shoppingCartHttpService.getShoppingCart().subscribe({
+      next: (shoppingCart: GetShoppingCartResponse) => {
+        this.shoppingCart = shoppingCart;
+        console.log('success');
+      },
+      error: (error) => {
+        console.log('error');
+        this.alertService.showAlert(
+          AlertType.DANGER,
+          '取得購物車失敗 ' + error.error.message,
+          3000
+        );
+      },
+    });
   }
 
   incrementQuantity(productId: number): void {
@@ -63,8 +52,9 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
           this.alertService.showAlert(
             AlertType.SUCCESS,
             '更新購物車成功',
-            3000);
-        }
+            3000
+          );
+        },
       });
     }
   }
@@ -80,8 +70,9 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
           this.alertService.showAlert(
             AlertType.SUCCESS,
             '更新購物車成功',
-            3000);
-        }
+            3000
+          );
+        },
       });
     }
   }
@@ -95,11 +86,8 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
       this.shoppingCartHttpService.removeCartItem(cartItemId).subscribe({
         next: () => {
           this.shoppingCart.cartItems.splice(index, 1);
-          this.alertService.showAlert(
-            AlertType.SUCCESS,
-            '移除商品成功',
-            3000);
-        }
+          this.alertService.showAlert(AlertType.SUCCESS, '移除商品成功', 3000);
+        },
       });
     }
   }
@@ -121,24 +109,20 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     };
 
     if (shoppingCartWithSelectedItems.cartItems.length === 0) {
-      this.alertService.showAlert(
-        AlertType.WARNING,
-        '請選擇商品',
-        3000);
+      this.alertService.showAlert(AlertType.WARNING, '請選擇商品', 3000);
       return;
     }
 
-    this.shoppingCartHttpService.checkout(shoppingCartWithSelectedItems).subscribe({
-      next: () => {
-        this.shoppingCart.cartItems = this.shoppingCart.cartItems.filter(
-          (item) => !item.selected
-        );
-        this.alertService.showAlert(
-          AlertType.SUCCESS,
-          '結帳成功',
-          3000);
-      }
-    });
+    this.shoppingCartHttpService
+      .checkout(shoppingCartWithSelectedItems)
+      .subscribe({
+        next: () => {
+          this.shoppingCart.cartItems = this.shoppingCart.cartItems.filter(
+            (item) => !item.selected
+          );
+          this.alertService.showAlert(AlertType.SUCCESS, '結帳成功', 3000);
+        },
+      });
   }
 
   isEmptyCart(): boolean {

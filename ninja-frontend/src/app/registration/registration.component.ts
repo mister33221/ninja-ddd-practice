@@ -1,22 +1,19 @@
 import {
   Component,
-  OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
+  ViewChild
 } from '@angular/core';
 import {
-  FormGroup,
-  FormBuilder,
-  Validators,
   AbstractControlOptions,
+  FormBuilder,
+  FormGroup,
+  Validators,
 } from '@angular/forms';
-import { RegistrationHttpService } from '../core/http-service/registration.http.service';
 import { Router } from '@angular/router';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { Subject } from 'rxjs/internal/Subject';
-import { takeUntil } from 'rxjs/internal/operators/takeUntil';
+import { BsModalRef } from 'ngx-bootstrap/modal';
 import { AlertService } from '../core/components/alert/service/alert.service';
+import { RegistrationHttpService } from '../core/http-service/registration.http.service';
 
 type ExampleAlertType = { type: string; msg: string; timeout: number };
 
@@ -25,24 +22,18 @@ type ExampleAlertType = { type: string; msg: string; timeout: number };
   templateUrl: './registration.component.html',
   styleUrls: ['./registration.component.scss'],
 })
-export class RegistrationComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class RegistrationComponent implements OnInit {
   registerForm: FormGroup = new FormGroup({});
   modalRef?: BsModalRef;
   @ViewChild('template', { static: true }) template!: TemplateRef<void>;
 
   constructor(
-    private formBuilder: FormBuilder,
-    private registrationHttpSvc: RegistrationHttpService,
+    private readonly formBuilder: FormBuilder,
+    private readonly registrationHttpSvc: RegistrationHttpService,
     // 導頁服務
-    private router: Router,
-    private alertService: AlertService
+    private readonly router: Router,
+    private readonly alertService: AlertService
   ) {}
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 
   ngOnInit(): void {
     this.registerForm = this.formBuilder.group(
@@ -73,19 +64,15 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     if (this.registerForm.valid) {
       const formData = { ...this.registerForm.value };
 
-      this.registrationHttpSvc
-        .register(formData)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            this.alertService.showAlert('success', '註冊成功！請重新登入', 3000);
-            this.router.navigate(['/product-list']);
-          },
-          error: (error) => {
-            this.alertService.showAlert('danger', error.error.message, 3000);
-          },
-        });
+      this.registrationHttpSvc.register(formData).subscribe({
+        next: (response) => {
+          this.alertService.showAlert('success', '註冊成功！請重新登入', 3000);
+          this.router.navigate(['/product-list']);
+        },
+        error: (error) => {
+          this.alertService.showAlert('danger', error.error.message, 3000);
+        },
+      });
     }
   }
-
 }
