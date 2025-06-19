@@ -37,32 +37,38 @@ public class ShoppingCartApplicationService {
 
     /**
      * 添加商品到購物車
-     */
-    public void addToCart(String token, AddToCartDto dto) {
+     */    public void addToCart(String token, AddToCartDto dto) {
+        Long productId = null;
         try {
             // 從 JWT token 中提取用戶 ID
             if (token == null || token.trim().isEmpty()) {
                 throw new IllegalArgumentException("Token cannot be null or empty");
             }
             
+            // 驗證 DTO
+            if (dto == null) {
+                throw new IllegalArgumentException("AddToCartDto cannot be null");
+            }
+            
+            productId = dto.getProductId();
+            
             // 驗證 token 並提取用戶 ID
             jwtUtil.validateToken(token);
             Long userId = jwtUtil.extractUserId(token);
             
-            log.info("Adding product {} to cart for user {} (extracted from token)", dto.getProductId(), userId);
-            
-            // 1. 驗證輸入參數
-            if (dto.getProductId() == null) {
+            log.info("Adding product {} to cart for user {} (extracted from token)", productId, userId);
+              // 1. 驗證輸入參數
+            if (productId == null) {
                 throw new IllegalArgumentException("Product ID must not be null");
             }
             
             // 2. 獲取商品信息
             UserId userIdObj = UserId.of(userId);
-            ProductId productId = ProductId.of(dto.getProductId());
+            ProductId productIdObj = ProductId.of(productId);
             
-            Optional<ProductPure> productOpt = productRepository.findById(productId);
+            Optional<ProductPure> productOpt = productRepository.findById(productIdObj);
             if (productOpt.isEmpty()) {
-                throw new IllegalArgumentException("Product not found with ID: " + dto.getProductId());
+                throw new IllegalArgumentException("Product not found with ID: " + productId);
             }
             
             ProductPure product = productOpt.get();
@@ -84,10 +90,10 @@ public class ShoppingCartApplicationService {
             
             // 5. 保存購物車
             shoppingCartRepository.save(cart);
+              log.info("Successfully added product {} to cart for user {}", productId, userId);
             
-            log.info("Successfully added product {} to cart for user {}", dto.getProductId(), userId);
-            
-        } catch (Exception e) {            log.error("Error adding product {} to cart: {}", dto.getProductId(), e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Error adding product {} to cart: {}", productId, e.getMessage(), e);
             throw new RuntimeException("Failed to add product to cart: " + e.getMessage(), e);
         }
     }

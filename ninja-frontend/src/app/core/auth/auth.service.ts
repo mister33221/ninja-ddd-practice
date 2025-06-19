@@ -65,9 +65,7 @@ export class AuthService {
 
   private getAuthorizationFromLocalStorage(): string | null {
     return localStorage.getItem('Authorization');
-  }
-
-  showLoginModal(): Observable<any> {
+  }  showLoginModal(): Observable<void> {
     const modalRef: BsModalRef = this.modalService.show(LoginModalComponent);
     return new Observable((observer) => {
       modalRef.content.onClose = () => {
