@@ -1,924 +1,1460 @@
-- 今天我們要拿一個實際的案例，來練習使用 DDD (Domain-Driven Design)，設計出一個在 Spring boot 框架上的專案。
-- 我盡量把我的思路寫得清楚一點，如果大家看的過程中，有任何覺得可以討論的地方請不吝指教。
-
-## 思路
-
-- 主題是我們要來設計一個在木葉村的忍具店，這個忍具店的主要業務是販售各種忍者用的道具。
-- 我們主要的思路流程大致會如下步驟
-    1. 需求分析( Requirement Analysis )
-    2. 事件風暴（Event Storming）
-        1. 領域分析( DDD Domain Analysis )
-        2. 定義限界上下文( Bounded Context )
-    3. 領域模型設計( DDD Domain Model )
-    4. 分層架構設計，按照 DDD 模型的分層架構來設計專案
-        1. Interface Layer
-        2. Application Layer
-        3. Domain Layer
-        4. Infrastructure Layer
-        5. Anti-corruption Layer 
-    5. 實作
-
-## 1. 需求分析
-
-我們的木葉村忍具店系統需要實現以下核心功能：
-
-1. 用戶管理
-    用戶註冊和登入
-    用戶角色區分（普通忍者、上忍、特殊身份如火影等）
-    個人資料管理
-
-2. 商品管理
-    忍具分類展示（如武器、防具、卷軸等）
-    商品詳細資訊（包括描述、價格、庫存等）
-    新品上架和庫存更新
-
-3. 購物功能
-    購物車系統
-    訂單生成和管理
-    支付系統（可能包括現金和特殊的忍者積分）
-
-4. 庫存和供應鏈管理
-    實時庫存追踪
-    與供應商的接口
-
-以下是我之後有空再擴展的功能：
-
-1. 搜索和過濾
-    按類別、價格、忍者等級等搜索商品
-    高級過濾選項
-
-2. 評價和評論系統
-    用戶可以對購買的忍具進行評分和評論
-    評論管理（例如違規評論的處理）
-
-3. 忍具定制服務
-    特殊忍具的定制申請
-    定制進度跟踪
-
-4. 優惠活動管理
-    季節性折扣
-    忠誠客戶獎勵計劃
-
-5. 安全和認證系統
-    確保只有合法忍者可以購買某些特殊忍具
-    防止敵對忍村的滲透
-
-6. 客戶服務
-    在線客服聊天
-    常見問題解答（FAQ）
-
-7. 忍具使用指南和教學
-    視頻教學
-    使用技巧分享
-
-8. 數據分析和報告
-    銷售趨勢分析
-    用戶行為分析
-
-目前我們先以核心功能為主，以下都會以核心功能為主進行設計。
-
-## 2. 事件風暴
-
-- 事件風暴是一種快速的設計方法，通過參與者的參與，將領域知識快速地抽取出來，並且將這些知識轉換成事件、命令、聚合...等，這樣可以幫助團隊快速地理解業務需求，並且快速地設計出領域模型。
-- 事件風暴中的名詞解釋
-    - Event: 
-        事件，系統中發生的事情，通常描述為過去式。即當某個事情發生時，我們可以定義為一個事件，讓這個事件被記錄下來，並且通知其他系統或執行其他操作。
-    - Command: 
-        命令，用來觸發事件的動作，通常描述為現在或未來式。即當我們要觸發一個事件時，我們可以定義為一個命令，讓這個命令被執行，觸發相應的事件。
-    - Aggregate: 
-        聚合，代表一個聚合的根，也就是我們軟體中的 Model。通常會貼在 Command、Event 之間。負責處理 Command，發出 Event。      
-        當業務對象或實體之間有很強的關聯性時，我們可以將這些實體聚合在一起，形成一個聚合，並且指定一個聚合根，負責維護聚合內部的一致性。通過聚合，我們可以將業務邏輯封裝在一個聚合內部，並且對外提供操作的入口。
-    - Policy: 
-        策略，定義事件發生後，要自動執行的邏輯或行為。通過策略，我們可以將事件發生後的行為自動化，減少人工干預。例如: 當某忍者註冊成功後，我們可以發送一封郵件給忍者，通知他註冊成功。
-    - User: 
-        使用者。通常會貼在 Command 上，表示這個命令是由哪個使用者觸發的。可能會是一班用戶、管理員、系統自動執行等。
-    - Read Model: 
-        閱讀模型。表示使用者當下所看到的資料、畫面。通常會是接在 Event 的後面，表示當某個事件發生後，我們需要更新畫面上的資料。但我個人認為，在 Command 發生之前，我們也可以使用 Read Model，來表示當使用者進行某個操作時，我們需要更新畫面上的資料。
-    - User Interface(UI): 
-        使用者介面。也就是畫面啦!可以依照 Read Model 簡單先畫出 Wireframe(線框圖)，讓使用者可以看到畫面的樣子。
-    - External System: 
-        外部系統。當我們的系統需要和其他系統進行交互時，我們可以使用 External System 來表示這個外部系統。
-    - Question(可選項): 
-        問題。當參與者有任何問題，包含但不限於業務問題、流程問題、技術問題等，都可以提出問題，讓大家一起討論。
-    - Hotspot(可選項): 
-        熱點。當參與者討論到一個比較複雜或者重要的問題時，可能連參與的領域專家、技術人員都無法解決，抑或是目前所擁有的資訊不足以解決時，我們可以將這個問題標記為熱點，以便之後進一步討論。
-    - Opportunity(可選項): 
-        機會。表示為本系統可能存在的商機或價值，或是某個流程你覺得很讚，就給他一個讚的意思 :D。
-
-- 通常我們會使用不同顏色的便利貼來區分事件、命令、聚合、策略等，這樣可以幫助我們更好的理解事件風暴的結果。
-    - Event 事件: 橘色便利貼
-    - Command 命令: 藍色便利貼
-    - Aggregate 聚合: 粉紅色便利貼
-    - Policy 策略: 綠色便利貼
-- 事件風暴的流程
-    1. 準備階段
-        - 邀請業務專家、開發人員、測試人員、產品經理等參與者參與事件風暴。
-        - 準備一個大白板或是一個大畫布、便利貼( 用來寫事件、命令、聚合等 )、筆等工具。
-        - 本主題中，我們可以邀請木葉村的忍者、木葉村的商人、木葉村的忍者訓練師、忍具店的店主等參與者參與事件風暴。
-    2. 執行階段
-        - 我們通常執行的流程會如下
-            - Big picture
-                1. 開始 Event Storming
-                2. 建立 Events ，大家開始貼出自己認為可能會發生的事件
-                3. 整理 Events 成有故事性的流程
-                4. 走過一次 Events 流程
-            - Process Modelling
-                1. 依照 Events 流程，建立 Commands
-                2. 寫出 Read Model
-                3. 劃出 User Interface，Wireframe即可。(我是覺得這個太理想了啦，怎麼可能在會議上就要人家畫出 Wireframe呢)
-                4. 在 Events 之後，寫出 Policies，連接 Command。
-            - Software Design
-                - 依照 Events、Commands、Policies，建立 Aggregates
-        1. 識別領域事件
-            - 通過參與者的參與，定義出系統中可能會發生的所有事件。
-            - 經過整理、補充、討論，最終完善事件列表。
-            - 本主題我們以橘色便利貼來標示事件。
-            - 用戶管理
-                - **用戶註冊完成**：當新用戶成功填寫註冊表單並提交，系統驗證並創建新賬戶後觸發。
-                - **用戶登入成功**：用戶輸入正確的憑證並通過系統驗證後觸發。
-                - **個人資料已更新**：用戶修改其個人資訊（如聯繫方式、忍術屬性等）並保存後觸發。
-                - **用戶登出完成**：用戶主動登出或系統自動登出用戶後觸發。
-            - 商品管理
-                - **新忍具已添加**：管理員在系統中添加新的忍具產品後觸發。
-                - **忍具分類已創建**：管理員創建新的忍具分類（如新型武器類別）後觸發。
-                - **忍具分類已更新**：管理員修改現有忍具分類的資訊後觸發。
-                - **商品資訊已更新**：管理員修改忍具的詳細資訊（如描述、價格）後觸發。
-                - **新品上架完成**：新添加的忍具正式在網站上發布並可供購買時觸發。
-                - **庫存數量已更新**：由於銷售、退貨或補貨導致忍具庫存數量變化時觸發。
-            - 購物功能
-                - **商品已添加到購物車**：用戶選擇一件忍具並將其加入購物車時觸發。
-                - **商品已從購物車移除**：用戶從購物車中刪除一件忍具時觸發。
-                - **購物車已清空**：用戶選擇清空整個購物車或完成訂單後系統自動清空購物車時觸發。
-                - **訂單已創建**：用戶確認購物車中的商品並生成訂單時觸發。
-                - **訂單狀態已更新**：訂單狀態發生變化（如待付款、已付款、已發貨等）時觸發。
-                - **支付已完成**：用戶成功支付訂單金額後觸發。
-            - 庫存和供應鏈管理
-                - **庫存水平已達到閾值**：某件忍具的庫存數量降至預設的最低閾值時觸發。
-                - **補貨訂單已生成**：系統自動或管理員手動創建向供應商的補貨訂單時觸發。
-                - **供應商訂單已確認**：供應商確認接受補貨訂單時觸發。
-                - **庫存已補充**：新的忍具庫存到達並更新系統庫存數據時觸發。
-        2. 添加命令
-            - 在事件的基礎上，說明如何觸發這些事件，定義出系統中可能會發生的所有命令。
-            - 在定義命令時，需要識別出哪些人或那些系統可以觸發這些命令。
-            - 本主題我們以藍色便利貼來標示命令。
-            - 用戶管理
-                - 註冊用戶
-                - 登錄用戶
-                - 登出用戶
-                - 更新個人資料
-            - 商品管理
-                - 添加新忍具
-                - 創建忍具分類
-                - 更新忍具分類
-                - 更新商品資訊
-                - 上架新品
-                - 更新庫存數量
-            - 購物功能
-                - 添加商品到購物車
-                - 從購物車移除商品
-                - 清空購物車
-                - 創建訂單
-                - 更新訂單狀態
-                - 處理支付
-            - 庫存和供應鏈管理
-                - 檢查庫存水平
-                - 生成補貨訂單
-                - 確認供應商訂單
-                - 補充庫存
-        3. 定義策略
-            - 策略是指當特定事件發生時，需要自動執行的邏輯或行為。
-            - 本主題我們以綠色便利貼來標示策略。
-                - 忍者已註冊時，發送郵件通知忍者
-                - 當訂單狀態變更為已發貨時，檢查庫存水平
-        4. 識別閱讀模型
-            - 通過討論，確定系統中可能會發生的所有事件、命令、聚合、策略等之後，將這些事件、命令、聚合、策略等映射到用戶界面上，形成閱讀模型。
-            閱讀模型也就是用戶在系統中看到的畫面，畫面上用戶可以看到的所有訊息。
-        5. 劃分限界上下文
-            - 根據事件風暴的結果，劃分限界上下文，確定各個聚合的邊界。
-        6. 識別聚合
-            - 定義完 events 和 command，限界上下文也都被劃分清楚了，那麼具在一起的也就是我們識別出的聚合。
-            - 聚合分組，根據業務邏輯，將相關的事件和命令分組，形成聚合。
-            - 每個聚合都有一個明確的聚合根，這有助於維護數據的一致性和完整性。
-            - 聚合的邊界基於業務邏輯和事務一致性需求來劃分，確保相關的實體和值對象在同一個事務邊界內。
-            - 這種設計促進了高內聚、低耦合的系統架構，使得每個聚合都能獨立地管理自己的數據和業務規則。
-            - 聚合的設計考慮了以上所有的事件和命令，確保每個聚合都能夠處理相應的業務操作。
-            - 本主題我們以粉紅色便利貼來標示聚合。
-            - 用戶聚合 (User Aggregate)
-                - **聚合根**：User
-                - **包含的實體/值對象**：UserProfile, UserCredentials
-                - **設計思路**：
-                - 用戶是系統的核心實體，包含了用戶的基本信息和身份驗證信息。
-                - 不包含語言偏好，因為這將通過 HTTP header 動態處理。
-                - **支持的命令**：註冊用戶、登錄用戶、更新個人資料。
-                    用戶聚合 (User Aggregate)
-                - **程式碼**
-                    - 聚合根: User
-                    ```java
-                    @Entity
-                    @Table(name = "users")
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class User {
-                        @Id
-                        @GeneratedValue(strategy = GenerationType.IDENTITY)
-                        private Long id;
-
-                        @Column(unique = true, nullable = false)
-                        private String username;
-
-                        @Embedded
-                        private UserProfile profile;
-
-                        @Embedded
-                        private UserCredentials credentials;
-                        
-                        public void register(String username, String password, String email) { ... }
-                        public void login(String username, String password) { ... }
-                        public void updateProfile(UserProfile newProfile) { ... }
-                    }
-                    ```
-                    - 值對象:
-                    ```java
-                    @Embeddable
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class UserProfile {
-                        @Column(name = "full_name")
-                        private String fullName;
-
-                        @Column(unique = true, nullable = false)
-                        private String email;
-
-                        @Column(name = "phone_number")
-                        private String phoneNumber;
-
-                        @Column(name = "date_of_birth")
-                        private LocalDate dateOfBirth;
-
-                        @Column(name = "address")
-                        private String address;
-                    }
-
-                    @Embeddable
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class UserCredentials {
-                        @Column(name = "hashed_password", nullable = false)
-                        private String hashedPassword;
-
-                        @Column(name = "last_login_time")
-                        private LocalDateTime lastLoginTime;
-
-                        @Column(name = "random_salt", nullable = false)
-                        private String randomSalt;
-
-                    }
-                    ```
-                    - 設計思路:
-                        User 作為聚合根，封裝了用戶的核心信息和行為。
-                        UserProfile 和 UserCredentials 作為值對象，分別處理用戶的個人信息和認證信息。
-                        方法設計反映了用戶的主要操作，如註冊、登錄、更新資料等。
-
-                - 商品聚合 (Product Aggregate)
-                    - **聚合根**：Product
-                    - **包含的實體/值對象**：ProductDetails, ProductPrice
-                    - **設計思路**：
-                        - 商品是系統中的核心實體，包含了商品的基本信息和價格信息。
-                    - **支持的命令**：添加商品、更新商品信息、刪除商品。
-
-                - **程式碼**：
-                    - 聚合根: Product
-                    ```java
-                    @Entity // 標記一個類為JPA實體。表示這個類將被映射到 DB 的一個 table。
-                    @Table(name = "product") // 指定實體對應的 table 名稱。
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class Product {
-                        @Id // 標記一個屬性為主鍵。也就是這個屬性，將會作為這個 table 的主鍵。
-                        @GeneratedValue(strategy = GenerationType.IDENTITY) // 定義主鍵的生成策略。IDENTITY 表示自動增長。
-                        private Long id;
-
-                        @Embedded // 標記一個屬性為嵌入式對象。將會看到另外一個 Class 中被標記為 Embeddable。在 DB 中，他們都是在同一個 table 中。但在程式碼中為了提高重用性、可讀性，我們將他們分開為兩個 Class。
-                        private ProductDetails details;
-
-                        @Column(nullable = false)
-                        private BigDecimal price;
-
-                        @Column(name = "stock_quantity", nullable = false)
-                        private int stockQuantity;
-
-                    //    @Column(name = "category_id", nullable = false)
-                    //    private Long categoryId;
-                        @ManyToOne
-                        @JoinColumn(name = "category_id")
-                        private ProductCategory category;
-
-                    //    這樣會導致你的 enum 中有幾個參數，就會有幾個 column，我的有 status，還有 statusDescription。
-                    //    但我只想要 status，所以改成直接用 String
-                    //    @Embedded
-                    //    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
-                    //    @Column(nullable = false)
-                    //    private ProductStatus productStatus;
-                        @Column(nullable = false)
-                        private String status;
-
-                    //    @ElementCollection
-                    //    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-                        @Column(name = "image_url")
-                        private String imageUrl;
-
-                        public void updateDetails(ProductDetails newDetails) { ... }
-                        public void updatePrice(BigDecimal newPrice) { ... }
-                        public void updateCategoryId(Long newCategoryId) { ... }
-                    }
-                    ```
-                    - 值對象:
-                    ```java
-                    @Embeddable
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class ProductDetails {
-                        @Column(nullable = false)
-                        private String name;
-
-                        @Column(length = 1000)
-                        private String description;
-                    }
-
-                    @Entity
-                    @Table(name = "product_categories")
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class ProductCategory {
-                        @Id
-                        @GeneratedValue(strategy = GenerationType.IDENTITY)
-                        private Long id;
-
-                        @Column(nullable = false, unique = true)
-                        private String name;
-
-                        private String description;
-                    }
-                    ```
-                    - 列舉
-                    ```java
-                    public enum ProductStatus {
-                        PULL_ON_SHELVES("PULL_ON_SHELVES", "上架"),
-                        PULL_OFF_SHELVES("PULL_OFF_SHELVES", "下架"),
-                        OUT_OF_STOCK("OUT_OF_STOCK", "缺貨"),
-                        DISCONTINUED("DISCONTINUED", "停產");
-
-                        private final String status;
-                        private final String statusDescription;
-
-                        ProductStatus(String status, String statusDescription) {
-                            this.status = status;
-                            this.statusDescription = statusDescription;
-                        }
-
-                        public String getStatusDescription() {
-                            return statusDescription;
-                        }
-                        public String getStatus() {
-                            return status;
-                        }
-                    }
-
-                    ```
-                    - 設計思路:
-                        Product 作為聚合根，管理商品的所有相關信息。
-                        ProductDetails 和 ProductCategory 作為值對象，提供了商品的詳細信息和分類。
-                        方法設計允許更新商品的各個方面，包括詳情、分類、價格和庫存。
-
-            -  購物車聚合 (ShoppingCart Aggregate)
-
-                - **聚合根**：ShoppingCart
-                - **包含的實體/值對象**：CartItem
-                - **設計思路**：
-                - 購物車代表了用戶的臨時購買意圖，需要單獨管理。
-                - 將 CartItem 作為 ShoppingCart 的一部分，確保購物車操作的原子性。
-                - **支持的命令**：添加商品到購物車、從購物車移除商品、清空購物車。
-                - **程式碼**：
-
-                    - 聚合根: ShoppingCart
-                    ```java
-                    @Entity
-                    @Table(name = "shopping_carts")
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class ShoppingCart {
-                        @Id
-                        @GeneratedValue(strategy = GenerationType.IDENTITY)
-                        private Long id;
-
-                        @Column(name = "user_id", nullable = false)
-                        private Long userId;
-
-                        @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-                        @JoinColumn(name = "cart_id")
-                        private List<CartItem> items = new ArrayList<>();
-
-                        public ShoppingCart(Long userId) {
-                            this.userId = userId;
-                        }
-                        
-                        public void addItem(ProductId productId, int quantity) { ... }
-                        public void removeItem(ProductId productId) { ... }
-                        public void updateItemQuantity(ProductId productId, int newQuantity) { ... }
-                        public void clear() { ... }
-                    }
-                    ```
-                    - 值對象:
-                    ```java
-                    @Entity
-                    @Table(name = "cart_items")
-                    @Getter
-                    @Setter
-                    @NoArgsConstructor
-                    @AllArgsConstructor
-                    @Builder
-                    public class CartItem {
-                        @Id
-                        @GeneratedValue(strategy = GenerationType.IDENTITY)
-                        private Long id;
-
-                        @Column(name = "cart_id", nullable = false)
-                        private Long cartId;
-
-                    //    @Column(name = "product_id", nullable = false)
-                    //    private Long productId;
-
-                        @ManyToOne
-                        @JoinColumn(name = "product_id", referencedColumnName = "id")
-                        private Product product;
-
-                        @Column(nullable = false)
-                        private int quantity;
-
-                        @Column(nullable = false)
-                        private BigDecimal price;
-                    }
-                    ```
-                    - 設計思路:
-                        ShoppingCart 作為聚合根，管理用戶的購物車內容。
-                        CartItem 作為值對象，代表購物車中的單個商品項。
-                        方法設計支持添加、移除、更新商品，以及清空購物車等操作。
-
-            -  訂單聚合 (Order Aggregate)
-
-                - **聚合根**：Order
-                - **包含的實體/值對象**：OrderItem, OrderStatus, PaymentInfo
-                - **設計思路**：
-                - 訂單是一個重要的業務概念，代表了一次完整的交易。
-                - 將 OrderItem、OrderStatus 和 PaymentInfo 作為 Order 的一部分，確保訂單相關的所有信息在一個事務邊界內。
-                - **支持的命令**：創建訂單、更新訂單狀態、處理支付。
-                - **程式碼**：
-                    - 聚合根: Order
-                    ```java
-                    @Entity
-                    @Table(name = "orders")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-                    public class Order {
-                        @Id
-                        @GeneratedValue(strategy = GenerationType.IDENTITY)
-                        private Long id;
-
-                        @Column(name = "user_id", nullable = false)
-                        private Long userId;
-
-                        @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-                        @JoinColumn(name = "order_id")
-                        private List<OrderItem> items = new ArrayList<>();
-
-                    //    @Embedded
-                    //    @Enumerated(EnumType.STRING) // 指定枚舉類型的映射策略。這裡使用的是字符串形式。表示雖然我在這邊的型別是枚舉類型，但在 DB 中，它將被映射為字符串形式。
-                    //    @Column(nullable = false)
-                    //    private OrderStatus status;
-                        @Column(nullable = false)
-                        private String status;
-
-                        @Column(name = "total_amount", nullable = false)
-                        private BigDecimal totalAmount;
-
-                        @Embedded
-                        private PaymentInfo paymentInfo;
-                        
-                        public void addItem(ProductId productId, int quantity, Money price) { ... }
-                        public void updateStatus(OrderStatus newStatus) { ... }
-                        public void processPayment(PaymentInfo paymentInfo) { ... }
-                    }
-                    ```
-                    - 列舉
-                    ```java
-                    public enum OrderStatus {
-                        PENDING("待處理"),
-                        PAID("已支付"),
-                        SHIPPED("已發貨"),
-                        DELIVERED("已送達"),
-                        CANCELLED("已取消");
-
-                        private final String statusDescription;
-
-                        OrderStatus(String statusDescription) {
-                            this.statusDescription = statusDescription;
-                        }
-
-                        public String getStatusDescription() {
-                            return statusDescription;
-                        }
-
-                        public boolean canCancel() {
-                            return this == PENDING || this == PAID;
-                        }
-                    }
-                    ```
-                    - 值對象:
-                    ```java
-                    @Entity
-                    @Table(name = "order_items")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-                    public class OrderItem {
-                        @Id
-                        @GeneratedValue(strategy = GenerationType.IDENTITY)
-                        private Long id;
-
-                        @Column(name = "product_id", nullable = false)
-                        private Long productId;
-
-                        @Column(nullable = false)
-                        private int quantity;
-
-                        @Column(nullable = false)
-                        private BigDecimal price;
-                    }
-
-                    @Entity
-                    @Table(name = "inventory_items")
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-                    public class InventoryItem {
-                        @Id
-                        @Column(name = "product_id")
-                        private Long productId;
-
-                        @Column(nullable = false)
-                        private int quantity;
-
-                        @Column(name = "reorder_threshold", nullable = false)
-                        private int reorderThreshold;
-                    }
-
-                    @Embeddable
-                    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-                    public class PaymentInfo {
-                        @Column(name = "payment_method")
-                        private String paymentMethod;
-
-                        @Column(name = "transaction_id")
-                        private String transactionId;
-
-                        @Column(name = "payment_time")
-                        private LocalDateTime paymentTime;
-                    }
-                    ```
-                    - 設計思路:
-                        Order 作為聚合根，封裝了訂單的所有相關信息和狀態。
-                        OrderItem、OrderStatus 和 PaymentInfo 作為值對象，分別處理訂單項、訂單狀態和支付信息。
-                        方法設計支持添加商品到訂單、更新訂單狀態和處理支付等操作。
-
-                - 這種設計的總體思路是：
-                    每個聚合都有一個明確的聚合根，負責維護該聚合的一致性和完整性。
-                    值對象用於表示那些沒有獨立身份，但包含重要業務數據的概念。
-                    方法設計反映了每個聚合的主要業務操作和規則。
-                    在每個根聚合的 ID 也使用一個物件包起來，提高可讀性及擴展性。
-                    聚合之間通過 ID 引用，而不是直接關聯，以保持鬆耦合。
-                    每個聚合都專注於其核心職責，遵循單一職責原則。
-                    這樣的設計有助於創建一個清晰、模塊化且易於維護的領域模型，同時也為未來的擴展和變更提供了良好的基礎。
-        7. 優化
-            - 通過討論、補充、整理，最終完善事件風暴的結果。
-    3. 總結階段
-        - 此時，我們的大白板上應該會呈現出一個完成的流程，包含了事件、命令、聚合、策略等。
-        - 將事件風暴的結果整理成文檔，並且與參與者確認。
-        - 這份文檔將作為我們設計領域模型的參考。
-
-## 3. 環境、後端基礎設置與架構
-
-經過了事件風暴(識別領域事件 -> 添加命令 -> 定義策略 -> 識別閱讀模型 -> 劃分限界上下文 -> 識別聚合 -> 優化)之後，我們已經有了一個清晰的領域模型，甚至是聚合(aggregate)都有了，那麼我們就可以開始設計我們的後端資料夾結構，並把我們的領域模型實現出來。
-
-### 基礎環境
-
-- Java 17
-- Spring Boot 3.3.1
-- maven
-- Dependency:
-    - Spring Web
-    - Spring Data JPA
-    - Lombok
-    - h2
-    - 後續有需要的再陸續添加
-- DB: H2
-
-### application.yml
-
-```yml
+# 領域驅動設計 (DDD) 實戰專案：木葉村忍具店
+
+> **學習目標**：通過實際案例深入理解和實踐 Domain-Driven Design (DDD) 的核心概念與設計模式
+
+## 專案簡介
+
+本專案是一個基於 **領域驅動設計 (Domain-Driven Design, DDD)** 的實戰學習專案，通過設計和實作一個「木葉村忍具店」電商系統，來展示 DDD 的完整開發流程和設計思維。
+
+### 為什麼選擇 DDD？
+
+**DDD 的核心價值**：
+- **促進溝通**：建立領域專家與開發團隊間的共通語言 (Ubiquitous Language)
+- **聚焦核心業務**：將複雜的業務邏輯清晰地映射到程式碼中
+- **保護業務邏輯**：避免技術細節污染領域模型
+- **易於維護擴展**：清晰的邊界與職責分離使系統更容易應對變化
+- **便於測試**：良好的模組化設計天然支持單元測試
+
+### DDD 設計流程
+
+我們將按照 DDD 的標準流程進行設計與實作：
+
+```mermaid
+graph TD
+    A[戰略設計 Strategic Design] --> B[戰術設計 Tactical Design]
+    A --> A1[需求分析]
+    A --> A2[事件風暴 Event Storming]
+    A --> A3[領域建模]
+    A --> A4[限界上下文劃分]
+    B --> B1[分層架構設計]
+    B --> B2[聚合設計]
+    B --> B3[實體與值對象設計]
+    B --> B4[程式碼實作]
+```
+
+---
+
+## 專案主題：木葉村忍具店
+
+### 業務背景
+木葉村是火之國最大的忍者村落，村內忍者眾多，對各種忍具有著龐大的需求。我們要為木葉村設計一個現代化的忍具電商平台，滿足從下忍到火影等各階層忍者的購物需求。
+
+### 為什麼選擇這個主題？
+1. **業務複雜度適中**：涵蓋用戶管理、商品管理、購物車、訂單等核心電商功能
+2. **角色多樣性**：不同等級的忍者有不同的購買權限和需求
+3. **易於理解**：大家都熟悉的動漫背景，便於建立共通語言
+4. **擴展性強**：可以逐步增加積分系統、定制忍具等高級功能
+
+---
+
+## 第一階段：戰略設計 (Strategic Design)
+
+> 戰略設計的目標：**獲得領域知識**，**拆分問題域**，**定義解決方案邊界**
+
+### 一、需求分析 (Requirement Analysis)
+
+#### 核心功能需求
+
+**用戶管理子領域**
+- 忍者註冊與身份驗證
+- 角色權限管理（下忍、中忍、上忍、特別上忍、火影等）
+- 個人資料管理
+
+**商品管理子領域**  
+- 忍具分類管理（武器、防具、卷軸、藥品等）
+- 商品詳細資訊（價格、描述、庫存、等級限制）
+- 商品上下架管理
+
+**購物車子領域**
+- 商品加入購物車
+- 購物車數量調整
+- 購物車狀態持久化
+
+**訂單管理子領域**
+- 訂單創建與狀態追蹤
+- 支付處理（里程、現金、積分等）
+- 訂單歷史查詢
+
+**庫存管理子領域**
+- 實時庫存追蹤
+- 自動補貨提醒
+- 供應商管理
+
+#### 子領域優先級分析
+
+根據 DDD 理論，我們將子領域分為三類：
+
+**核心子領域 (Core Subdomain)**
+- **購物車管理**：直接影響用戶購買體驗的核心流程
+- **訂單處理**：電商系統的核心價值所在
+
+**支援子領域 (Supporting Subdomain)**  
+- **用戶管理**：必要但非差異化的功能
+- **商品管理**：支持核心業務但相對標準化
+
+**一般子領域 (Generic Subdomain)**
+- **庫存管理**：市場上有成熟解決方案
+- **支付處理**：可以使用第三方服務
+
+> **DDD 原則**：將有限的資源集中在核心子領域，支援子領域簡化實作，一般子領域考慮外包或採用現成方案。
+
+### 二、事件風暴 (Event Storming)
+
+#### 什麼是事件風暴？
+事件風暴是一種**快速領域建模技術**，通過團隊協作的方式，識別出系統中的關鍵業務事件、命令、聚合等要素。它是 DDD 中最重要的協作工具，能幫助開發團隊和領域專家建立共同的理解。
+
+#### 事件風暴執行步驟
+
+**準備階段**
+1. **參與人員**：領域專家、產品經理、架構師、開發人員、測試人員
+2. **工具準備**：大白板、便利貼（橘色、藍色、黃色、粉紅色、綠色）、筆
+3. **時間安排**：2-4 小時的連續時間，避免中斷
+
+**執行流程**
+
+**第一步：收集領域事件 (橘色便利貼)**
+- **目標**：識別業務流程中發生的重要事件
+- **方式**：參與者自由發揮，將想到的事件寫在橘色便利貼上
+- **命名規則**：使用過去式，例如「用戶已註冊」、「商品已添加到購物車」
+
+**第二步：建立時間線**
+- **目標**：將事件按照時間順序排列
+- **方式**：團隊討論，將便利貼貼在白板上按時間線排序
+- **注意**：可能會有並行流程和分支
+
+**第三步：添加命令 (藍色便利貼)**
+- **目標**：識別觸發事件的用戶意圖或系統操作
+- **方式**：在每個事件前面放置對應的命令
+- **命名規則**：使用動詞，例如「註冊用戶」、「添加到購物車」
+
+**第四步：識別聚合 (黃色便利貼)**
+- **目標**：找出處理命令和產生事件的業務概念
+- **方式**：將相關的命令和事件群組化，識別負責處理的聚合
+- **原則**：一個聚合負責一組相關的業務邏輯
+
+**第五步：找出閱讀模型 (綠色便利貼)**
+- **目標**：識別用戶需要查看的數據視圖
+- **方式**：討論用戶在執行命令前需要看到什麼資訊
+
+**第六步：劃分限界上下文 (粉紅色便利貼)**
+- **目標**：將聚合按照業務邊界分組
+- **方式**：討論哪些聚合應該在同一個上下文中
+
+#### 本專案事件風暴模擬
+
+**參與角色設定**
+- **產品經理**：「我們需要一個忍具購物平台，讓忍者可以方便購買所需裝備」
+- **領域專家**：「忍者購買忍具有等級限制，不同等級忍者可購買的商品不同」
+- **架構師**：「需要考慮高併發下的庫存一致性問題」
+- **開發人員**：「購物車數據如何持久化？用戶離線後再上線購物車還在嗎？」
+
+**事件風暴過程記錄**
+
+```mermaid
+graph LR
+    subgraph "用戶管理流程"
+    A1[註冊用戶] --> B1[用戶已註冊]
+    C1[登入系統] --> D1[用戶已登入]
+    end
+    
+    subgraph "購物流程"
+    E1[瀏覽商品] --> F1[商品已展示]
+    G1[添加到購物車] --> H1[商品已添加到購物車]
+    I1[更新數量] --> J1[購物車已更新]
+    K1[移除商品] --> L1[商品已從購物車移除]
+    end
+    
+    subgraph "訂單流程"
+    M1[結帳] --> N1[訂單已創建]
+    O1[支付] --> P1[支付已完成]
+    Q1[發貨] --> R1[訂單已發貨]
+    end
+```
+
+**討論重點記錄**
+1. **產品經理**：「用戶可以不登入就瀏覽商品，但必須登入才能加入購物車」
+2. **領域專家**：「購物車應該在用戶登入時自動載入之前的商品」
+3. **架構師**：「購物車和訂單是不同的概念，結帳時從購物車創建訂單」
+4. **開發人員**：「需要考慮用戶在多個設備上的購物車同步問題」
+
+#### 我們的事件風暴結果
+
+**領域事件 (Domain Events) - 橘色便利貼**
+```
+用戶已註冊 → 用戶已登入 → 商品已瀏覽 → 商品已添加到購物車 → 購物車數量已更新 
+→ 商品已從購物車移除 → 購物車已清空 → 訂單已創建 → 支付已完成 → 庫存已更新 → 訂單已發貨
+```
+
+**命令 (Commands) - 藍色便利貼**
+```
+註冊用戶 → 登入系統 → 瀏覽商品 → 添加商品到購物車 → 更新購物車數量 
+→ 移除購物車商品 → 清空購物車 → 結帳 → 處理支付 → 更新庫存 → 發貨
+```
+
+**聚合 (Aggregates) - 黃色便利貼**
+```
+User聚合 → Product聚合 → ShoppingCart聚合 → Order聚合 → Inventory聚合
+```
+
+**閱讀模型 (Read Models) - 綠色便利貼**
+```
+用戶資訊視圖 → 商品列表視圖 → 商品詳情視圖 → 購物車視圖 → 訂單歷史視圖
+```
+
+**限界上下文 (Bounded Contexts) - 粉紅色便利貼**
+```
+用戶管理上下文 → 商品目錄上下文 → 購物車上下文 → 訂單處理上下文 → 庫存管理上下文
+```
+
+#### 關鍵洞察與設計決策
+
+**重要發現**：
+1. **購物車與訂單分離**：購物車是臨時性的願望清單，訂單是確定的交易記錄
+2. **聚合邊界清晰**：每個聚合都有明確的業務職責和數據一致性範圍
+3. **事件驅動通信**：聚合間通過領域事件進行鬆耦合的通信
+4. **用戶體驗考量**：支持匿名瀏覽、登入購物、跨設備同步等場景
+
+**設計決策**：
+- 購物車聚合獨立於訂單聚合，避免緊耦合
+- 商品聚合專注於商品資訊管理，不涉及庫存邏輯
+- 用戶聚合只關注身份認證和基本資料，不包含購物行為
+- 通過事件實現跨聚合的業務流程協調
+
+### 三、限界上下文劃分 (Bounded Context)
+
+基於事件風暴的結果，我們劃分出以下限界上下文：
+
+```mermaid
+graph LR
+    A[用戶上下文<br/>User Context] --> B[購物上下文<br/>Shopping Context]
+    B --> C[訂單上下文<br/>Order Context]
+    C --> D[庫存上下文<br/>Inventory Context]
+    
+    subgraph "核心領域"
+    B
+    C
+    end
+    
+    subgraph "支援領域"  
+    A
+    D
+    end
+```
+
+#### 限界上下文的重要性
+
+1. **語意邊界**：每個上下文內有自己的通用語言
+2. **技術邊界**：不同上下文可以選擇不同的技術棧
+3. **團隊邊界**：每個上下文可以由不同團隊負責
+4. **數據邊界**：避免共享數據庫造成的耦合
+
+> **常見錯誤**：將所有功能放在一個大的上下文中，導致概念混淆和緊耦合。
+
+---
+
+## 第二階段：戰術設計 (Tactical Design)
+
+> 戰術設計的目標：**在限界上下文內實作具體的業務邏輯**
+
+### 一、分層架構設計
+
+我們採用經典的 DDD 四層架構：
+
+```
+┌─────────────────────────┐
+│   Interface Layer       │  ← HTTP Controllers, API Models
+│  (用戶介面層)            │
+├─────────────────────────┤
+│   Application Layer     │  ← Application Services, DTOs  
+│  (應用層)                │
+├─────────────────────────┤
+│   Domain Layer          │  ← Entities, Value Objects, Aggregates
+│  (領域層)                │
+├─────────────────────────┤
+│   Infrastructure Layer  │  ← Repositories, External Services
+│  (基礎設施層)            │
+└─────────────────────────┘
+```
+
+#### 各層職責說明
+
+**Interface Layer (介面層)**
+```java
+@RestController
+public class ShoppingCartController {
+    // 只負責HTTP請求處理，不包含業務邏輯
+    @PostMapping("/add")
+    public ResponseEntity<Void> addToCart(@RequestBody AddToCartRequest request) {
+        // 委託給應用層處理
+        shoppingCartApplicationService.addToCart(token, dto);
+        return ResponseEntity.ok().build();
+    }
+}
+```
+
+**Application Layer (應用層)**
+```java
+@Service
+@Transactional
+public class ShoppingCartApplicationService {
+    // 協調多個領域物件，但不包含業務邏輯
+    public void addToCart(String token, AddToCartDto dto) {
+        // 1. 驗證用戶身份
+        Long userId = jwtUtil.extractUserId(token);
+        
+        // 2. 獲取商品資訊
+        ProductPure product = productRepository.findById(productId);
+        
+        // 3. 委託給聚合處理業務邏輯
+        cart.addProduct(product, quantity);
+        
+        // 4. 持久化
+        shoppingCartRepository.save(cart);
+    }
+}
+```
+
+**Domain Layer (領域層)**
+```java
+// 聚合根：包含真正的業務邏輯
+public class ShoppingCartPure {
+    public void addProduct(ProductPure product, int quantity) {
+        // 業務規則：檢查商品是否已存在
+        Optional<CartItemPure> existingItem = findItemByProductId(product.getId());
+        
+        if (existingItem.isPresent()) {
+            // 累加數量
+            existingItem.get().increaseQuantity(quantity);
+        } else {
+            // 新增項目
+            CartItemPure newItem = CartItemPure.create(product, quantity);
+            this.items.add(newItem);
+        }
+    }
+}
+```
+
+**Infrastructure Layer (基礎設施層)**
+```java
+@Repository
+public class ShoppingCartPureRepositoryImpl implements ShoppingCartPureRepository {
+    // 處理技術細節，如數據庫操作
+    public Optional<ShoppingCartPure> findByUserId(UserId userId) {
+        // JPA 查詢 + 實體映射
+        ShoppingCartEntity entity = jpaRepository.findByUserId(userId.getValue());
+        return Optional.ofNullable(mapper.toDomain(entity));
+    }
+}
+```
+
+> **關鍵原則**：依賴方向永遠由外向內，內層不依賴外層，這確保了領域層的純潔性。
+
+### 二、聚合設計 (Aggregate Design)
+
+聚合是 DDD 中最重要的戰術模式之一，它定義了**數據一致性的邊界**。
+
+#### 設計原則
+
+1. **聚合根 (Aggregate Root)**：作為聚合的唯一入口
+2. **事務邊界**：一個事務只能修改一個聚合
+3. **引用方式**：聚合間只能通過 ID 引用，不能直接引用對象
+4. **小聚合**：聚合應該盡可能小，只包含緊密相關的實體
+
+#### 我們的聚合設計
+
+**ShoppingCart 聚合**
+```java
+// 聚合根
+public class ShoppingCartPure {
+    private ShoppingCartId id;           // 聚合唯一標識
+    private UserId userId;               // 引用用戶聚合（通過ID）
+    private List<CartItemPure> items;    // 聚合內部實體
+    
+    // 業務邏輯：添加商品
+    public void addProduct(ProductPure product, int quantity) {
+        // 檢查商品是否已存在
+        Optional<CartItemPure> existingItem = findItemByProductId(product.getId());
+        
+        if (existingItem.isPresent()) {
+            existingItem.get().increaseQuantity(quantity);
+        } else {
+            CartItemPure newItem = CartItemPure.create(
+                CartItemId.generate(), 
+                product.getId(),        // 引用商品聚合（通過ID）
+                product.getName(),
+                product.getPrice(),
+                quantity
+            );
+            this.items.add(newItem);
+        }
+    }
+    
+    // 業務邏輯：移除商品
+    public void removeProduct(ProductId productId) {
+        this.items.removeIf(item -> item.getProductId().equals(productId));
+    }
+    
+    // 業務邏輯：清空購物車
+    public void clear() {
+        this.items.clear();
+    }
+}
+```
+
+**User 聚合**
+```java
+public class UserPure {
+    private UserId id;
+    private UserCredentialsPure credentials;  // 值對象
+    private UserProfilePure profile;          // 值對象
+    
+    // 業務邏輯在聚合根中
+    public void updateProfile(String fullName, String email, String address) {
+        this.profile = UserProfilePure.builder()
+            .fullName(fullName)
+            .email(email)
+            .address(address)
+            .build();
+    }
+}
+```
+
+**Product 聚合**
+```java
+public class ProductPure {
+    private ProductId id;
+    private ProductDetails details;  // 值對象
+    private Money price;            // 值對象
+    private int stockQuantity;
+    private ProductStatus status;
+    
+    // 業務邏輯：檢查是否可購買
+    public boolean isAvailableForPurchase(int requestedQuantity) {
+        return this.status == ProductStatus.ACTIVE 
+            && this.stockQuantity >= requestedQuantity;
+    }
+}
+```
+
+#### 為什麼這樣設計？
+
+**正確的設計**：
+- ShoppingCart 和 CartItem 在同一個聚合內，因為它們需要保持一致性
+- Product 是獨立聚合，因為商品信息變更不應該影響購物車
+- User 是獨立聚合，符合單一職責原則
+
+**錯誤的設計**：
+```java
+// 錯誤：將 Product 實體放在 ShoppingCart 聚合內
+public class ShoppingCartWrong {
+    private List<Product> products;  // 錯誤！跨聚合引用
+}
+
+// 錯誤：聚合過大
+public class OrderWrong {
+    private User user;               // 錯誤！應該只引用 UserId
+    private List<Product> products;  // 錯誤！應該只引用 ProductId
+    private ShoppingCart cart;       // 錯誤！跨聚合直接引用
+}
+```
+
+### 三、值對象設計 (Value Object Design)
+
+值對象是描述性的，沒有標識符，且不可變。
+
+#### 核心值對象
+
+**Money (金錢)**
+```java
+@Getter
+@EqualsAndHashCode
+public class Money {
+    private final BigDecimal amount;
+    private final String currency;
+    
+    private Money(BigDecimal amount, String currency) {
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("金額不能為負數");
+        }
+        this.amount = amount;
+        this.currency = currency;
+    }
+    
+    public static Money of(BigDecimal amount, String currency) {
+        return new Money(amount, currency);
+    }
+    
+    // 業務邏輯：金額計算
+    public Money multiply(int quantity) {
+        return new Money(this.amount.multiply(BigDecimal.valueOf(quantity)), this.currency);
+    }
+    
+    public Money add(Money other) {
+        if (!this.currency.equals(other.currency)) {
+            throw new IllegalArgumentException("不同貨幣無法相加");
+        }
+        return new Money(this.amount.add(other.amount), this.currency);
+    }
+}
+```
+
+**強型別 ID**
+```java
+// 避免原始型別困擾 (Primitive Obsession)
+@Getter
+@EqualsAndHashCode
+public class ProductId {
+    private final Long value;
+    
+    private ProductId(Long value) {
+        if (value == null || value <= 0) {
+            throw new IllegalArgumentException("ProductId 不能為空或負數");
+        }
+        this.value = value;
+    }
+    
+    public static ProductId of(Long value) {
+        return new ProductId(value);
+    }
+}
+```
+
+**ProductDetails**
+```java
+@Getter
+@EqualsAndHashCode
+public class ProductDetails {
+    private final String name;
+    private final String description;
+    private final String imageUrl;
+    
+    // 值對象包含業務驗證邏輯
+    private ProductDetails(String name, String description, String imageUrl) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("商品名稱不能為空");
+        }
+        if (name.length() > 100) {
+            throw new IllegalArgumentException("商品名稱不能超過100字元");
+        }
+        
+        this.name = name.trim();
+        this.description = description;
+        this.imageUrl = imageUrl;
+    }
+    
+    public static ProductDetails of(String name, String description, String imageUrl) {
+        return new ProductDetails(name, description, imageUrl);
+    }
+}
+```
+
+#### 值對象的重要性
+
+1. **表達業務概念**：`Money` 比 `BigDecimal` 更清楚表達金錢概念
+2. **封裝驗證邏輯**：建構時就確保數據有效性
+3. **避免原始型別困擾**：`ProductId` 避免了傳錯參數的問題
+4. **不可變性**：確保線程安全和數據一致性
+
+### 四、Repository 模式
+
+Repository 提供了一個**面向領域的數據訪問介面**，隱藏了技術細節。
+
+#### Repository 介面設計
+
+```java
+// Domain Layer - 純粹的領域介面
+public interface ShoppingCartPureRepository {
+    Optional<ShoppingCartPure> findByUserId(UserId userId);
+    ShoppingCartPure save(ShoppingCartPure cart);
+    void delete(ShoppingCartPure cart);
+    
+    // 面向業務的查詢方法，而非技術導向的 CRUD
+    List<ShoppingCartPure> findActiveCartsOlderThan(LocalDateTime threshold);
+}
+```
+
+#### Repository 實作
+
+```java
+// Infrastructure Layer - 技術實作
+@Repository
+public class ShoppingCartPureRepositoryImpl implements ShoppingCartPureRepository {
+    
+    private final ShoppingCartJpaRepository jpaRepository;
+    private final ShoppingCartEntityMapper entityMapper;
+    
+    @Override
+    public Optional<ShoppingCartPure> findByUserId(UserId userId) {
+        return jpaRepository.findByUserId(userId.getValue())
+            .map(entityMapper::toDomain);  // 實體映射
+    }
+    
+    @Override
+    public ShoppingCartPure save(ShoppingCartPure cart) {
+        ShoppingCartEntity entity = entityMapper.toEntity(cart);
+        ShoppingCartEntity savedEntity = jpaRepository.save(entity);
+        return entityMapper.toDomain(savedEntity);
+    }
+}
+```
+
+#### Anti-Corruption Layer (防腐層)
+
+我們使用 Mapper 來隔離領域模型和持久化模型：
+
+```java
+@Component
+public class ShoppingCartEntityMapper {
+    
+    // 領域模型 → 持久化模型
+    public ShoppingCartEntity toEntity(ShoppingCartPure domain) {
+        return ShoppingCartEntity.builder()
+            .id(domain.getId() != null ? domain.getId().getValue() : null)
+            .userId(domain.getUserId().getValue())
+            .items(domain.getItems().stream()
+                .map(this::cartItemToEntity)
+                .collect(Collectors.toList()))
+            .build();
+    }
+    
+    // 持久化模型 → 領域模型
+    public ShoppingCartPure toDomain(ShoppingCartEntity entity) {
+        return new ShoppingCartPure(
+            entity.getId() != null ? ShoppingCartId.of(entity.getId()) : null,
+            UserId.of(entity.getUserId()),
+            entity.getItems().stream()
+                .map(this::cartItemToDomain)
+                .collect(Collectors.toList())
+        );
+    }
+}
+```
+
+> **防腐層的重要性**：它保護領域模型不被外部技術細節污染，使得我們可以獨立演化領域邏輯和技術實作。
+
+---
+
+## 專案結構
+
+基於 DDD 原則，我們的專案結構如下：
+
+```
+src/main/java/com/kai/ninja_ddd_practice/
+├── interfaceLayer/                    # 介面層
+│   ├── controllers/                   # REST Controllers
+│   ├── apiModels/                     # API 請求/回應模型
+│   └── mappers/                       # Interface Layer Mappers
+├── applicationLayer/                  # 應用層
+│   ├── applicationService/            # 應用服務
+│   ├── dtos/                         # 數據傳輸物件
+│   └── mappers/                       # Application Layer Mappers
+├── domainLayer/                       # 領域層 (核心)
+│   ├── aggregations/                  # 聚合
+│   │   ├── user/
+│   │   │   ├── aggregateRoot/         # User 聚合根
+│   │   │   └── valueObjects/          # UserId, UserProfile 等
+│   │   ├── product/
+│   │   │   ├── aggregateRoot/         # Product 聚合根
+│   │   │   └── valueObjects/          # ProductId, Money 等
+│   │   └── shoppingCart/
+│   │       ├── aggregateRoot/         # ShoppingCart 聚合根
+│   │       └── valueObjects/          # CartItem 等
+│   ├── repositoryInterfaces/          # Repository 介面
+│   ├── domainServices/                # 領域服務
+│   └── domainEvents/                  # 領域事件
+└── infrastructureLayer/               # 基礎設施層
+    ├── persistence/                   # 持久化
+    │   ├── entities/                  # JPA 實體
+    │   ├── repositories/              # JPA Repositories
+    │   └── mappers/                   # 實體映射器
+    ├── repositoryImplementations/     # Repository 實作
+    ├── security/                      # 安全相關
+    └── config/                        # 配置類
+```
+
+### 目錄職責說明
+
+| 層級 | 職責 | 依賴關係 |
+|------|------|----------|
+| **Interface** | HTTP 請求處理、資料驗證、格式轉換 | → Application |
+| **Application** | 流程協調、事務管理、DTO 轉換 | → Domain |
+| **Domain** | 業務邏輯、業務規則、領域知識 | 無外部依賴 |
+| **Infrastructure** | 技術實作、外部服務整合 | → Domain (介面) |
+
+> **依賴倒置原則**：高層模組不依賴低層模組，兩者都依賴抽象。Infrastructure 層實作 Domain 層定義的介面。
+
+---
+
+## 數據庫設計
+
+## 數據庫設計
+
+### 設計原則
+
+1. **聚合邊界 = 表邊界**：每個聚合對應到資料庫中的相關表
+2. **避免跨聚合外鍵**：聚合間只通過 ID 引用，不建立 FK 約束
+3. **值對象內嵌**：將值對象的屬性內嵌到聚合根的表中
+
+### 資料庫 Schema
+
+```sql
+-- 用戶聚合
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    
+    -- UserCredentials 值對象內嵌
+    hashed_password VARCHAR(255) NOT NULL,
+    random_salt VARCHAR(255) NOT NULL,
+    last_login_time TIMESTAMP,
+    
+    -- UserProfile 值對象內嵌
+    full_name VARCHAR(100),
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone_number VARCHAR(20),
+    date_of_birth DATE,
+    address TEXT,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 商品聚合
+CREATE TABLE products (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    
+    -- ProductDetails 值對象內嵌
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    image_url VARCHAR(500),
+    
+    -- Money 值對象內嵌
+    price_amount DECIMAL(10,2) NOT NULL,
+    price_currency VARCHAR(3) DEFAULT 'TWD',
+    
+    stock_quantity INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 購物車聚合
+CREATE TABLE shopping_carts (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,  -- 引用 User 聚合，但不建立 FK
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_user_id (user_id)
+);
+
+-- 購物車項目 (CartItem 值對象，但因為集合關係獨立成表)
+CREATE TABLE cart_items (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    cart_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,  -- 引用 Product 聚合，但不建立 FK
+    
+    -- 商品快照 (避免商品資訊變更影響購物車)
+    product_name VARCHAR(100) NOT NULL,
+    unit_price_amount DECIMAL(10,2) NOT NULL,
+    unit_price_currency VARCHAR(3) DEFAULT 'TWD',
+    
+    quantity INT NOT NULL,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (cart_id) REFERENCES shopping_carts(id) ON DELETE CASCADE,
+    INDEX idx_cart_id (cart_id),
+    INDEX idx_product_id (product_id)
+);
+```
+
+### 為什麼不建立跨聚合外鍵？
+
+**DDD 推薦做法**：
+```sql
+-- 購物車只引用 User ID，不建立外鍵約束
+CREATE TABLE shopping_carts (
+    user_id BIGINT NOT NULL,  -- 只是引用，不是 FK
+    ...
+);
+```
+
+**傳統 ORM 做法**：
+```sql
+-- 錯誤：建立跨聚合外鍵
+CREATE TABLE shopping_carts (
+    user_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),  -- 造成緊耦合
+    ...
+);
+```
+
+**原因**：
+1. **聚合獨立性**：每個聚合應該能獨立演化
+2. **避免分散式事務**：跨聚合操作通過事件而非事務
+3. **微服務準備**：未來可以將不同聚合拆分到不同服務
+
+### 資料初始化
+
+```sql
+-- 測試資料
+INSERT INTO users (username, hashed_password, random_salt, full_name, email) VALUES
+('naruto', 'hashed_password_1', 'salt_1', '漩渦鳴人', 'naruto@konoha.village'),
+('sasuke', 'hashed_password_2', 'salt_2', '宇智波佐助', 'sasuke@konoha.village'),
+('sakura', 'hashed_password_3', 'salt_3', '春野櫻', 'sakura@konoha.village');
+
+INSERT INTO products (name, description, price_amount, price_currency, stock_quantity, status) VALUES
+('苦無', '基本忍具，投擲用武器', 150.00, 'TWD', 100, 'PULL_ON_SHELVES'),
+('手裏劍', '星型投擲武器，命中率高', 80.00, 'TWD', 200, 'PULL_ON_SHELVES'),
+('煙霧彈', '逃跑或掩護用道具', 120.00, 'TWD', 50, 'PULL_ON_SHELVES'),
+('兵糧丸', '快速恢復查克拉的藥品', 300.00, 'TWD', 30, 'PULL_ON_SHELVES');
+```
+
+---
+
+## 技術棧與配置
+
+### 技術選型
+
+| 層級 | 技術 | 版本 | 說明 |
+|------|------|------|------|
+| **框架** | Spring Boot | 3.3.1 | 主框架 |
+| **語言** | Java | 17 | LTS 版本 |
+| **構建工具** | Maven | 3.9+ | 依賴管理 |
+| **資料庫** | H2 | 內嵌 | 開發環境快速啟動 |
+| **ORM** | Spring Data JPA | 3.3.1 | 資料存取 |
+| **安全** | Spring Security + JWT | 6.3.1 | 認證授權 |
+| **文檔** | Lombok | 1.18.30 | 減少樣板代碼 |
+
+### 應用程式配置
+
+```yaml
+# application.yml
 spring:
   application:
     name: ninja-ddd-practice
-#  h2
+    
+  # H2 內嵌資料庫配置
   datasource:
-    url: jdbc:h2:mem:testdb # in-memory database, database name is testdb
-    driver-class-name: org.h2.Driver # H2 driver
-    username: sa # default username
-    password: password # default password
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+    
+  # H2 控制台 (開發環境)
   h2:
     console:
-      enabled: true # enable H2 console, this console can be accessed by http://localhost:8080/h2-console
+      enabled: true
       path: /h2-console
+      
+  # JPA 配置
   jpa:
     hibernate:
-      ddl-auto: update
-#    ddl- auto has 5 options: none, validate, update, create, create-drop
-#    none: 不做任何操作。
-#    validate: 驗證 DB schema 是否和 Hibernate 的 Entity schema 一致。如果不一致的話，會丟出一個異常。通常會用於生 production 環境。
-#    update: 根據 Hibernate 的 Entity schema 更新 DB schema，這是最常用的選項。但不會刪除既存的資料。
-#    create: 根據 Hibernate 的 Entity schema 建立新的 DB schema，這會刪除既存的資料。
-#    create-drop: 在 SessionFactory 關閉的時候，刪除 DB schema。通常會用於 test 環境。
-    show-sql: true # 當有 SQL 執行時，會在 console 顯示 SQL 語句
-    open-in-view: false # 用於延長 Hibernate Session 的生命週期，使其在 View 中仍然有效，避免 LazyInitializationException。但這會導致性能問題，所以建議設置為 false。
-    generate-ddl: false # 與 ddl-auto 一樣，但是 ddl-auto 提供了更細的顆粒度控制。hibernate.ddl-auto 通常會覆蓋 spring.jpa.generate-ddl。這裡因為用了 ddl-auto，所以設置為 false。
+      ddl-auto: update  # 開發環境自動建表
+    show-sql: true      # 顯示 SQL (開發環境)
+    open-in-view: false # 避免 LazyInitializationException
+    generate-ddl: false
+
+# JWT 配置
+jwt:
+  secret: ninja-ddd-practice-secret-key-for-development
+  expiration: 86400000  # 24小時 (毫秒)
+
+# 日誌配置
+logging:
+  level:
+    com.kai.ninja_ddd_practice: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
 ```
 
-### 資料夾結構
+### Maven 依賴
 
-DDD 的資料夾結構大概會分成四個層，另外再加上一個 common 的層，這個 common 的層是用來放一些共用的東西，例如: exception、utils 等等。四個層如下:
-- 介面層 (Interfaces Layer)
-    - 系統的最外層，負責處理來自外部的請求和回應。
-    - 包含的物件：
-        - Controllers：處理 HTTP 請求
-        - API models：API 特定的請求和回應物件
-        - Assemblers/Mappers：在 API 模型和應用層 DTO 之間進行轉換。Assembler 與 Mapper 的效果是一樣的。不過 Assembler 專注於 domain model 和 DTO 之間的轉換，Mapper 則是更廣泛的概念，可以用於任何對象之間的轉換。專案裡面我們就使用 Mapper 就好。
-- 應用層 (Application Layer)
-    - 協調領域物件以完成特定的應用任務或用例。它不包含業務邏輯，而是委託給領域層。
-    - 包含的物件：
-        - Application Services：通常是用於處理、協調不同領域物件、不同層之間的操作。不包含業務邏輯。
-        - DTOs (Data Transfer Objects)：在應用邊界傳輸資料的物件
-        - Commands 和 Queries：表示使用者意圖的物件
-        - Event Handlers：處理來自領域層的事件
-- 領域層 (Domain Layer)
-    - 業務邏輯和類型，是 DDD 的核心。
-    - 包含的物件：
-        - Aggregates：實體和值物件的集合，維護一致性邊界
-            - Aggregate Root：聚合的根實體，負責維護聚合的一致性和完整性。
-            - Value Objects：無唯一標識的領域物件
-        - Domain Services：真正處理業務邏輯的物件，不屬於任何特定的實體或值物件，保持高內聚、低耦合的特性。
-        - Repository Interfaces：定義持久化操作的介面
-        - Domain Events：領域中發生的重要事件
-- 基礎設施層 (Infrastructure Layer)
-    - 提供技術能力，支持其他層的運作。
-    - 包含的物件：
-        - Repository Implementations：實現領域層定義的儲存庫介面
-        - Configurations：Spring 配置類
-        - External Service Integrations：與外部服務的整合
-        - Utility Classes：通用工具類
-- 共享核心 (Shared Kernel) (Optional)
-    - 包含在多個限界上下文之間共享的程式碼。或是也可以寫在基礎設施層。
-    - 包含的物件：
-        - Common Value Objects：共享的值物件
-        - Shared Utilities：共享的工具類
-        - Cross-cutting Concerns：如日誌、安全等橫切關注點
-
-
-- 預計我們的資料夾結構會長這樣，Optional 的在專案中如果沒有用到，我就會建立了
-```
-src
-├── main
-    ├── java
-    │   └── com
-    │       └── kai
-    │           └── ninja_ddd_practice
-    │               ├── applicationLayer
-    │               │   ├── commands
-    │               │   ├── dtos
-    │               │   ├── eventHandlers (Optional)
-    │               │   ├── mappers
-    │               │   ├── queries (Optional) (將 query 獨立於 command 之外，是為了讓其他更複雜的業務邏輯可以獨立出來，更好維護。)
-    │               │   └── services (applicatoin 層中的 service 職責在於協調領域物件，不包含業務邏輯，例如處裡訂單業務，可能會涉及到訂單、商品、用戶等多個領域物件，那麼這個 service 就是用來協調這些物件的。)
-    │               ├── domainLayer
-    │               │   ├── aggregates
-    │               │   │   ├── order
-    │               │   │   │   ├── aggregateRoot
-    │               │   │   │   │   └── Order.java
-    │               │   │   │   └── valueObjects
-    |               |   |   |       ├── InventoryItem.java
-    │               │   │   │       ├── OrderItem.java
-    │               │   │   │       ├── OrderStatus.java
-    │               │   │   │       └── PaymentInfo.java 
-    │               │   │   ├── product
-    │               │   │   │   ├── aggregateRoot
-    │               │   │   │   │   └── Product.java
-    │               │   │   │   └── valueObjects
-    │               │   │   │       ├── ProductDetails.java
-    │               │   │   │       ├── ProductPrice.java
-    │               │   │   │       └── ProductStatus.java
-    │               │   │   ├── productCategory
-    │               │   │   │   ├── aggregateRoot
-    │               │   │   │   │   └── ProductCategory.java 
-    │               │   │   │   └── valueObjects
-    │               │   │   │       └── CategoryDetails.java
-    │               │   │   ├── shoppingCart
-    │               │   │   │   ├── aggregateRoot
-    │               │   │   │   │   └── ShoppingCart.java
-    │               │   │   │   └── valueObjects
-    │               │   │   │       └── CartItem.java
-    │               │   │   └── user
-    │               │   │       ├── aggregateRoot
-    │               │   │       │   └── User.java
-    │               │   │       └── valueObjects
-    │               │   │           ├── UserProfile.java
-    │               │   │           └── UserCredentials.java
-    │               │   ├── domainEvents
-    │               │   ├── domainServices ( domain 層中的 service 職責在於處理業務邏輯，不屬於任何特定的實體或值物件，保持高內聚、低耦合的特性。)
-    │               │   └── repositoryInterfaces
-    |               |       ├── OrderRepository.java
-    |               |       ├── ProductRepository.java
-    |               |       ├── ProductCategoryRepository.java
-    |               |       ├── ShoppingCartRepository.java
-    |               |       ├── UserRepository.java
-    |               |       └── InventoryRepository.java
-    │               ├── infrastructureLayer
-    │               │   ├── config
-    │               │   ├── externalServices
-    │               │   ├── repositoryImplementations
-    │               │   │   ├── OrderRepositoryImpl.java
-    │               │   │   ├── ProductRepositoryImpl.java
-    │               │   │   ├── ProductCategoryRepositoryImpl.java
-    │               │   │   ├── ShoppingCartRepositoryImpl.java
-    │               │   │   ├── UserRepositoryImpl.java
-    │               │   │   └── InventoryRepositoryImpl.java
-    │               │   └── utilities
-    │               └── interfacesLayer
-    │                   ├── apiModels
-    │                   ├── controllers
-    │                   │   ├── OrderController.java
-    │                   │   ├── ProductController.java
-    │                   │   ├── ProductCategoryController.java
-    │                   │   ├── ShoppingCartController.java
-    │                   │   ├── UserController.java
-    │                   │   ├── InventoryController.java
-    │                   └── mappers
-    └── resources
-        └── application.yml
+```xml
+<dependencies>
+    <!-- Spring Boot Starters -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    
+    <!-- JWT -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>0.11.5</version>
+    </dependency>
+    
+    <!-- 資料庫 -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    
+    <!-- 工具 -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+</dependencies>
 ```
 
-### 忍具管理上下文
+---
 
-- 忍具管理上下文的核心業務是管理忍具的資訊，這邊我們來看一下忍具管理上下文的領域模型。
+## 實作重點與最佳實踐
 
-- Entity:
-    - Ninja Tool (忍具): 代表一種忍具，具有違一個標識符。
-- Value Object:
-    - Tool Category (忍具類別): 代表忍具的類別，例如: 武器、防具、道具等等。
-    - Tool Specification (忍具規格): 代表忍具的規格，例如: 長度、重量、材質等等。
-- Aggregate:
-    - Ninja Tool Catalog (忍具目錄): 以 Ninja Tool 為聚合根(aggregate root)，管理忍具的資訊。
-> 根聚合(aggregate root)是一個特殊的實體。      
-> 根聚合的設計原則:     
-> 1. 根聚合是一個實體，而不是值對象。
-> 2. 根聚合是一個聚合的根，是整個聚合的入口。
-> 3. 根聚合負責維護聚合內部的一致性，對外提供操作的入口。
-> 4. 聚合內部的實體只能通過根聚合進行操作，外部對聚合內部的實體是透明的。
-> 5. 根聚合的設計應該符合業務邏輯，而不是數據庫的設計。
-> 6. 盡可能將聚合設計保持小巧，指包含緊密相關的實體，減少聚合根之間的相互依賴。
-- Domain Event:
-    - Ninja Tool Added Event (忍具新增事件): 當新增一個忍具時，發送一個忍具新增事件。
-    - Ninja Tool Updated Event (忍具更新事件): 當更新一個忍具時，發送一個忍具更新事件。
-- Repository:
-    - Ninja Tool Repository (忍具倉庫): 負責管理忍具的資料存取。
+### 1. 購物車核心功能實作
 
-## 6. 分層架構設計
+#### 添加商品到購物車
 
-- 接下來我們要來設計專案的分層架構，這邊我們會按照 DDD 的分層架構來設計專案。
-
-### Interface Layer
-
-- Interface Layer 是專案的入口，負責接收外部請求，並轉發給 Application Layer 進行處理。
-- Controller(REST API): 提供 RESTful API 服務。
-- DTO: Data Transfer Object，用來封裝請求和回應的數據。
-
-### Application Layer
-
-- Application Layer 是專案的應用層，負責處理業務邏輯，並調用 Domain Layer 進行業務處理。
-- Service: 服務類，負責處理業務邏輯。
-- 命令處理器(Command Handler): 負責處理命令。
-
-### Domain Layer
-
-- Domain Layer 是專案的領域層，負責定義領域模型和業務邏輯。
-- Entity: 實體類，代表領域模型。
-- Value Object: 值對象，代表領域模型中，不需要是唯一標識符的對象。例如: 忍具類別、忍具規格等等。在不同的忍具，可能會有相同的忍具類別或忍具規格。
-- Aggregate: 聚合根，代表一個聚合的根，負責維護聚合內部的一致性。
-- Domain Event: 領域事件，例如: 忍具新增事件、忍具更新事件就可以定義為領域事件。
-- Domain Service: 領域服務，負責處理領域邏輯。例如我們要處理的業務邏輯，就可以定義是領域服務。
-
-### Infrastructure Layer
-
-- Infrastructure Layer 是專案的基礎設施層，負責專案的基礎設施建設。
-- Repository: 資料庫的實踐，負責管理領域模型的資料存取。
-- Out bound adapter: 外部適配器，負責對外部系統的適配。例如 publish event、send message、third-party API 等等。
-
-### Anti-corruption Layer
-
-- Anti-corruption Layer 是專案的防腐層，為了防止領域模型之間的相互依賴，我們可以使用防腐層來解決。
-- 外部系統適配器: 負責對外部系統的適配。
-
-## 7. 實作
-
-
-
-1. registration 功能
-    1. 使用 @ControllerAdvice 處理全域的異常
-    2. 完成註冊功能
-2. 製作登入功能
-    1. 建立 jwt util
-    2. 完成登入功能
-    3. 客製 annotation @CurrentUser，用來取得當前登入的使用者
-    4. 克制 annotation @ValidateJwt，用來驗證 jwt
-    5. 在需要驗證 jwt 的地方使用 @ValidateJwt
-
-
-
-
-```plantuml
-@startuml
-
-skinparam packageStyle rectangle
-
-package "Interface Layer" {
-  [NinjaToolController]
-  [AddNinjaToolRequest]
-  [NinjaToolResponse]
+```java
+@Service
+@Transactional
+public class ShoppingCartApplicationService {
+    
+    public void addToCart(String token, AddToCartDto dto) {
+        // 1. 身份驗證 (Infrastructure 層的技術細節)
+        Long userId = jwtUtil.extractUserId(token);
+        
+        // 2. 獲取業務物件
+        ProductPure product = productRepository.findById(ProductId.of(dto.getProductId()))
+            .orElseThrow(() -> new IllegalArgumentException("商品不存在"));
+            
+        // 3. 業務邏輯委託給聚合
+        ShoppingCartPure cart = getOrCreateCart(UserId.of(userId));
+        cart.addProduct(product, dto.getQuantity());
+        
+        // 4. 持久化
+        shoppingCartRepository.save(cart);
+    }
+    
+    private ShoppingCartPure getOrCreateCart(UserId userId) {
+        return shoppingCartRepository.findByUserId(userId)
+            .orElse(new ShoppingCartPure(null, userId));
+    }
 }
-
-package "Application Layer" {
-  [NinjaToolService]
-  [AddNinjaToolCommand]
-  [GetNinjaToolQuery]
-}
-
-package "Domain Layer" {
-  [NinjaTool]
-  [NinjaToolCatalog]
-  [ToolCategory]
-  [ToolSpecification]
-  [NinjaToolRepository]
-  [NinjaToolAddedEvent]
-  [NinjaToolUpdatedEvent]
-  [DomainEventPublisher]
-}
-
-package "Infrastructure Layer" {
-  [JpaNinjaToolRepository]
-  [PersistenceConfig]
-}
-
-NinjaToolController --> NinjaToolService: uses
-NinjaToolController --> AddNinjaToolRequest: uses
-NinjaToolController --> NinjaToolResponse: returns
-
-NinjaToolService --> AddNinjaToolCommand: uses
-NinjaToolService --> GetNinjaToolQuery: uses
-NinjaToolService --> NinjaToolRepository: uses
-NinjaToolService --> NinjaTool: creates/manages
-
-NinjaToolCatalog --> NinjaTool: contains
-NinjaToolCatalog --> DomainEventPublisher: publishes events to
-
-NinjaTool --> ToolCategory: has
-NinjaTool --> ToolSpecification: has
-
-NinjaToolRepository <|.. JpaNinjaToolRepository: implements
-
-JpaNinjaToolRepository --> PersistenceConfig: uses
-
-@enduml
 ```
+
+#### 聚合內的業務邏輯
+
+```java
+public class ShoppingCartPure {
+    
+    public void addProduct(ProductPure product, int quantity) {
+        // 業務規則：檢查商品狀態
+        if (!product.isAvailableForPurchase(quantity)) {
+            throw new IllegalArgumentException("商品庫存不足或已下架");
+        }
+        
+        // 業務規則：相同商品累加數量
+        Optional<CartItemPure> existingItem = findItemByProductId(product.getId());
+        if (existingItem.isPresent()) {
+            existingItem.get().increaseQuantity(quantity);
+        } else {
+            // 創建新的購物車項目
+            CartItemPure newItem = CartItemPure.create(
+                product.getId(),
+                product.getDetails().getName(),
+                product.getPrice(),
+                quantity
+            );
+            this.items.add(newItem);
+        }
+    }
+    
+    // 業務規則：移除商品時的邏輯
+    public void removeProduct(ProductId productId) {
+        boolean removed = this.items.removeIf(item -> 
+            item.getProductId().equals(productId));
+            
+        if (!removed) {
+            // 根據業務需求，這裡可以選擇拋出異常或靜默處理
+            log.warn("嘗試移除不存在的商品: {}", productId.getValue());
+        }
+    }
+}
+```
+
+### 2. 錯誤處理策略
+
+根據 DDD 原則，不同層級有不同的錯誤處理策略：
+
+```java
+// Domain Layer: 業務規則驗證
+public class Money {
+    private Money(BigDecimal amount, String currency) {
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("金額不能為負數");  // 業務規則異常
+        }
+        this.amount = amount;
+        this.currency = currency;
+    }
+}
+
+// Application Layer: 協調和異常轉換
+@Service
+public class ShoppingCartApplicationService {
+    
+    public void addToCart(String token, AddToCartDto dto) {
+        try {
+            // 委託給領域層處理
+            cart.addProduct(product, quantity);
+        } catch (IllegalArgumentException e) {
+            // 轉換為應用層異常
+            throw new ShoppingCartException("添加商品到購物車失敗: " + e.getMessage());
+        }
+    }
+}
+
+// Interface Layer: HTTP 異常處理
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(ShoppingCartException.class)
+    public ResponseEntity<ErrorResponse> handleShoppingCartException(ShoppingCartException e) {
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse("CART_ERROR", e.getMessage()));
+    }
+}
+```
+
+### 3. 測試策略
+
+DDD 的分層架構天然支持不同層級的測試：
+
+```java
+// Domain Layer 單元測試
+class ShoppingCartPureTest {
+    
+    @Test
+    void should_add_new_item_when_product_not_exists() {
+        // Given
+        ShoppingCartPure cart = new ShoppingCartPure(null, UserId.of(1L));
+        ProductPure product = createTestProduct();
+        
+        // When
+        cart.addProduct(product, 2);
+        
+        // Then
+        assertThat(cart.getItems()).hasSize(1);
+        assertThat(cart.getItems().get(0).getQuantity()).isEqualTo(2);
+    }
+    
+    @Test
+    void should_increase_quantity_when_product_already_exists() {
+        // Given
+        ShoppingCartPure cart = createCartWithOneItem();
+        ProductPure existingProduct = cart.getItems().get(0).getProduct();
+        
+        // When
+        cart.addProduct(existingProduct, 3);
+        
+        // Then
+        assertThat(cart.getItems()).hasSize(1);
+        assertThat(cart.getItems().get(0).getQuantity()).isEqualTo(5); // 2 + 3
+    }
+}
+
+// Application Layer 整合測試
+@SpringBootTest
+@Transactional
+class ShoppingCartApplicationServiceTest {
+    
+    @Test
+    void should_create_new_cart_when_user_has_no_cart() {
+        // Given
+        String token = createValidToken(userId);
+        AddToCartDto dto = new AddToCartDto(productId, 1);
+        
+        // When
+        shoppingCartService.addToCart(token, dto);
+        
+        // Then
+        Optional<ShoppingCartPure> cart = cartRepository.findByUserId(UserId.of(userId));
+        assertThat(cart).isPresent();
+        assertThat(cart.get().getItems()).hasSize(1);
+    }
+}
+```
+
+---
+
+## 常見錯誤與最佳實踐
+
+### 應該避免的反模式
+
+#### 1. 貧血模型 (Anemic Domain Model)
+
+```java
+// 錯誤：貧血模型，沒有業務邏輯
+public class ShoppingCartAnemic {
+    private Long id;
+    private Long userId;
+    private List<CartItem> items;
+    
+    // 只有 getter/setter，沒有業務邏輯
+}
+
+// 業務邏輯散落在 Service 中
+@Service
+public class ShoppingCartService {
+    public void addProduct(Long cartId, Long productId, int quantity) {
+        ShoppingCartAnemic cart = repository.findById(cartId);
+        
+        // 業務邏輯在 Service 中，而不是領域模型中
+        for (CartItem item : cart.getItems()) {
+            if (item.getProductId().equals(productId)) {
+                item.setQuantity(item.getQuantity() + quantity);
+                return;
+            }
+        }
+        cart.getItems().add(new CartItem(productId, quantity));
+    }
+}
+```
+
+**正確做法：充血模型**
+
+```java
+// 正確：業務邏輯在領域模型中
+public class ShoppingCartPure {
+    public void addProduct(ProductPure product, int quantity) {
+        // 業務邏輯在聚合內部
+        Optional<CartItemPure> existingItem = findItemByProductId(product.getId());
+        if (existingItem.isPresent()) {
+            existingItem.get().increaseQuantity(quantity);
+        } else {
+            this.items.add(CartItemPure.create(product, quantity));
+        }
+    }
+}
+```
+
+#### 2. 跨聚合直接引用
+
+```java
+// 錯誤：跨聚合直接引用
+public class OrderWrong {    private User user;              // 直接引用其他聚合
+    private ShoppingCart cart;      // 直接引用其他聚合
+    private List<Product> products; // 直接引用其他聚合
+}
+```
+
+**正確做法：通過 ID 引用**
+
+```java
+// 正確：只通過 ID 引用其他聚合
+public class OrderPure {
+    private UserId userId;                    // 只引用 ID
+    private ShoppingCartId sourceCartId;     // 只引用 ID  
+    private List<OrderItemPure> items;       // 聚合內部的值對象
+}
+```
+
+#### 3. 跨聚合事務
+
+```java
+// 錯誤：一個事務修改多個聚合
+@Transactional
+public void checkout(Long userId) {
+    // 修改購物車聚合
+    ShoppingCart cart = cartRepository.findByUserId(userId);
+    
+    // 修改訂單聚合
+    Order order = orderService.createOrder(cart);
+    
+    // 修改庫存聚合
+    inventoryService.reduceStock(order.getItems());
+    
+    // 一個事務涉及三個聚合，違反 DDD 原則
+}
+```
+
+**正確做法：使用領域事件**
+
+```java
+// 正確：只修改一個聚合，通過事件通知其他聚合
+@Transactional
+public void checkout(String token, CheckoutRequest request) {
+    // 只修改購物車聚合
+    ShoppingCartPure cart = getCartByToken(token);
+    
+    // 驗證並清空購物車
+    cart.validateForCheckout();
+    cart.clear();
+    shoppingCartRepository.save(cart);
+    
+    // 發出領域事件，其他聚合響應事件
+    domainEventPublisher.publish(new CartCheckedOutEvent(cart.getUserId(), cart.getItems()));
+}
+
+// 事件處理器處理跨聚合邏輯
+@EventHandler
+public void handle(CartCheckedOutEvent event) {
+    // 創建訂單（不同事務）
+    orderService.createOrderFromCart(event);
+    
+    // 更新庫存（不同事務）  
+    inventoryService.reduceStock(event.getItems());
+}
+```
+
+### 最佳實踐總結
+
+#### 1. 聚合設計原則
+
+- **小聚合**：聚合應該盡可能小，只包含必須一起變更的數據
+- **單一聚合根**：外部只能通過聚合根訪問聚合內部
+- **ID 引用**：聚合間只通過 ID 引用，避免對象引用
+- **事務邊界**：一個事務只修改一個聚合
+
+#### 2. 值對象設計原則
+
+- **不可變性**：值對象一旦創建就不能修改
+- **值語義**：相等性基於所有屬性值
+- **完整性**：包含完整的驗證邏輯
+- **表達性**：選擇有業務意義的名稱
+
+#### 3. Repository 設計原則
+
+- **面向聚合**：一個聚合對應一個 Repository
+- **集合語義**：提供類似內存集合的介面
+- **查詢封裝**：將複雜查詢邏輯封裝在 Repository 中
+- **技術無關**：介面不依賴具體的持久化技術
+
+#### 4. 應用服務設計原則
+
+- **薄層**：只做流程協調，不包含業務邏輯
+- **事務邊界**：管理事務的開始和結束
+- **異常轉換**：將領域異常轉換為應用異常
+- **DTO 轉換**：處理外部數據格式轉換
+
+---
+
+## 學習成果與收穫
+
+通過這個專案，我們深入實踐了 DDD 的核心概念：
+
+### 理論學習
+
+1. **戰略設計**：學會如何分析業務領域，劃分子領域和限界上下文
+2. **戰術設計**：掌握聚合、實體、值對象、Repository 等設計模式
+3. **分層架構**：理解每一層的職責和依賴關係
+4. **防腐層**：學會如何保護領域模型不被技術細節污染
+
+### 實踐技能
+
+1. **聚合設計**：能夠根據業務需求設計合適的聚合邊界
+2. **值對象運用**：善用值對象表達業務概念並封裝驗證邏輯
+3. **Repository 模式**：實作面向領域的數據訪問層
+4. **錯誤處理**：建立分層的異常處理機制
+
+### 🔍 深度思考
+
+1. **業務驅動**：始終以業務需求為出發點進行設計
+2. **邊界意識**：清楚每個組件的職責邊界
+3. **演化能力**：設計能夠應對未來變化的架構
+4. **測試友好**：良好的分離使得每一層都易於測試
+
+### 🚀 未來擴展
+
+這個專案為未來的擴展打下了良好基礎：
+
+1. **微服務化**：每個限界上下文可以演化為獨立的微服務
+2. **事件驅動**：可以引入更複雜的領域事件和事件溯源
+3. **CQRS**：可以將查詢和命令進一步分離
+4. **分散式系統**：可以應對更大規模的分散式場景
+
+---
+
+## 📖 參考資料與延伸閱讀
+
+### 📚 經典書籍
+
+1. **《領域驅動設計》** - Eric Evans (DDD 聖經)
+2. **《實現領域驅動設計》** - Vaughn Vernon  
+3. **《領域驅動設計精粹》** - Vaughn Vernon
+4. **《微服務設計》** - Sam Newman
+
+### 線上資源
+
+1. [DDD Community](https://github.com/ddd-crew)
+2. [Event Storming](https://www.eventstorming.com/)
+3. [Domain-Driven Design Reference](https://domainlanguage.com/ddd/reference/)
+
+### 實踐建議
+
+1. **從小開始**：先在小專案中練習 DDD 的核心概念
+2. **重構練習**：將現有的貧血模型重構為充血模型
+3. **團隊學習**：DDD 需要團隊共同理解和實踐
+4. **持續改進**：隨著對業務理解的加深，不斷優化領域模型
+
+---
+
+## 專案功能規劃與完成度
+
+本專案以 DDD 學習為主要目標，功能規劃適中且具有代表性。以下是完整的功能清單和實作狀態：
+
+### 核心功能模組
+
+#### 用戶管理模組
+- [x] 用戶註冊功能
+- [x] 用戶登入功能（JWT 認證）
+- [x] 用戶資料更新
+- [x] 密碼安全處理（加鹽雜湊）
+- [x] JWT 權限驗證中介軟體
+- [ ] 忘記密碼功能
+- [ ] 用戶等級管理（下忍、中忍、上忍等）
+- [ ] 用戶頭像上傳
+
+#### 商品管理模組
+- [x] 商品列表查詢
+- [x] 商品詳細資訊展示
+- [x] 商品分類系統
+- [x] 商品狀態管理（上架/下架）
+- [x] 商品庫存顯示
+- [ ] 商品搜尋功能
+- [ ] 商品評價系統
+- [ ] 商品圖片管理
+- [ ] 商品推薦機制
+
+#### 購物車模組
+- [x] 添加商品到購物車
+- [x] 更新購物車商品數量
+- [x] 移除購物車商品
+- [x] 清空購物車
+- [x] 購物車狀態持久化
+- [x] 跨會話購物車同步
+- [x] 購物車結帳功能
+- [ ] 購物車商品價格變動提醒
+- [ ] 購物車過期清理
+
+#### 訂單管理模組
+- [x] 基礎訂單創建（從購物車結帳）
+- [ ] 訂單狀態追蹤
+- [ ] 訂單歷史查詢
+- [ ] 訂單詳情查看
+- [ ] 訂單取消功能
+- [ ] 訂單退款處理
+- [ ] 訂單發貨通知
+- [ ] 訂單評價功能
+
+#### 支付管理模組
+- [x] 基礎支付流程（模擬）
+- [ ] 多種支付方式（信用卡、電子錢包等）
+- [ ] 支付狀態同步
+- [ ] 支付失敗處理
+- [ ] 退款處理
+- [ ] 支付記錄查詢
+
+#### 庫存管理模組
+- [x] 基礎庫存顯示
+- [ ] 實時庫存更新
+- [ ] 庫存不足提醒
+- [ ] 自動補貨機制
+- [ ] 供應商管理
+- [ ] 庫存異動記錄
+
+### 技術架構功能
+
+#### DDD 架構實作
+- [x] 四層架構設計（Interface, Application, Domain, Infrastructure）
+- [x] 聚合邊界劃分
+- [x] 值對象設計與實作
+- [x] Repository 模式實作
+- [x] 防腐層（Anti-Corruption Layer）實作
+- [x] 領域模型與基礎設施分離
+- [x] 應用服務協調模式
+- [ ] 領域事件發布與處理
+- [ ] CQRS 模式實作
+- [ ] 事件溯源（Event Sourcing）
+
+#### 安全與認證
+- [x] JWT 認證機制
+- [x] 密碼安全處理
+- [x] API 權限控制
+- [x] 全域異常處理
+- [ ] HTTPS 支援
+- [ ] API 限流機制
+- [ ] 敏感資料遮罩
+
+#### 數據持久化
+- [x] H2 內嵌資料庫配置
+- [x] JPA 實體映射
+- [x] 資料庫初始化腳本
+- [x] 領域模型與資料模型映射
+- [ ] 資料庫遷移腳本
+- [ ] 讀寫分離
+- [ ] 資料庫效能優化
+
+#### 測試與品質
+- [ ] 單元測試（Domain Layer）
+- [ ] 整合測試（Application Layer）
+- [ ] API 端對端測試
+- [ ] 測試覆蓋率報告
+- [ ] 靜態程式碼分析
+- [ ] 效能測試
+
+#### 運維與監控
+- [ ] 應用程式日誌
+- [ ] 效能監控
+- [ ] 健康檢查端點
+- [ ] Docker 容器化
+- [ ] CI/CD 流水線
+- [ ] 環境配置管理
+
+### 前端整合功能
+- [x] 使用者註冊頁面
+- [x] 使用者登入頁面
+- [x] 商品列表頁面
+- [x] 購物車管理頁面
+- [x] 基礎 RWD 響應式設計
+- [ ] 商品詳情頁面
+- [ ] 用戶個人資料頁面
+- [ ] 訂單管理頁面
+- [ ] 支付流程頁面
+
+### 專案特色與學習價值
+
+**已實現的 DDD 核心概念**：
+- ✅ **聚合設計**：清晰的聚合邊界和一致性保證
+- ✅ **值對象運用**：Money、ProductId 等強型別設計
+- ✅ **Repository 模式**：面向領域的資料訪問層
+- ✅ **分層架構**：嚴格的依賴方向控制
+- ✅ **防腐層保護**：Mapper 隔離技術細節
+
+**適合學習的規模**：
+- 功能複雜度適中，涵蓋典型電商核心流程
+- 程式碼量可控，容易理解和修改
+- 技術棧現代化，具有實際參考價值
+- 架構設計完整，展示 DDD 最佳實踐
+
+> **設計理念**：本專案的功能規劃以「展示 DDD 核心概念」為主要目標，而非追求功能的完整性。透過適度的功能實作，讓學習者能夠專注於理解 DDD 的設計思維和實作技巧，避免被過多的業務細節分散注意力。
+
+---
+
+> **重要提醒**：DDD 不是銀彈，它是一種思維方式。重要的是理解業務，將業務知識正確地映射到程式碼中，創造出既能滿足當前需求，又能應對未來變化的軟體系統。
+
+**感謝閱讀！希望這個專案能幫助你更好地理解和實踐 DDD 的核心概念。**
+          

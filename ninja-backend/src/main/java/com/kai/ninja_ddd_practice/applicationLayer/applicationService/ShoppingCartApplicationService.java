@@ -123,19 +123,21 @@ public class ShoppingCartApplicationService {
             Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
             
             if (cartOpt.isEmpty()) {
-                throw new IllegalArgumentException("Shopping cart not found for user: " + userId);
+                // 根據 DDD 原則：如果購物車不存在，我們應該優雅處理而不是拋出異常
+                log.info("No cart found for user {}, nothing to remove", userId);
+                return;
             }
             
             ShoppingCartPure cart = cartOpt.get();
             ProductId productIdObj = ProductId.of(productId);
             
-            // 3. 移除商品
+            // 3. 移除商品（聚合內部會處理商品不存在的情況）
             cart.removeProduct(productIdObj);
             
-            // 4. 保存購物車
+            // 4. 保存購物車（整個聚合作為事務邊界）
             shoppingCartRepository.save(cart);
             
-            log.info("Successfully removed product {} from cart for user {}", productId, userId);
+            log.info("Successfully processed remove product {} request for user {}", productId, userId);
             
         } catch (Exception e) {
             log.error("Error removing product {} from cart: {}", productId, e.getMessage(), e);
@@ -427,14 +429,17 @@ public class ShoppingCartApplicationService {
                         item.getQuantity(), 
                         item.getTotalPrice());
             });
-            
-            // 5. 創建訂單 (這裡簡化處理，實際應該調用訂單服務)
+              // 5. 創建訂單 (這裡簡化處理，實際應該調用訂單服務)
             // TODO: 在完整實作中，這裡應該：
             // - 驗證庫存是否足夠
             // - 創建訂單記錄
             // - 更新庫存
             // - 處理付款
             // - 發送確認通知
+            
+            // 根據 DDD 原則：結帳應該發出領域事件，讓其他聚合響應
+            // 例如：OrderCreatedEvent, InventoryUpdateRequestedEvent 等
+            // 這樣符合「一個處理流程應避免更新多個Aggregate」的原則
             
             log.info("Order created successfully for user {}", userId);
             
