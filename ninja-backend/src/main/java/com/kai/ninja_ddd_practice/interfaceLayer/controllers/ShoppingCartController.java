@@ -51,9 +51,7 @@ public class ShoppingCartController {
     public GetShoppingCartResponse getShoppingCart(@RequestHeader("Authorization") String token) {
         GetShoppingCartDto getShoppingCartDto = shoppingCartApplicationService.getShoppingCart(token);
         return ShoppingCartInterfaceLayerMapper.convertGetShoppingCartDtoToResponse(getShoppingCartDto);
-    }
-
-    @PutMapping("/update-cart-item-quantity")
+    }    @PutMapping("/update-cart-item-quantity")
     @Operation(
             summary = "Update cart item quantity",
             description = "Update cart item quantity",
@@ -62,9 +60,10 @@ public class ShoppingCartController {
     )
     @AuthorizationValidation
     public void updateCartItemQuantity(
+            @RequestHeader("Authorization") String token,
             @RequestBody UpdaateCartItemQuantityRequest updaateCartItemQuantityRequest) {
         UpdateCartItemQuantityDto updateCartItemQuantityDto = ShoppingCartInterfaceLayerMapper.convertUpdateCartItemQuantityRequestToDto(updaateCartItemQuantityRequest);
-        shoppingCartApplicationService.updateCartItemQuantity(updateCartItemQuantityDto);
+        shoppingCartApplicationService.updateCartItemQuantity(token, updateCartItemQuantityDto);
     }
 
     @DeleteMapping("/remove-cart-item/{cartItemId}")
@@ -73,13 +72,11 @@ public class ShoppingCartController {
             description = "Remove cart item",
             tags = {"shopping-cart"},
             security = @SecurityRequirement(name = "Authorized")
-    )
-    @AuthorizationValidation
-    public void removeCartItem( @PathVariable Long cartItemId) {
-        shoppingCartApplicationService.removeCartItem(cartItemId);
-    }
-
-    @PostMapping("/checkout")
+    )    @AuthorizationValidation
+    public void removeCartItem(@RequestHeader("Authorization") String token, 
+                              @PathVariable Long cartItemId) {
+        shoppingCartApplicationService.removeCartItem(token, cartItemId);
+    }    @PostMapping("/checkout")
     @Operation(
             summary = "Checkout",
             description = "Checkout",
@@ -90,6 +87,18 @@ public class ShoppingCartController {
     public void checkout(@RequestHeader("Authorization") String token, @RequestBody CheckoutRequest checkoutRequest) {
 //        CheckoutDto checkoutDto = ShoppingCartInterfaceLayerMapper.convertCheckoutRequestToDto(checkoutRequest);
         shoppingCartApplicationService.checkout(token, checkoutRequest);
+    }
+
+    @DeleteMapping("/clear")
+    @Operation(
+            summary = "Clear shopping cart",
+            description = "Clear all items from shopping cart",
+            tags = {"shopping-cart"},
+            security = @SecurityRequirement(name = "Authorized")
+    )
+    @AuthorizationValidation
+    public void clearCart(@RequestHeader("Authorization") String token) {
+        shoppingCartApplicationService.clearCart(token);
     }
 
 }
