@@ -117,28 +117,616 @@ graph TD
 - **方式**：參與者自由發揮，將想到的事件寫在橘色便利貼上
 - **命名規則**：使用過去式，例如「用戶已註冊」、「商品已添加到購物車」
 
+```mermaid
+flowchart TD
+  %% 定義統一的樣式
+  classDef eventStyle fill:#FFA500,stroke:#FF8C00,stroke-width:2px,color:#000,font-weight:bold
+  %% 用戶管理事件組
+  subgraph UserEvents ["用戶管理事件"]
+    direction LR
+    E1["用戶已註冊"]:::eventStyle
+    E2["用戶已登入"]:::eventStyle 
+    E3["用戶已登出"]:::eventStyle
+    E4["用戶資料已更新"]:::eventStyle
+  end
+
+  %% 商品管理事件組
+  subgraph ProductEvents ["商品管理事件"]
+    direction LR
+    E5["商品已新增"]:::eventStyle
+    E6["商品資訊已更新"]:::eventStyle
+    E7["商品已下架"]:::eventStyle
+  end
+
+  %% 購物車事件組
+  subgraph CartEvents ["購物車事件"]
+    direction LR
+    E8["商品已加入購物車"]:::eventStyle
+    E9["購物車項目數量已更新"]:::eventStyle
+    E10["購物車項目已移除"]:::eventStyle
+    E11["購物車已清空"]:::eventStyle
+    E12["購物車已持久化"]:::eventStyle
+  end
+
+  %% 訂單事件組
+  subgraph OrderEvents ["訂單事件"]
+    direction LR
+    E13["訂單已建立"]:::eventStyle
+    E14["訂單已取消"]:::eventStyle
+    E15["訂單狀態已更新"]:::eventStyle
+    E23["出貨已安排"]:::eventStyle
+  end
+
+  %% 庫存事件組
+  subgraph InventoryEvents ["庫存事件"]
+    direction LR
+    E16["庫存已預留"]:::eventStyle
+    E17["庫存已扣除"]:::eventStyle
+    E18["庫存已補充"]:::eventStyle
+    E19["庫存不足警告已發出"]:::eventStyle
+  end
+
+  %% 付款事件組
+  subgraph PaymentEvents ["付款事件"]
+    direction LR
+    E20["付款已處理"]:::eventStyle
+    E21["付款已失敗"]:::eventStyle
+    E22["付款已退款"]:::eventStyle
+  end
+  %% 分組樣式定義
+  style UserEvents fill:#E6F3FF,stroke:#4A90E2,stroke-width:2px,color:#000
+  style ProductEvents fill:#FFF2E6,stroke:#F5A623,stroke-width:2px,color:#000
+  style CartEvents fill:#E6FFE6,stroke:#7ED321,stroke-width:2px,color:#000
+  style OrderEvents fill:#FFE6F3,stroke:#D0021B,stroke-width:2px,color:#000
+  style InventoryEvents fill:#F3E6FF,stroke:#9013FE,stroke-width:2px,color:#000
+  style PaymentEvents fill:#FFFAE6,stroke:#F8E71C,stroke-width:2px,color:#000
+```
+
 **第二步：建立時間線**
 - **目標**：將事件按照時間順序排列
 - **方式**：團隊討論，將便利貼貼在白板上按時間線排序
 - **注意**：可能會有並行流程和分支
+
+```mermaid
+flowchart TD
+  %% 定義樣式
+  classDef eventStyle fill:#FFA500,stroke:#FF8C00,stroke-width:2px,color:#000,font-weight:bold
+  classDef primaryFlow stroke:#2196F3,stroke-width:3px
+  classDef parallelFlow stroke:#FF9800,stroke-width:2px,stroke-dasharray: 5 5
+
+  %% 主要業務流程（縱向主線）
+  E1["用戶已註冊"]:::eventStyle
+  E2["用戶已登入"]:::eventStyle
+  E8["商品已加入購物車"]:::eventStyle
+  E13["訂單已建立"]:::eventStyle
+  E16["庫存已預留"]:::eventStyle
+  E17["庫存已扣除"]:::eventStyle
+  E20["付款已處理"]:::eventStyle
+  E23["出貨已安排"]:::eventStyle
+
+  %% 主流程連接
+  E1 --> E2 --> E8 --> E13 --> E16 --> E17 --> E20 --> E23
+  %% 購物車相關並行流程
+  subgraph CartOperations ["購物車操作（並行）"]
+    direction LR
+    E9["購物車項目數量已更新"]:::eventStyle
+    E10["購物車項目已移除"]:::eventStyle
+    E11["購物車已清空"]:::eventStyle
+    E12["購物車已持久化"]:::eventStyle
+  end
+
+  %% 訂單相關並行流程
+  subgraph OrderOperations ["訂單操作（並行）"]
+    direction LR
+    E14["訂單已取消"]:::eventStyle
+    E15["訂單狀態已更新"]:::eventStyle
+  end
+
+  %% 付款相關並行流程
+  subgraph PaymentOperations ["付款操作（並行）"]
+    direction LR
+    E21["付款已失敗"]:::eventStyle
+    E22["付款已退款"]:::eventStyle
+  end
+
+  %% 庫存管理並行流程
+  subgraph InventoryOperations ["庫存管理（並行）"]
+    direction LR
+    E18["庫存已補充"]:::eventStyle
+    E19["庫存不足警告已發出"]:::eventStyle
+  end
+
+  %% 商品管理並行流程
+  subgraph ProductOperations ["商品管理（並行）"]
+    direction LR
+    E5["商品已新增"]:::eventStyle
+    E6["商品資訊已更新"]:::eventStyle
+    E7["商品已下架"]:::eventStyle
+  end
+
+  %% 用戶其他操作
+  subgraph UserOperations ["用戶其他操作（並行）"]
+    direction LR
+    E3["用戶已登出"]:::eventStyle
+    E4["用戶資料已更新"]:::eventStyle
+  end
+
+  %% 並行流程連接（虛線表示）
+  E8 -.-> CartOperations
+  E13 -.-> OrderOperations
+  E13 -.-> PaymentOperations
+  E17 -.-> InventoryOperations
+  E2 -.-> UserOperations
+  E5 -.-> ProductOperations
+
+  %% 異常處理流程
+  E21 -.-> E22
+  E17 -.-> E18
+  E17 -.-> E19
+  %% 分組樣式
+  style CartOperations fill:#E6FFE6,stroke:#7ED321,stroke-width:2px,color:#000
+  style OrderOperations fill:#FFE6F3,stroke:#D0021B,stroke-width:2px,color:#000
+  style PaymentOperations fill:#FFFAE6,stroke:#F8E71C,stroke-width:2px,color:#000
+  style InventoryOperations fill:#F3E6FF,stroke:#9013FE,stroke-width:2px,color:#000
+  style ProductOperations fill:#FFF2E6,stroke:#F5A623,stroke-width:2px,color:#000
+  style UserOperations fill:#E6F3FF,stroke:#4A90E2,stroke-width:2px,color:#000
+```
 
 **第三步：添加命令 (藍色便利貼)**
 - **目標**：識別觸發事件的用戶意圖或系統操作
 - **方式**：在每個事件前面放置對應的命令
 - **命名規則**：使用動詞，例如「註冊用戶」、「添加到購物車」
 
+```mermaid
+flowchart LR
+  %% 定義樣式
+  classDef commandStyle fill:#87CEFA,stroke:#4682B4,stroke-width:2px,color:#000,font-weight:bold
+  classDef eventStyle fill:#FFA500,stroke:#FF8C00,stroke-width:2px,color:#000,font-weight:bold
+  classDef flowLine stroke:#2196F3,stroke-width:3px
+  classDef eventFlow stroke:#FF9800,stroke-width:2px,stroke-dasharray: 3 3
+  %% 用戶管理流程
+  subgraph UserFlow ["用戶管理流程"]
+    direction TB
+    C1["註冊用戶"]:::commandStyle --> E1["用戶已註冊"]:::eventStyle
+    C2["登入系統"]:::commandStyle --> E2["用戶已登入"]:::eventStyle
+    C3["登出系統"]:::commandStyle --> E3["用戶已登出"]:::eventStyle
+    C4["更新用戶資料"]:::commandStyle --> E4["用戶資料已更新"]:::eventStyle
+  end
+
+  %% 商品管理流程
+  subgraph ProductFlow ["商品管理流程"]
+    direction TB
+    C5["新增商品"]:::commandStyle --> E5["商品已新增"]:::eventStyle
+    C6["更新商品資訊"]:::commandStyle --> E6["商品資訊已更新"]:::eventStyle
+    C7["下架商品"]:::commandStyle --> E7["商品已下架"]:::eventStyle
+  end
+
+  %% 購物車管理流程
+  subgraph CartFlow ["購物車管理流程"]
+    direction TB
+    C8["添加到購物車"]:::commandStyle --> E8["商品已加入購物車"]:::eventStyle
+    C9["更新購物車項目數量"]:::commandStyle --> E9["購物車項目數量已更新"]:::eventStyle
+    C10["移除購物車項目"]:::commandStyle --> E10["購物車項目已移除"]:::eventStyle
+    C11["清空購物車"]:::commandStyle --> E11["購物車已清空"]:::eventStyle
+    C12["持久化購物車"]:::commandStyle --> E12["購物車已持久化"]:::eventStyle
+  end
+
+  %% 訂單管理流程
+  subgraph OrderFlow ["訂單管理流程"]
+    direction TB
+    C13["提交訂單"]:::commandStyle --> E13["訂單已建立"]:::eventStyle
+    C14["取消訂單"]:::commandStyle --> E14["訂單已取消"]:::eventStyle
+    C15["更新訂單狀態"]:::commandStyle --> E15["訂單狀態已更新"]:::eventStyle
+    C23["安排出貨"]:::commandStyle --> E23["出貨已安排"]:::eventStyle
+  end
+
+  %% 庫存管理流程
+  subgraph InventoryFlow ["庫存管理流程"]
+    direction TB
+    C16["預留庫存"]:::commandStyle --> E16["庫存已預留"]:::eventStyle
+    C17["扣除庫存"]:::commandStyle --> E17["庫存已扣除"]:::eventStyle
+    C18["補充庫存"]:::commandStyle --> E18["庫存已補充"]:::eventStyle
+    C19["檢查庫存不足"]:::commandStyle --> E19["庫存不足警告已發出"]:::eventStyle
+  end
+
+  %% 付款管理流程
+  subgraph PaymentFlow ["付款管理流程"]
+    direction TB
+    C20["處理付款"]:::commandStyle --> E20["付款已處理"]:::eventStyle
+    C21["付款失敗處理"]:::commandStyle --> E21["付款已失敗"]:::eventStyle
+    C22["處理退款"]:::commandStyle --> E22["付款已退款"]:::eventStyle
+  end
+
+  %% 跨流程事件驅動通信（虛線表示）
+  E1 -.->|觸發| C2
+  E2 -.->|觸發| C8
+  E8 -.->|觸發| C13
+  E13 -.->|觸發| C16
+  E16 -.->|觸發| C17
+  E13 -.->|觸發| C20
+  E20 -.->|觸發| C23
+  E21 -.->|觸發| C22
+  E17 -.->|觸發| C18
+  E17 -.->|觸發| C19
+  %% 分組樣式
+  style UserFlow fill:#E6F3FF,stroke:#4A90E2,stroke-width:2px,color:#000
+  style ProductFlow fill:#FFF2E6,stroke:#F5A623,stroke-width:2px,color:#000
+  style CartFlow fill:#E6FFE6,stroke:#7ED321,stroke-width:2px,color:#000
+  style OrderFlow fill:#FFE6F3,stroke:#D0021B,stroke-width:2px,color:#000
+  style InventoryFlow fill:#F3E6FF,stroke:#9013FE,stroke-width:2px,color:#000
+  style PaymentFlow fill:#FFFAE6,stroke:#F8E71C,stroke-width:2px,color:#000
+```
+
 **第四步：識別聚合 (黃色便利貼)**
 - **目標**：找出處理命令和產生事件的業務概念
 - **方式**：將相關的命令和事件群組化，識別負責處理的聚合
 - **原則**：一個聚合負責一組相關的業務邏輯
 
+```mermaid
+graph TB
+  %% ==== 聚合（黃色） ==== 
+  style A1 fill:#FFFF66,color:#000
+  style A2 fill:#FFFF66,color:#000
+  style A3 fill:#FFFF66,color:#000
+  style A4 fill:#FFFF66,color:#000
+  style A5 fill:#FFFF66,color:#000
+  style A6 fill:#FFFF66,color:#000
+
+  %% ==== 命令（藍色） ==== 
+  style C1 fill:#87CEFA,color:#000
+  style C2 fill:#87CEFA,color:#000
+  style C3 fill:#87CEFA,color:#000
+  style C4 fill:#87CEFA,color:#000
+  style C5 fill:#87CEFA,color:#000
+  style C6 fill:#87CEFA,color:#000
+  style C7 fill:#87CEFA,color:#000
+  style C8 fill:#87CEFA,color:#000
+  style C9 fill:#87CEFA,color:#000
+  style C10 fill:#87CEFA,color:#000
+  style C11 fill:#87CEFA,color:#000
+  style C12 fill:#87CEFA,color:#000
+  style C13 fill:#87CEFA,color:#000
+  style C14 fill:#87CEFA,color:#000
+  style C15 fill:#87CEFA,color:#000
+  style C16 fill:#87CEFA,color:#000
+  style C17 fill:#87CEFA,color:#000
+  style C18 fill:#87CEFA,color:#000
+  style C19 fill:#87CEFA,color:#000
+  style C20 fill:#87CEFA,color:#000
+  style C21 fill:#87CEFA,color:#000
+  style C22 fill:#87CEFA,color:#000
+  style C23 fill:#87CEFA,color:#000
+
+  %% ==== 事件（橘色） ==== 
+  style E1 fill:#FFA500,color:#000
+  style E2 fill:#FFA500,color:#000
+  style E3 fill:#FFA500,color:#000
+  style E4 fill:#FFA500,color:#000
+  style E5 fill:#FFA500,color:#000
+  style E6 fill:#FFA500,color:#000
+  style E7 fill:#FFA500,color:#000
+  style E8 fill:#FFA500,color:#000
+  style E9 fill:#FFA500,color:#000
+  style E10 fill:#FFA500,color:#000
+  style E11 fill:#FFA500,color:#000
+  style E12 fill:#FFA500,color:#000
+  style E13 fill:#FFA500,color:#000
+  style E14 fill:#FFA500,color:#000
+  style E15 fill:#FFA500,color:#000
+  style E16 fill:#FFA500,color:#000
+  style E17 fill:#FFA500,color:#000
+  style E18 fill:#FFA500,color:#000
+  style E19 fill:#FFA500,color:#000
+  style E20 fill:#FFA500,color:#000
+  style E21 fill:#FFA500,color:#000
+  style E22 fill:#FFA500,color:#000
+  style E23 fill:#FFA500,color:#000
+
+  %% ==== 聚合定義 ==== 
+  A1[User 聚合]
+  A2[Product 聚合]
+  A3[ShoppingCart 聚合]
+  A4[Order 聚合]
+  A5[Inventory 聚合]
+  A6[Payment 聚合]
+
+  %% ==== User 聚合的責任 ==== 
+  A1 --> C1[註冊用戶] --> E1[用戶已註冊]
+  A1 --> C2[登入系統] --> E2[用戶已登入]
+  A1 --> C3[登出系統] --> E3[用戶已登出]
+  A1 --> C4[更新用戶資料] --> E4[用戶資料已更新]
+
+  %% ==== Product 聚合的責任 ==== 
+  A2 --> C5[新增商品] --> E5[商品已新增]
+  A2 --> C6[更新商品資訊] --> E6[商品資訊已更新]
+  A2 --> C7[下架商品] --> E7[商品已下架]
+
+  %% ==== ShoppingCart 聚合的責任 ==== 
+  A3 --> C8[添加到購物車] --> E8[商品已加入購物車]
+  A3 --> C9[更新購物車項目數量] --> E9[購物車項目數量已更新]
+  A3 --> C10[移除購物車項目] --> E10[購物車項目已移除]
+  A3 --> C11[清空購物車] --> E11[購物車已清空]
+  A3 --> C12[持久化購物車] --> E12[購物車已持久化]
+
+  %% ==== Order 聚合的責任 ==== 
+  A4 --> C13[提交訂單] --> E13[訂單已建立]
+  A4 --> C14[取消訂單] --> E14[訂單已取消]
+  A4 --> C15[更新訂單狀態] --> E15[訂單狀態已更新]
+  A4 --> C23[安排出貨] --> E23[出貨已安排]
+
+  %% ==== Inventory 聚合的責任 ==== 
+  A5 --> C16[預留庫存] --> E16[庫存已預留]
+  A5 --> C17[扣除庫存] --> E17[庫存已扣除]
+  A5 --> C18[補充庫存] --> E18[庫存已補充]
+  A5 --> C19[檢查庫存不足] --> E19[庫存不足警告已發出]
+
+  %% ==== Payment 聚合的責任 ==== 
+  A6 --> C20[處理付款] --> E20[付款已處理]
+  A6 --> C21[付款失敗處理] --> E21[付款已失敗]
+  A6 --> C22[處理退款] --> E22[付款已退款]
+
+  %% ==== 跨聚合事件驅動通信（虛線表示） ==== 
+  E1 -.-> C2
+  E2 -.-> C8
+  E8 -.-> C13
+  E13 -.-> C16
+  E16 -.-> C17
+  E13 -.-> C20
+  E20 -.-> C23
+  E21 -.-> C22
+  E17 -.-> C18
+  E17 -.-> C19
+```
+
 **第五步：找出閱讀模型 (綠色便利貼)**
 - **目標**：識別用戶需要查看的數據視圖
 - **方式**：討論用戶在執行命令前需要看到什麼資訊
 
+**前台用戶操作場景**
+
+```mermaid
+flowchart TD
+  %% 定義樣式
+  classDef readModelStyle fill:#90EE90,stroke:#32CD32,stroke-width:2px,color:#000,font-weight:bold
+  classDef commandStyle fill:#87CEFA,stroke:#4682B4,stroke-width:2px,color:#000,font-weight:bold
+  
+  %% 用戶與商品瀏覽場景
+  subgraph UserContext ["用戶管理場景"]
+    direction TB
+    R1["用戶資料 ReadModel<br/>（顯示：姓名、等級、積分）"]:::readModelStyle
+    R2["登入狀態 ReadModel<br/>（顯示：是否登入、權限）"]:::readModelStyle
+    
+    R1 --> C2["登入系統"]:::commandStyle
+    R1 --> C4["更新用戶資料"]:::commandStyle
+    R2 --> C3["登出系統"]:::commandStyle
+  end
+
+  subgraph ProductContext ["商品瀏覽場景"]
+    direction TB
+    R3["商品列表 ReadModel<br/>（顯示：商品名稱、價格、庫存）"]:::readModelStyle
+    R4["商品詳情 ReadModel<br/>（顯示：詳細描述、規格、評價）"]:::readModelStyle
+    
+    R3 --> C8["添加到購物車"]:::commandStyle
+    R4 --> C8
+  end
+  
+  %% 分組樣式
+  style UserContext fill:#E6F3FF,stroke:#4A90E2,stroke-width:2px,color:#000
+  style ProductContext fill:#FFF2E6,stroke:#F5A623,stroke-width:2px,color:#000
+```
+
+**購物車與訂單管理場景**
+
+```mermaid
+flowchart TD
+  %% 定義樣式
+  classDef readModelStyle fill:#90EE90,stroke:#32CD32,stroke-width:2px,color:#000,font-weight:bold
+  classDef commandStyle fill:#87CEFA,stroke:#4682B4,stroke-width:2px,color:#000,font-weight:bold
+  
+  %% 購物車場景
+  subgraph CartContext ["購物車場景"]
+    direction TB
+    R6["購物車內容 ReadModel<br/>（顯示：商品列表、數量、單價）"]:::readModelStyle
+    R7["購物車統計 ReadModel<br/>（顯示：總金額、總數量、優惠）"]:::readModelStyle
+    
+    R6 --> C9["更新購物車項目數量"]:::commandStyle
+    R6 --> C10["移除購物車項目"]:::commandStyle
+    R6 --> C11["清空購物車"]:::commandStyle
+    R7 --> C13["提交訂單"]:::commandStyle
+  end
+
+  %% 訂單管理場景
+  subgraph OrderContext ["訂單管理場景"]
+    direction TB
+    R8["訂單列表 ReadModel<br/>（顯示：訂單號、狀態、金額）"]:::readModelStyle
+    R9["訂單詳情 ReadModel<br/>（顯示：商品明細、配送資訊）"]:::readModelStyle
+    
+    R8 --> C14["取消訂單"]:::commandStyle
+    R8 --> C15["更新訂單狀態"]:::commandStyle
+    R9 --> C14
+    R9 --> C15
+  end
+  
+  %% 分組樣式
+  style CartContext fill:#E6FFE6,stroke:#7ED321,stroke-width:2px,color:#000
+  style OrderContext fill:#FFE6F3,stroke:#D0021B,stroke-width:2px,color:#000
+```
+
+**系統管理場景**
+
+```mermaid
+flowchart TD
+  %% 定義樣式
+  classDef readModelStyle fill:#90EE90,stroke:#32CD32,stroke-width:2px,color:#000,font-weight:bold
+  classDef commandStyle fill:#87CEFA,stroke:#4682B4,stroke-width:2px,color:#000,font-weight:bold
+  
+  %% 付款與庫存場景
+  subgraph PaymentContext ["付款場景"]
+    direction TB
+    R12["付款選項 ReadModel<br/>（顯示：付款方式、手續費、折扣）"]:::readModelStyle
+    
+    R12 --> C20["處理付款"]:::commandStyle
+  end
+
+  subgraph InventoryContext ["庫存管理場景"]
+    direction TB
+    R11["庫存警告 ReadModel<br/>（顯示：低庫存商品、補貨建議）"]:::readModelStyle
+    R10["庫存狀態 ReadModel<br/>（顯示：可購買數量、預估到貨）"]:::readModelStyle
+    
+    R11 --> C18["補充庫存"]:::commandStyle
+    R11 --> C19["檢查庫存不足"]:::commandStyle
+    R10 --> C8["添加到購物車"]:::commandStyle
+  end
+  
+  %% 分組樣式
+  style PaymentContext fill:#FFFAE6,stroke:#F8E71C,stroke-width:2px,color:#000
+  style InventoryContext fill:#F3E6FF,stroke:#9013FE,stroke-width:2px,color:#000
+```
+
 **第六步：劃分限界上下文 (粉紅色便利貼)**
 - **目標**：將聚合按照業務邊界分組
 - **方式**：討論哪些聚合應該在同一個上下文中
+
+```mermaid
+graph TB
+
+  %% ==== 聚合（黃色） ==== 
+  style A1 fill:#FFFF66,color:#000
+  style A2 fill:#FFFF66,color:#000
+  style A3 fill:#FFFF66,color:#000
+  style A4 fill:#FFFF66,color:#000
+  style A5 fill:#FFFF66,color:#000
+  style A6 fill:#FFFF66,color:#000
+
+  A1[User 聚合]
+  A2[Product 聚合]
+  A3[ShoppingCart 聚合]
+  A4[Order 聚合]
+  A5[Inventory 聚合]
+  A6[Payment 聚合]
+
+  %% ==== ReadModel（綠色） ==== 
+  style R1 fill:#90EE90,color:#000
+  style R2 fill:#90EE90,color:#000
+  style R3 fill:#90EE90,color:#000
+  style R4 fill:#90EE90,color:#000
+  style R5 fill:#90EE90,color:#000
+  style R6 fill:#90EE90,color:#000
+  style R7 fill:#90EE90,color:#000
+  style R8 fill:#90EE90,color:#000
+  style R9 fill:#90EE90,color:#000
+  style R10 fill:#90EE90,color:#000
+  style R11 fill:#90EE90,color:#000
+  style R12 fill:#90EE90,color:#000
+
+  R1[用戶資料 ReadModel]
+  R2[登入狀態 ReadModel]
+  R3[商品列表 ReadModel]
+  R4[商品詳情 ReadModel]
+  R5[商品分類 ReadModel]
+  R6[購物車內容 ReadModel]
+  R7[購物車統計 ReadModel]
+  R8[訂單列表 ReadModel]
+  R9[訂單詳情 ReadModel]
+  R10[庫存狀態 ReadModel]
+  R11[庫存警告 ReadModel]
+  R12[付款選項 ReadModel]
+
+  %% ==== 限界上下文（分組顯示） ==== 
+  subgraph UserManagementContext ["使用者管理上下文 (User Management Context)"]
+    direction TB
+    A1
+    R1
+    R2
+  end
+
+  subgraph ProductCatalogContext ["商品目錄上下文 (Product Catalog Context)"]
+    direction TB
+    A2
+    A5
+    R3
+    R4
+    R5
+    R10
+    R11
+  end
+
+  subgraph ShoppingCartContext ["購物車上下文 (Shopping Cart Context)"]
+    direction TB
+    A3
+    R6
+    R7
+  end
+
+  subgraph OrderManagementContext ["訂單管理上下文 (Order Management Context)"]
+    direction TB
+    A4
+    R8
+    R9
+  end
+
+  subgraph PaymentContext ["付款上下文 (Payment Context)"]
+    direction TB
+    A6
+    R12
+  end
+
+  %% ==== 跨限界上下文的事件驅動通信（虛線） ==== 
+  UserManagementContext -.->|用戶已登入| ShoppingCartContext
+  ProductCatalogContext -.->|商品已新增| ShoppingCartContext
+  ShoppingCartContext -.->|購物車已提交| OrderManagementContext
+  OrderManagementContext -.->|訂單已建立| ProductCatalogContext
+  OrderManagementContext -.->|訂單已建立| PaymentContext
+  ProductCatalogContext -.->|庫存已扣除| OrderManagementContext
+  PaymentContext -.->|付款已處理| OrderManagementContext
+  %% ==== 上下文職責說明 ==== 
+  classDef contextStyle fill:#FFE4E6,stroke:#333,stroke-width:2px,color:#000
+
+  UserManagementContext:::contextStyle
+  ProductCatalogContext:::contextStyle
+  ShoppingCartContext:::contextStyle
+  OrderManagementContext:::contextStyle
+  PaymentContext:::contextStyle
+  
+  %% 確保 subgraph 標題為黑色
+  style UserManagementContext color:#000
+  style ProductCatalogContext color:#000
+  style ShoppingCartContext color:#000
+  style OrderManagementContext color:#000
+  style PaymentContext color:#000
+```
+
+#### 限界上下文劃分原則與說明
+
+**使用者管理上下文 (User Management Context)**
+- **職責**：用戶註冊、登入、身份驗證、資料管理
+- **聚合**：User 聚合
+- **ReadModel**：用戶資料、登入狀態
+- **邊界理由**：用戶管理是獨立的業務能力，與其他業務邏輯關聯較少
+
+**商品目錄上下文 (Product Catalog Context)**
+- **職責**：商品資訊管理、庫存管理、商品分類
+- **聚合**：Product 聚合、Inventory 聚合
+- **ReadModel**：商品列表、商品詳情、商品分類、庫存狀態、庫存警告
+- **邊界理由**：商品與庫存密切相關，且共同服務於商品展示與管理
+
+**購物車上下文 (Shopping Cart Context)**
+- **職責**：購物車狀態管理、購物車持久化
+- **聚合**：ShoppingCart 聚合
+- **ReadModel**：購物車內容、購物車統計
+- **邊界理由**：購物車是核心業務邏輯，具有獨特的狀態管理需求
+
+**訂單管理上下文 (Order Management Context)**
+- **職責**：訂單創建、狀態跟蹤、出貨安排
+- **聚合**：Order 聚合
+- **ReadModel**：訂單列表、訂單詳情
+- **邊界理由**：訂單管理涉及複雜的狀態變化和業務流程
+
+**付款上下文 (Payment Context)**
+- **職責**：付款處理、退款、付款狀態管理
+- **聚合**：Payment 聚合  
+- **ReadModel**：付款選項
+- **邊界理由**：付款邏輯複雜且可能整合外部服務，獨立上下文便於管理
 
 #### 本專案事件風暴模擬
 
@@ -148,62 +736,85 @@ graph TD
 - **架構師**：「需要考慮高併發下的庫存一致性問題」
 - **開發人員**：「購物車數據如何持久化？用戶離線後再上線購物車還在嗎？」
 
-**事件風暴過程記錄**
-
-```mermaid
-graph LR
-    subgraph "用戶管理流程"
-    A1[註冊用戶] --> B1[用戶已註冊]
-    C1[登入系統] --> D1[用戶已登入]
-    end
-    
-    subgraph "購物流程"
-    E1[瀏覽商品] --> F1[商品已展示]
-    G1[添加到購物車] --> H1[商品已添加到購物車]
-    I1[更新數量] --> J1[購物車已更新]
-    K1[移除商品] --> L1[商品已從購物車移除]
-    end
-    
-    subgraph "訂單流程"
-    M1[結帳] --> N1[訂單已創建]
-    O1[支付] --> P1[支付已完成]
-    Q1[發貨] --> R1[訂單已發貨]
-    end
-```
-
 **討論重點記錄**
 1. **產品經理**：「用戶可以不登入就瀏覽商品，但必須登入才能加入購物車」
 2. **領域專家**：「購物車應該在用戶登入時自動載入之前的商品」
 3. **架構師**：「購物車和訂單是不同的概念，結帳時從購物車創建訂單」
 4. **開發人員**：「需要考慮用戶在多個設備上的購物車同步問題」
+5. **領域專家**：「庫存扣減必須在訂單確認時進行，不能在加入購物車時扣減」
+6. **架構師**：「不同聚合間的通信應該通過領域事件進行，避免直接調用」
 
 #### 我們的事件風暴結果
 
-**領域事件 (Domain Events) - 橘色便利貼**
+**完整的領域事件識別**
 ```
-用戶已註冊 → 用戶已登入 → 商品已瀏覽 → 商品已添加到購物車 → 購物車數量已更新 
-→ 商品已從購物車移除 → 購物車已清空 → 訂單已創建 → 支付已完成 → 庫存已更新 → 訂單已發貨
+用戶管理事件：
+- 用戶已註冊 → 用戶已登入 → 用戶已登出 → 用戶資料已更新
+
+商品管理事件：
+- 商品已新增 → 商品資訊已更新 → 商品已下架
+
+購物車事件：
+- 商品已加入購物車 → 購物車項目數量已更新 → 購物車項目已移除 → 購物車已清空 → 購物車已持久化
+
+訂單事件：
+- 訂單已建立 → 訂單已取消 → 訂單狀態已更新 → 出貨已安排
+
+庫存事件：
+- 庫存已預留 → 庫存已扣除 → 庫存已補充 → 庫存不足警告已發出
+
+付款事件：
+- 付款已處理 → 付款已失敗 → 付款已退款
 ```
 
-**命令 (Commands) - 藍色便利貼**
+**對應的命令識別**
 ```
-註冊用戶 → 登入系統 → 瀏覽商品 → 添加商品到購物車 → 更新購物車數量 
-→ 移除購物車商品 → 清空購物車 → 結帳 → 處理支付 → 更新庫存 → 發貨
+用戶管理命令：
+- 註冊用戶 → 登入系統 → 登出系統 → 更新用戶資料
+
+商品管理命令：
+- 新增商品 → 更新商品資訊 → 下架商品
+
+購物車命令：
+- 添加到購物車 → 更新購物車項目數量 → 移除購物車項目 → 清空購物車 → 持久化購物車
+
+訂單命令：
+- 提交訂單 → 取消訂單 → 更新訂單狀態 → 安排出貨
+
+庫存命令：
+- 預留庫存 → 扣除庫存 → 補充庫存 → 檢查庫存不足
+
+付款命令：
+- 處理付款 → 付款失敗處理 → 處理退款
 ```
 
-**聚合 (Aggregates) - 黃色便利貼**
+**聚合設計結果**
 ```
-User聚合 → Product聚合 → ShoppingCart聚合 → Order聚合 → Inventory聚合
+- User 聚合：負責用戶身份與資料管理
+- Product 聚合：負責商品資訊管理
+- ShoppingCart 聚合：負責購物車狀態管理（核心聚合）
+- Order 聚合：負責訂單生命週期管理（核心聚合）
+- Inventory 聚合：負責庫存狀態管理
+- Payment 聚合：負責付款處理
 ```
 
-**閱讀模型 (Read Models) - 綠色便利貼**
+**ReadModel 視圖設計**
 ```
-用戶資訊視圖 → 商品列表視圖 → 商品詳情視圖 → 購物車視圖 → 訂單歷史視圖
+- 用戶資料 ReadModel、登入狀態 ReadModel
+- 商品列表 ReadModel、商品詳情 ReadModel、商品分類 ReadModel
+- 購物車內容 ReadModel、購物車統計 ReadModel
+- 訂單列表 ReadModel、訂單詳情 ReadModel
+- 庫存狀態 ReadModel、庫存警告 ReadModel
+- 付款選項 ReadModel
 ```
 
-**限界上下文 (Bounded Contexts) - 粉紅色便利貼**
+**限界上下文劃分結果**
 ```
-用戶管理上下文 → 商品目錄上下文 → 購物車上下文 → 訂單處理上下文 → 庫存管理上下文
+- 使用者管理上下文：User 聚合 + 相關 ReadModel
+- 商品目錄上下文：Product 聚合 + Inventory 聚合 + 相關 ReadModel
+- 購物車上下文：ShoppingCart 聚合 + 相關 ReadModel
+- 訂單管理上下文：Order 聚合 + 相關 ReadModel
+- 付款上下文：Payment 聚合 + 相關 ReadModel
 ```
 
 #### 關鍵洞察與設計決策
@@ -213,42 +824,126 @@ User聚合 → Product聚合 → ShoppingCart聚合 → Order聚合 → Inventor
 2. **聚合邊界清晰**：每個聚合都有明確的業務職責和數據一致性範圍
 3. **事件驅動通信**：聚合間通過領域事件進行鬆耦合的通信
 4. **用戶體驗考量**：支持匿名瀏覽、登入購物、跨設備同步等場景
+5. **庫存一致性**：庫存扣減在訂單確認時進行，避免購物車占用庫存
+6. **商品與庫存分離**：Product 負責商品基本資訊，Inventory 負責庫存數量管理
 
 **設計決策**：
 - 購物車聚合獨立於訂單聚合，避免緊耦合
-- 商品聚合專注於商品資訊管理，不涉及庫存邏輯
+- 商品聚合專注於商品資訊管理，庫存邏輯交由 Inventory 聚合
 - 用戶聚合只關注身份認證和基本資料，不包含購物行為
 - 通過事件實現跨聚合的業務流程協調
+- Product 與 Inventory 聚合放在同一限界上下文，因為它們在商品展示時需要緊密配合
+- Payment 聚合獨立，便於整合外部付款服務
 
 ### 三、限界上下文劃分 (Bounded Context)
 
-基於事件風暴的結果，我們劃分出以下限界上下文：
+基於前述事件風暴的完整分析結果，我們識別出了木葉村忍具店的五個核心限界上下文。這些上下文的劃分遵循了業務領域的自然邊界，確保每個上下文都有明確的職責和通用語言。
 
-```mermaid
-graph LR
-    A[用戶上下文<br/>User Context] --> B[購物上下文<br/>Shopping Context]
-    B --> C[訂單上下文<br/>Order Context]
-    C --> D[庫存上下文<br/>Inventory Context]
-    
-    subgraph "核心領域"
-    B
-    C
-    end
-    
-    subgraph "支援領域"  
-    A
-    D
-    end
+#### 木葉村忍具店的限界上下文設計
+
+**核心子領域 (Core Subdomain)** - 紅色邊框
+- **購物車上下文 (Shopping Cart Context)**：忍者購物體驗的核心，支持等級權限驗證和忍具選購
+- **訂單管理上下文 (Order Management Context)**：忍具交易的完整生命週期，從下單到火影府配送
+
+**支援子領域 (Supporting Subdomain)** - 藍色邊框  
+- **商品目錄上下文 (Product Catalog Context)**：忍具資訊管理，包含等級限制、庫存監控
+- **使用者管理上下文 (User Management Context)**：忍者身份驗證、等級權限管理
+
+**一般子領域 (Generic Subdomain)** - 綠色邊框
+- **付款上下文 (Payment Context)**：整合木葉村錢莊和第三方付款服務
+
+#### 限界上下文的業務價值
+
+**1. 語意邊界與通用語言 (Ubiquitous Language)**
+
+每個上下文都建立了符合木葉村忍具店業務的專有詞彙：
+
+- **購物車上下文**：忍具項目、等級檢查、購買權限、忍具組合
+- **訂單上下文**：訂單狀態（已下單、火影核准、配送中、已送達）、配送區域（木葉村內、邊境任務點）
+- **商品目錄上下文**：忍具分類（忍者刀、手裡劍、起爆符）、等級限制（下忍、中忍、上忍、火影級）
+- **用戶管理上下文**：忍者等級、村民身份、購買權限、任務積分
+- **付款上下文**：木葉幣、任務報酬、分期付款
+
+**2. 技術邊界與架構選擇**
+
+根據各上下文的特性選擇合適的技術棧：
+
+```java
+// 購物車上下文：高併發讀寫，需要快速響應
+- 資料庫：Redis (主) + PostgreSQL (持久化)
+- 快取策略：忍者登入時預載購物車
+- 特殊需求：支持匿名瀏覽、登入後購物車合併
+
+// 商品目錄上下文：讀多寫少，需要搜尋功能
+- 資料庫：PostgreSQL + Elasticsearch
+- 快取策略：商品資訊多級快取
+- 特殊需求：等級權限過濾、庫存即時更新
+
+// 訂單管理上下文：高一致性要求
+- 資料庫：PostgreSQL (ACID 保證)
+- 訊息佇列：RabbitMQ (訂單狀態事件)
+- 特殊需求：訂單狀態機、配送追蹤
 ```
 
-#### 限界上下文的重要性
+**3. 團隊邊界與組織架構**
 
-1. **語意邊界**：每個上下文內有自己的通用語言
-2. **技術邊界**：不同上下文可以選擇不同的技術棧
-3. **團隊邊界**：每個上下文可以由不同團隊負責
-4. **數據邊界**：避免共享數據庫造成的耦合
+```
+木葉村忍具店開發團隊劃分：
 
-> **常見錯誤**：將所有功能放在一個大的上下文中，導致概念混淆和緊耦合。
+🔴 核心業務團隊 (Core Teams)
+├─ 購物車團隊：前端體驗專家 + 後端效能專家
+└─ 訂單團隊：業務分析師 + 後端開發 + 配送協調
+
+🔵 支援業務團隊 (Supporting Teams)  
+├─ 商品團隊：產品經理 + 庫存管理 + 搜尋優化
+└─ 用戶團隊：安全專家 + 身份驗證 + 權限管理
+
+🟢 平台服務團隊 (Platform Teams)
+└─ 付款團隊：第三方整合 + 財務對帳 + 風險控制
+```
+
+**4. 資料邊界與事件驅動協作**
+
+避免直接資料耦合，通過領域事件實現上下文間的協作：
+
+```java
+// 事件驅動的忍具購買流程
+1. UserLoginEvent (用戶上下文)
+   ↓
+2. CartLoadedEvent (購物車上下文)  
+   ↓
+3. ProductAddedToCartEvent (商品目錄上下文 → 購物車上下文)
+   ↓
+4. OrderCreatedEvent (購物車上下文 → 訂單上下文)
+   ↓
+5. InventoryReservedEvent (商品目錄上下文 ← 訂單上下文)
+   ↓
+6. PaymentProcessedEvent (付款上下文 → 訂單上下文)
+   ↓
+7. OrderConfirmedEvent (訂單上下文 → 商品目錄上下文)
+```
+
+#### 上下文映射關係與防腐層
+
+**核心業務流程的事件鏈**：
+```
+忍者身份驗證 → 等級權限載入 → 忍具瀏覽 → 購物車管理 → 
+訂單建立 → 等級驗證 → 庫存預留 → 付款處理 → 
+火影核准 → 忍具配送 → 任務積分更新
+```
+
+**防腐層 (Anti-Corruption Layer) 設計原則**：
+
+1. **API 契約標準化**：每個上下文提供 RESTful API 和事件介面
+2. **資料轉換隔離**：使用 DTO 和 Mapper 防止內部模型洩漏  
+3. **事件版本控制**：支持事件結構演進，保持向後相容
+4. **失敗隔離機制**：單一上下文故障不影響其他上下文運作
+
+> **木葉村忍具店的設計原則**：
+> - 忍者等級權限是跨上下文的核心概念，但各上下文維護自己的權限視圖
+> - 庫存一致性通過事件最終一致性保證，避免分散式鎖
+> - 購物車支持匿名用戶，登入後自動合併，提升用戶體驗
+> - 訂單需要火影級別核准的高價值忍具有特殊審批流程
 
 ---
 
@@ -355,10 +1050,50 @@ public class ShoppingCartPureRepositoryImpl implements ShoppingCartPureRepositor
 
 #### 設計原則
 
-1. **聚合根 (Aggregate Root)**：作為聚合的唯一入口
-2. **事務邊界**：一個事務只能修改一個聚合
-3. **引用方式**：聚合間只能通過 ID 引用，不能直接引用對象
-4. **小聚合**：聚合應該盡可能小，只包含緊密相關的實體
+1. **聚合根 (Aggregate Root)**：作為聚合的唯一入口，所有對聚合內部的修改都必須通過聚合根
+2. **事務邊界**：一個事務只能修改一個聚合，確保資料一致性
+3. **引用方式**：聚合間只能通過 ID 引用，不能直接引用對象，避免緊耦合
+4. **小聚合**：聚合應該盡可能小，只包含緊密相關的實體和值對象
+5. **不變條件**：聚合負責維護內部的業務不變條件（Business Invariants）
+6. **領域事件**：聚合根可以發布領域事件來通知其他聚合或系統
+
+#### 實際專案的聚合設計考量
+
+**購物車聚合的設計決策**：
+- ✅ **包含 CartItem**：購物車項目與購物車狀態緊密相關，需要同時變更
+- ✅ **引用 ProductId**：避免商品變更影響購物車，通過 ID 解耦
+- ✅ **引用 UserId**：用戶資訊與購物車操作獨立
+- ✅ **計算總金額**：作為聚合內部業務邏輯
+
+**為什麼 Order 不包含 ShoppingCart**：
+- 訂單建立後，購物車可以被清空或繼續使用
+- 兩者有不同的生命週期和業務規則
+- 通過應用服務協調兩個聚合的交互
+
+**聚合大小的權衡**：
+```java
+// 合適的聚合大小
+public class ShoppingCartPure {
+    // 聚合根職責：
+    // 1. 管理購物車項目
+    // 2. 計算總金額
+    // 3. 驗證業務規則
+    // 4. 發布領域事件
+}
+
+// 如果聚合過小（反模式）
+public class CartItemAsAggregate {
+    // 問題：無法保證購物車整體一致性
+    // 無法執行跨項目的業務規則
+}
+
+// 如果聚合過大（反模式）  
+public class ECommerceSystemAsAggregate {
+    // 問題：包含太多職責
+    // 事務邊界過大，效能問題
+    // 違反單一職責原則
+}
+```
 
 #### 我們的聚合設計
 
@@ -369,92 +1104,226 @@ public class ShoppingCartPure {
     private ShoppingCartId id;           // 聚合唯一標識
     private UserId userId;               // 引用用戶聚合（通過ID）
     private List<CartItemPure> items;    // 聚合內部實體
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     
     // 業務邏輯：添加商品
-    public void addProduct(ProductPure product, int quantity) {
-        // 檢查商品是否已存在
-        Optional<CartItemPure> existingItem = findItemByProductId(product.getId());
-        
-        if (existingItem.isPresent()) {
-            existingItem.get().increaseQuantity(quantity);
-        } else {
-            CartItemPure newItem = CartItemPure.create(
-                CartItemId.generate(), 
-                product.getId(),        // 引用商品聚合（通過ID）
-                product.getName(),
-                product.getPrice(),
-                quantity
-            );
-            this.items.add(newItem);
+    public void addProduct(ProductPure product, Integer quantity) {
+        if (product == null || quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Product and quantity must be valid");
         }
+
+        // 檢查商品是否已存在
+        Optional<CartItemPure> existingItem = items.stream()
+                .filter(item -> item.getProductId().equals(product.getId()))
+                .findFirst();
+
+        if (existingItem.isPresent()) {
+            // 更新現有項目數量
+            CartItemPure item = existingItem.get();
+            items.remove(item);
+            items.add(item.toBuilder()
+                    .quantity(item.getQuantity() + quantity)
+                    .build());
+        } else {
+            // 添加新項目，引用商品聚合（通過ID）
+            items.add(CartItemPure.builder()
+                    .productId(product.getId())
+                    .productName(product.getDetails().getName())
+                    .productImageUrl(product.getImageUrl())
+                    .quantity(quantity)
+                    .unitPrice(product.getPrice().getAmount())
+                    .build());
+        }
+        this.updatedAt = LocalDateTime.now();
     }
     
     // 業務邏輯：移除商品
     public void removeProduct(ProductId productId) {
-        this.items.removeIf(item -> item.getProductId().equals(productId));
+        items.removeIf(item -> item.getProductId().equals(productId));
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // 業務邏輯：計算總金額
+    public Money getTotalAmount() {
+        BigDecimal total = items.stream()
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new Money(total);
     }
     
     // 業務邏輯：清空購物車
     public void clear() {
         this.items.clear();
+        this.updatedAt = LocalDateTime.now();
     }
 }
 ```
 
 **User 聚合**
 ```java
+@Value
+@Builder(toBuilder = true)
 public class UserPure {
-    private UserId id;
-    private UserCredentialsPure credentials;  // 值對象
-    private UserProfilePure profile;          // 值對象
+    UserId id;
+    String username;
+    UserProfilePure profile;          // 值對象
+    UserCredentialsPure credentials;  // 值對象
     
-    // 業務邏輯在聚合根中
-    public void updateProfile(String fullName, String email, String address) {
-        this.profile = UserProfilePure.builder()
-            .fullName(fullName)
-            .email(email)
-            .address(address)
-            .build();
+    // 業務邏輯：更新用戶資訊
+    public UserPure updateUserInfo(String username, String fullName, String phoneNumber, 
+                                  String address, LocalDate dateOfBirth) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+
+        UserProfilePure updatedProfile = profile.toBuilder()
+                .fullName(fullName)
+                .phoneNumber(phoneNumber)
+                .address(address)
+                .dateOfBirth(dateOfBirth)
+                .build();
+
+        return this.toBuilder()
+                .username(username.trim())
+                .profile(updatedProfile)
+                .build();
     }
 }
 ```
 
 **Product 聚合**
 ```java
+@Getter
+@AllArgsConstructor
+@Builder
 public class ProductPure {
-    private ProductId id;
-    private ProductDetails details;  // 值對象
-    private Money price;            // 值對象
-    private int stockQuantity;
-    private ProductStatus status;
+    private final ProductId id;
+    private ProductDetails details;      // 值對象
+    private Money price;                // 值對象
+    private StockQuantity stockQuantity; // 值對象
+    private ProductCategory category;    // 值對象
+    private String status;
+    private String imageUrl;
     
     // 業務邏輯：檢查是否可購買
-    public boolean isAvailableForPurchase(int requestedQuantity) {
-        return this.status == ProductStatus.ACTIVE 
-            && this.stockQuantity >= requestedQuantity;
+    public boolean isAvailable() {
+        return "ACTIVE".equals(status) && stockQuantity.isAvailable();
+    }
+    
+    public boolean hasEnoughStock(int requestedQuantity) {
+        return stockQuantity.hasEnough(requestedQuantity);
+    }
+    
+    // 業務邏輯：庫存管理
+    public void reduceStock(int quantity) {
+        if (!hasEnoughStock(quantity)) {
+            throw new IllegalArgumentException("Insufficient stock");
+        }
+        this.stockQuantity = this.stockQuantity.reduce(quantity);
+    }
+    
+    public void updatePrice(Money newPrice) {
+        if (newPrice.isNegativeOrZero()) {
+            throw new IllegalArgumentException("Price must be positive");
+        }
+        this.price = newPrice;
+    }
+}
+```
+
+**Order 聚合** (實際專案新增)
+```java
+@Value
+@Builder(toBuilder = true)
+public class OrderPure {
+    OrderId id;
+    UserId userId;                      // 引用用戶聚合（通過ID）
+    List<OrderItemPure> items;          // 聚合內部實體
+    OrderStatus status;
+    BigDecimal totalAmount;
+    PaymentInfoPure paymentInfo;        // 值對象
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
+    
+    // 業務邏輯：取消訂單
+    public OrderPure cancel() {
+        if (status != OrderStatus.PENDING) {
+            throw new IllegalStateException("Only pending orders can be cancelled");
+        }
+        return this.toBuilder()
+                .status(OrderStatus.CANCELLED)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    // 業務邏輯：確認付款
+    public OrderPure confirmPayment(PaymentInfoPure paymentInfo) {
+        return this.toBuilder()
+                .status(OrderStatus.PAID)
+                .paymentInfo(paymentInfo)
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
 }
 ```
 
 #### 為什麼這樣設計？
 
-**正確的設計**：
-- ShoppingCart 和 CartItem 在同一個聚合內，因為它們需要保持一致性
-- Product 是獨立聚合，因為商品信息變更不應該影響購物車
-- User 是獨立聚合，符合單一職責原則
+**正確的設計原則**：
+- **ShoppingCart 和 CartItem 在同一個聚合內**：因為它們需要保持一致性，購物車項目的變更必須與購物車狀態同步
+- **Product 是獨立聚合**：商品資訊變更不應該直接影響購物車，通過 ProductId 引用
+- **User 是獨立聚合**：符合單一職責原則，用戶資訊變更與購物車操作解耦
+- **Order 是獨立聚合**：訂單有自己的生命週期和業務規則
 
-**錯誤的設計**：
+**實際專案的聚合邊界**：
+```
+🛒 ShoppingCart 聚合
+├── ShoppingCartPure (聚合根)
+└── CartItemPure (內部實體)
+
+👤 User 聚合  
+├── UserPure (聚合根)
+├── UserProfilePure (值對象)
+└── UserCredentialsPure (值對象)
+
+📦 Product 聚合
+├── ProductPure (聚合根)
+├── ProductDetails (值對象)
+├── Money (值對象)
+├── StockQuantity (值對象)
+└── ProductCategory (值對象)
+
+📋 Order 聚合
+├── OrderPure (聚合根)
+├── OrderItemPure (內部實體)
+├── PaymentInfoPure (值對象)
+└── OrderStatus (列舉)
+```
+
+**錯誤的設計範例**：
 ```java
-// 錯誤：將 Product 實體放在 ShoppingCart 聚合內
+// ❌ 錯誤：將其他聚合的實體直接放在聚合內
 public class ShoppingCartWrong {
-    private List<Product> products;  // 錯誤！跨聚合引用
+    private List<ProductPure> products;  // 錯誤！跨聚合直接引用
+    private UserPure user;              // 錯誤！應該只引用 UserId
 }
 
-// 錯誤：聚合過大
+// ❌ 錯誤：聚合過大，包含太多職責
 public class OrderWrong {
-    private User user;               // 錯誤！應該只引用 UserId
-    private List<Product> products;  // 錯誤！應該只引用 ProductId
-    private ShoppingCart cart;       // 錯誤！跨聚合直接引用
+    private UserPure user;               // 錯誤！應該只引用 UserId
+    private List<ProductPure> products;  // 錯誤！應該只引用 ProductId
+    private ShoppingCartPure cart;       // 錯誤！跨聚合直接引用
+    private PaymentService paymentService; // 錯誤！服務不應該在聚合內
+}
+
+// ✅ 正確：通過 ID 引用，保持聚合邊界
+public class OrderCorrect {
+    private OrderId id;
+    private UserId userId;              // ✅ 只引用 ID
+    private List<OrderItemPure> items;  // ✅ 內部實體
+    private OrderStatus status;
+    private PaymentInfoPure paymentInfo; // ✅ 值對象
 }
 ```
 
@@ -466,18 +1335,28 @@ public class OrderWrong {
 
 **Money (金錢)**
 ```java
-@Getter
-@EqualsAndHashCode
+@Value
 public class Money {
-    private final BigDecimal amount;
-    private final String currency;
+    BigDecimal amount;
+    String currency;
     
-    private Money(BigDecimal amount, String currency) {
-        if (amount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("金額不能為負數");
+    public Money(BigDecimal amount, String currency) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        if (currency == null || currency.trim().isEmpty()) {
+            throw new IllegalArgumentException("Currency cannot be null or empty");
         }
         this.amount = amount;
         this.currency = currency;
+    }
+    
+    public Money(BigDecimal amount) {
+        this(amount, "TWD"); // 預設為台幣
+    }
+    
+    public static Money of(BigDecimal amount) {
+        return new Money(amount);
     }
     
     public static Money of(BigDecimal amount, String currency) {
@@ -485,15 +1364,19 @@ public class Money {
     }
     
     // 業務邏輯：金額計算
-    public Money multiply(int quantity) {
-        return new Money(this.amount.multiply(BigDecimal.valueOf(quantity)), this.currency);
+    public boolean isNegativeOrZero() {
+        return amount.compareTo(BigDecimal.ZERO) <= 0;
     }
     
     public Money add(Money other) {
         if (!this.currency.equals(other.currency)) {
-            throw new IllegalArgumentException("不同貨幣無法相加");
+            throw new IllegalArgumentException("Cannot add different currencies");
         }
         return new Money(this.amount.add(other.amount), this.currency);
+    }
+    
+    public Money multiply(int quantity) {
+        return new Money(this.amount.multiply(BigDecimal.valueOf(quantity)), this.currency);
     }
 }
 ```
@@ -501,14 +1384,13 @@ public class Money {
 **強型別 ID**
 ```java
 // 避免原始型別困擾 (Primitive Obsession)
-@Getter
-@EqualsAndHashCode
+@Value
 public class ProductId {
-    private final Long value;
+    Long value;
     
-    private ProductId(Long value) {
+    public ProductId(Long value) {
         if (value == null || value <= 0) {
-            throw new IllegalArgumentException("ProductId 不能為空或負數");
+            throw new IllegalArgumentException("Product ID must be positive");
         }
         this.value = value;
     }
@@ -517,19 +1399,31 @@ public class ProductId {
         return new ProductId(value);
     }
 }
+
+// 其他強型別 ID
+@Value
+public class UserId {
+    Long value;
+    // 類似實作...
+}
+
+@Value
+public class ShoppingCartId {
+    Long value;
+    // 類似實作...
+}
 ```
 
-**ProductDetails**
+**ProductDetails (實際專案中的值對象)**
 ```java
-@Getter
-@EqualsAndHashCode
+@Value
+@Builder
 public class ProductDetails {
-    private final String name;
-    private final String description;
-    private final String imageUrl;
+    String name;
+    String description;
     
     // 值對象包含業務驗證邏輯
-    private ProductDetails(String name, String description, String imageUrl) {
+    public ProductDetails(String name, String description) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("商品名稱不能為空");
         }
@@ -539,11 +1433,71 @@ public class ProductDetails {
         
         this.name = name.trim();
         this.description = description;
-        this.imageUrl = imageUrl;
+    }
+}
+```
+
+**StockQuantity (庫存數量值對象)**
+```java
+@Value
+public class StockQuantity {
+    Integer value;
+    
+    public StockQuantity(Integer value) {
+        if (value == null || value < 0) {
+            throw new IllegalArgumentException("Stock quantity cannot be negative");
+        }
+        this.value = value;
     }
     
-    public static ProductDetails of(String name, String description, String imageUrl) {
-        return new ProductDetails(name, description, imageUrl);
+    public boolean isAvailable() {
+        return value > 0;
+    }
+    
+    public boolean hasEnough(int requestedQuantity) {
+        return value >= requestedQuantity;
+    }
+    
+    public StockQuantity reduce(int quantity) {
+        if (quantity > value) {
+            throw new IllegalArgumentException("Cannot reduce more than available stock");
+        }
+        return new StockQuantity(value - quantity);
+    }
+    
+    public StockQuantity adjust(int quantity) {
+        return new StockQuantity(value + quantity);
+    }
+}
+```
+
+**UserProfilePure (用戶資料值對象)**
+```java
+@Value
+@Builder(toBuilder = true)
+public class UserProfilePure {
+    String fullName;
+    String email;
+    String phoneNumber;
+    String address;
+    LocalDate dateOfBirth;
+    
+    // 驗證邏輯在建構時執行
+    public UserProfilePure(String fullName, String email, String phoneNumber, 
+                          String address, LocalDate dateOfBirth) {
+        if (email != null && !isValidEmail(email)) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+        
+        this.fullName = fullName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.dateOfBirth = dateOfBirth;
+    }
+    
+    private boolean isValidEmail(String email) {
+        return email.contains("@") && email.contains(".");
     }
 }
 ```
@@ -564,12 +1518,14 @@ Repository 提供了一個**面向領域的數據訪問介面**，隱藏了技�
 ```java
 // Domain Layer - 純粹的領域介面
 public interface ShoppingCartPureRepository {
+    Optional<ShoppingCartPure> findById(ShoppingCartId id);
     Optional<ShoppingCartPure> findByUserId(UserId userId);
     ShoppingCartPure save(ShoppingCartPure cart);
     void delete(ShoppingCartPure cart);
     
     // 面向業務的查詢方法，而非技術導向的 CRUD
-    List<ShoppingCartPure> findActiveCartsOlderThan(LocalDateTime threshold);
+    List<ShoppingCartPure> findEmptyCartsOlderThan(LocalDateTime threshold);
+    boolean existsByUserId(UserId userId);
 }
 ```
 
@@ -578,22 +1534,39 @@ public interface ShoppingCartPureRepository {
 ```java
 // Infrastructure Layer - 技術實作
 @Repository
+@RequiredArgsConstructor
+@Slf4j
 public class ShoppingCartPureRepositoryImpl implements ShoppingCartPureRepository {
     
     private final ShoppingCartJpaRepository jpaRepository;
-    private final ShoppingCartEntityMapper entityMapper;
+    private final ShoppingCartEntityMapper mapper;
     
     @Override
-    public Optional<ShoppingCartPure> findByUserId(UserId userId) {
-        return jpaRepository.findByUserId(userId.getValue())
-            .map(entityMapper::toDomain);  // 實體映射
+    @Transactional(readOnly = true)
+    public Optional<ShoppingCartPure> findById(ShoppingCartId id) {
+        log.debug("Finding shopping cart by id: {}", id.getValue());
+        
+        return jpaRepository.findByIdWithItems(id.getValue())
+                .map(mapper::toDomain);  // 實體映射
     }
     
     @Override
+    @Transactional(readOnly = true)
+    public Optional<ShoppingCartPure> findByUserId(UserId userId) {
+        log.debug("Finding shopping cart by user id: {}", userId.getValue());
+        
+        return jpaRepository.findByUserIdWithItems(userId.getValue())
+                .map(mapper::toDomain);
+    }
+    
+    @Override
+    @Transactional
     public ShoppingCartPure save(ShoppingCartPure cart) {
-        ShoppingCartEntity entity = entityMapper.toEntity(cart);
+        log.debug("Saving shopping cart: {}", cart.getId());
+        
+        ShoppingCartEntity entity = mapper.toEntity(cart);
         ShoppingCartEntity savedEntity = jpaRepository.save(entity);
-        return entityMapper.toDomain(savedEntity);
+        return mapper.toDomain(savedEntity);
     }
 }
 ```
