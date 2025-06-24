@@ -15,6 +15,20 @@ import java.time.LocalDateTime;
 @Value
 @Builder(toBuilder = true)
 public class UserPure {
+    /**
+     * 強型別 ID
+     * 一般的 ID 會使用原始型別
+     * 但是你看以下兩種 ID
+     * 1. Long productId = 123L;
+     * 2. Long userId = 456L;
+     * 這樣的 ID 會讓人混淆，因為它們都是 Long 型別。
+     * 當我這樣用
+     * ```java
+     * getProductByProductId(userId)
+     * ```
+     * 他也不會報錯
+     * 所以我們會使用強型別 ID 來避免這種混淆。
+     */
     UserId id;
     String username;
     UserProfilePure profile;
