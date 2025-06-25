@@ -2,6 +2,7 @@ package com.kai.ninja_ddd_practice.interfaceLayer.controllers;
 
 import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/test")
 @CrossOrigin(origins = "*")
+@Profile({"dev", "test"}) // 只在開發和測試環境啟用
 public class TestController {
 
     private final JwtUtil jwtUtil;

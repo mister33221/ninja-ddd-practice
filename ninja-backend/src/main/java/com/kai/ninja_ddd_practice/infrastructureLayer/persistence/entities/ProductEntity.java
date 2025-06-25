@@ -32,6 +32,7 @@ public class ProductEntity {
     private BigDecimal price;
 
     @Column(name = "currency", nullable = false)
+    @Builder.Default
     private String currency = "TWD";
 
     @Column(name = "stock_quantity", nullable = false)

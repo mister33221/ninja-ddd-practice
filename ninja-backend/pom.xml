@@ -96,16 +96,17 @@
 			<version>0.11.5</version>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- security for encrypt -->
-		<dependency>
+		<!-- security for encrypt -->		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-crypto</artifactId>
 		</dependency>
-		<!-- kafka -->
+		<!-- kafka (作為防腐層示例保留，但不啟用配置) -->
+		<!--
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
 		</dependency>
+		-->
 	</dependencies>
 
 

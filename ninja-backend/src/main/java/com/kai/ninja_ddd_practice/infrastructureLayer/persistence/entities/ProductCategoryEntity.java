@@ -26,5 +26,6 @@ public class ProductCategoryEntity {
     private String description;
 
     @Column(name = "active", nullable = false)
+    @Builder.Default
     private Boolean active = true;
 }
