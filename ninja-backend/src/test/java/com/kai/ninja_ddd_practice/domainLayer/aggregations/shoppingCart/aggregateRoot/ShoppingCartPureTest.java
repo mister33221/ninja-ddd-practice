@@ -160,107 +160,176 @@ class ShoppingCartPureTest {
     }
 
     @Test
-    @DisplayName("當商品數量為負數時，應該拋出異常")
-    void should_throw_exception_when_adding_negative_quantity() {
-        // Given
-        int negativeQuantity = -1;
-        
+    @DisplayName("添加商品數量為0時應該拋出異常")
+    void should_throw_exception_when_adding_zero_quantity() {
         // When & Then
-        assertThatThrownBy(() -> cart.addProduct(testProduct, negativeQuantity))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Product and quantity must be valid");
+        assertThatThrownBy(() -> cart.addProduct(testProduct, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("數量必須大於 0");
     }
 
     @Test
-    @DisplayName("當商品為空時，應該拋出異常")
+    @DisplayName("添加商品數量為負數時應該拋出異常")
+    void should_throw_exception_when_adding_negative_quantity() {
+        // When & Then
+        assertThatThrownBy(() -> cart.addProduct(testProduct, -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("數量必須大於 0");
+    }
+
+    @Test
+    @DisplayName("添加null商品時應該拋出異常")
     void should_throw_exception_when_adding_null_product() {
         // When & Then
         assertThatThrownBy(() -> cart.addProduct(null, 1))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Product and quantity must be valid");
-    }
-
-    @Test
-    @DisplayName("計算購物車總金額應該正確")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("商品不能為空");
+    }    @Test
+    @DisplayName("購物車應該正確計算總金額")
     void should_calculate_total_amount_correctly() {
         // Given
-        ProductPure anotherProduct = ProductPure.builder()
-            .id(ProductId.of(2L))
-            .details(ProductDetails.builder()
-                .name("手裏劍")
-                .description("星型投擲武器")
-                .build())
-            .price(Money.of(BigDecimal.valueOf(80)))
-            .stockQuantity(StockQuantity.of(200))
-            .category(ProductCategory.builder().name("武器").build())
-            .status("ACTIVE")
-            .imageUrl("shuriken.jpg")
-            .build();
-            
-        cart.addProduct(testProduct, 2);    // 150 * 2 = 300
-        cart.addProduct(anotherProduct, 3); // 80 * 3 = 240
-        
-        // When
-        Money totalAmount = cart.getTotalAmount();
-        
-        // Then
-        assertThat(totalAmount.getAmount()).isEqualTo(BigDecimal.valueOf(540));
-        assertThat(totalAmount.getCurrency()).isEqualTo("TWD");
-    }
+        ProductPure product2 = ProductPure.builder()
+                .id(ProductId.of(2L))
+                .details(ProductDetails.builder()
+                        .name("手裡劍")
+                        .description("投擲武器")
+                        .build())
+                .price(Money.of(BigDecimal.valueOf(80)))
+                .stockQuantity(StockQuantity.of(50))
+                .category(ProductCategory.builder().name("武器").build())
+                .status("ACTIVE")
+                .imageUrl("shuriken.jpg")
+                .build();
 
-    @Test
-    @DisplayName("計算購物車商品總數量應該正確")
-    void should_calculate_total_item_count_correctly() {
+        // When
+        cart.addProduct(testProduct, 2);  // 150 * 2 = 300
+        cart.addProduct(product2, 3);     // 80 * 3 = 240        // Then
+        assertThat(cart.getTotalAmount().getAmount()).isEqualByComparingTo(BigDecimal.valueOf(540));
+    }@Test
+    @DisplayName("更新商品數量為0時應該移除該項目_新版")
+    void should_remove_item_when_update_quantity_to_zero_v2() {
         // Given
-        ProductPure anotherProduct = ProductPure.builder()
-            .id(ProductId.of(2L))
-            .details(ProductDetails.builder()
-                .name("手裏劍")
-                .description("星型投擲武器")
-                .build())
-            .price(Money.of(BigDecimal.valueOf(80)))
-            .stockQuantity(StockQuantity.of(200))
-            .category(ProductCategory.builder().name("武器").build())
-            .status("ACTIVE")
-            .imageUrl("shuriken.jpg")
-            .build();
-            
         cart.addProduct(testProduct, 2);
-        cart.addProduct(anotherProduct, 3);
-        
+        assertThat(cart.getItems()).hasSize(1);
+
         // When
-        Integer totalCount = cart.getItemCount();
-        
+        cart.updateProductQuantity(ProductId.of(1L), 0);
+
         // Then
-        assertThat(totalCount).isEqualTo(5);
+        assertThat(cart.getItems()).isEmpty();
     }
 
     @Test
-    @DisplayName("空購物車應該回傳isEmpty為true")
-    void should_return_true_when_cart_is_empty() {
-        // When & Then
-        assertThat(cart.isEmpty()).isTrue();
-    }
-
-    @Test
-    @DisplayName("有商品的購物車應該回傳isEmpty為false")
-    void should_return_false_when_cart_has_items() {
+    @DisplayName("更新不存在商品的數量時應該拋出異常")
+    void should_throw_exception_when_update_non_existing_product() {
         // Given
-        cart.addProduct(testProduct, 1);
-        
-        // When & Then
-        assertThat(cart.isEmpty()).isFalse();
+        ProductId nonExistingProductId = ProductId.of(999L);        // When & Then
+        assertThatThrownBy(() -> cart.updateProductQuantity(nonExistingProductId, 5))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("商品不存在於購物車中");
     }
 
     @Test
-    @DisplayName("創建新購物車的靜態方法應該正常運作")
-    void should_create_new_cart_with_static_method() {
-        // When
-        ShoppingCartPure newCart = ShoppingCartPure.createNewCart(testUserId);
+    @DisplayName("移除不存在的商品時應該優雅處理")
+    void should_handle_gracefully_when_removing_non_existing_product() {
+        // Given
+        ProductId nonExistingProductId = ProductId.of(999L);
+        int originalSize = cart.getItems().size();
+
+        // When & Then
+        assertThatCode(() -> cart.removeProduct(nonExistingProductId))
+                .doesNotThrowAnyException();
         
+        assertThat(cart.getItems()).hasSize(originalSize);
+    }
+
+    @Test
+    @DisplayName("購物車項目應該包含正確的商品資訊")
+    void should_contain_correct_product_information_in_cart_item() {
+        // Given & When
+        cart.addProduct(testProduct, 3);
+
         // Then
-        assertThat(newCart.getUserId()).isEqualTo(testUserId);
-        assertThat(newCart.getItems()).isEmpty();
-        assertThat(newCart.getId()).isNull(); // ID will be generated when persisted
+        CartItemPure item = cart.getItems().get(0);
+        assertThat(item.getProductId()).isEqualTo(ProductId.of(1L));
+        assertThat(item.getProductName()).isEqualTo("苦無");
+        assertThat(item.getQuantity()).isEqualTo(3);
+        assertThat(item.getUnitPrice()).isEqualByComparingTo(BigDecimal.valueOf(150));
+        assertThat(item.getTotalPrice()).isEqualByComparingTo(BigDecimal.valueOf(450));
+    }
+
+    @Test
+    @DisplayName("清空購物車後應該沒有任何項目")
+    void should_have_no_items_after_clear() {
+        // Given
+        cart.addProduct(testProduct, 2);
+        assertThat(cart.getItems()).hasSize(1);
+
+        // When
+        cart.clear();
+
+        // Then
+        assertThat(cart.getItems()).isEmpty();
+        assertThat(cart.getTotalAmount().getAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("購物車應該支援多種相同商品的數量累加")
+    void should_accumulate_quantity_for_same_product() {
+        // Given & When
+        cart.addProduct(testProduct, 2);
+        cart.addProduct(testProduct, 3);
+
+        // Then
+        assertThat(cart.getItems()).hasSize(1);
+        CartItemPure item = cart.getItems().get(0);
+        assertThat(item.getQuantity()).isEqualTo(5);
+        assertThat(item.getTotalPrice()).isEqualByComparingTo(BigDecimal.valueOf(750)); // 150 * 5
+    }
+
+    @Test
+    @DisplayName("購物車項目ID應該在第一次添加時生成")
+    void should_generate_item_id_when_first_added() {
+        // Given & When
+        cart.addProduct(testProduct, 1);
+
+        // Then
+        CartItemPure item = cart.getItems().get(0);
+        assertThat(item.getId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("檢查購物車是否為空")
+    void should_check_if_cart_is_empty() {
+        // Given
+        assertThat(cart.isEmpty()).isTrue();
+
+        // When
+        cart.addProduct(testProduct, 1);
+
+        // Then
+        assertThat(cart.isEmpty()).isFalse();
+    }    @Test
+    @DisplayName("獲取購物車項目總數")
+    void should_get_total_item_count() {
+        // Given & When
+        cart.addProduct(testProduct, 3);
+        
+        ProductPure product2 = ProductPure.builder()
+                .id(ProductId.of(2L))
+                .details(ProductDetails.builder().name("product2").build())
+                .price(Money.of(BigDecimal.valueOf(100)))
+                .stockQuantity(StockQuantity.of(50))
+                .category(ProductCategory.builder().name("category").build())
+                .status("ACTIVE")
+                .imageUrl("test.jpg")
+                .build();
+        cart.addProduct(product2, 2);
+
+        // Then - 檢查項目數量
+        int totalItems = cart.getItems().stream()
+                .mapToInt(item -> item.getQuantity())
+                .sum();
+        assertThat(totalItems).isEqualTo(5); // 3 + 2
     }
 }

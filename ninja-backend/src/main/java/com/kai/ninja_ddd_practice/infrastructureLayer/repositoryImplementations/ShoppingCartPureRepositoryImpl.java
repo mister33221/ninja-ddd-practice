@@ -5,6 +5,7 @@ import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObj
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserId;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ShoppingCartPureRepository;
 import com.kai.ninja_ddd_practice.infrastructureLayer.persistence.entities.ShoppingCartEntity;
+import com.kai.ninja_ddd_practice.infrastructureLayer.persistence.entities.CartItemEntity;
 import com.kai.ninja_ddd_practice.infrastructureLayer.persistence.mappers.ShoppingCartEntityMapper;
 import com.kai.ninja_ddd_practice.infrastructureLayer.persistence.repositories.ShoppingCartJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +44,39 @@ public class ShoppingCartPureRepositoryImpl implements ShoppingCartPureRepositor
         
         return jpaRepository.findByUserIdWithItems(userId.getValue())
                 .map(mapper::toDomain);
-    }
-
-    @Override
+    }    @Override
     @Transactional
     public ShoppingCartPure save(ShoppingCartPure shoppingCart) {
         log.debug("Saving shopping cart for user: {}", shoppingCart.getUserId().getValue());
         
+        // 如果購物車已經存在，需要先取得現有的實體再更新
+        if (shoppingCart.getId() != null) {
+            Optional<ShoppingCartEntity> existingEntity = jpaRepository.findByIdWithItems(shoppingCart.getId().getValue());
+            if (existingEntity.isPresent()) {
+                ShoppingCartEntity entity = existingEntity.get();
+                
+                // 清空現有的 items 並重新新增
+                entity.getItems().clear();
+                
+                // 添加新的 items
+                shoppingCart.getItems().forEach(item -> {
+                    CartItemEntity cartItem = CartItemEntity.builder()
+                            .id(item.getId() != null ? item.getId().getValue() : null)
+                            .productId(item.getProductId().getValue())
+                            .productName(item.getProductName())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .cart(entity)
+                            .build();
+                    entity.getItems().add(cartItem);
+                });
+                
+                ShoppingCartEntity savedEntity = jpaRepository.save(entity);
+                return mapper.toDomain(savedEntity);
+            }
+        }
+        
+        // 新購物車的情況
         ShoppingCartEntity entity = mapper.toEntity(shoppingCart);
         ShoppingCartEntity savedEntity = jpaRepository.save(entity);
         

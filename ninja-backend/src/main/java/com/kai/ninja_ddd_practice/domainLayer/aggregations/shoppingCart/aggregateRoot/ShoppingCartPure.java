@@ -3,6 +3,7 @@ package com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.aggrega
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.aggregateRoot.ProductPure;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.Money;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.product.valueObjects.ProductId;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.CartItemId;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.CartItemPure;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObjects.ShoppingCartId;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserId;
@@ -69,12 +70,18 @@ public class ShoppingCartPure {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }    // Domain methods
+    private CartItemId generateTemporaryId() {
+        // Generate a temporary ID based on current timestamp and item count
+        return CartItemId.of(System.nanoTime() + items.size());
     }
 
-    // Domain methods
     public void addProduct(ProductPure product, Integer quantity) {
-        if (product == null || quantity == null || quantity <= 0) {
-            throw new IllegalArgumentException("Product and quantity must be valid");
+        if (product == null) {
+            throw new IllegalArgumentException("商品不能為空");
+        }
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("數量必須大於 0");
         }
 
         // Check if product already exists in cart
@@ -85,14 +92,13 @@ public class ShoppingCartPure {
         if (existingItem.isPresent()) {
             // Update quantity of existing item
             CartItemPure item = existingItem.get();
-            items.remove(item);
-            items.add(item.toBuilder()
+            items.remove(item);            items.add(item.toBuilder()
                     .quantity(item.getQuantity() + quantity)
                     .build());
         } else {
-            // Add new item
+            // Add new item with temporary ID for domain logic
             items.add(CartItemPure.builder()
-                    .id(null) // Will be generated when persisted
+                    .id(generateTemporaryId())
                     .productId(product.getId())
                     .productName(product.getDetails().getName())
                     .productImageUrl(product.getImageUrl())
@@ -125,15 +131,15 @@ public class ShoppingCartPure {
 
         Optional<CartItemPure> existingItem = items.stream()
                 .filter(item -> item.getProductId().equals(productId))
-                .findFirst();
-
-        if (existingItem.isPresent()) {
+                .findFirst();        if (existingItem.isPresent()) {
             CartItemPure item = existingItem.get();
             items.remove(item);
             items.add(item.toBuilder()
                     .quantity(newQuantity)
                     .build());
             this.updatedAt = LocalDateTime.now();
+        } else {
+            throw new IllegalArgumentException("商品不存在於購物車中");
         }
     }
 

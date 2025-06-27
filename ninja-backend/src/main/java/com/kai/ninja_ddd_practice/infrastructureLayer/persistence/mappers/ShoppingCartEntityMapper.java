@@ -10,7 +10,9 @@ import com.kai.ninja_ddd_practice.infrastructureLayer.persistence.entities.Shopp
 import com.kai.ninja_ddd_practice.infrastructureLayer.persistence.entities.CartItemEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 購物車領域模型與 JPA Entity 轉換器
@@ -35,9 +37,7 @@ public class ShoppingCartEntityMapper {    /**
                 null, // createdAt - will be set to current time in constructor
                 null  // updatedAt - will be set to current time in constructor
         );
-    }
-
-    /**
+    }    /**
      * 領域模型 -> Entity
      */
     public ShoppingCartEntity toEntity(ShoppingCartPure domain) {
@@ -48,15 +48,25 @@ public class ShoppingCartEntityMapper {    /**
         ShoppingCartEntity entity = ShoppingCartEntity.builder()
                 .id(domain.getId() != null ? domain.getId().getValue() : null)
                 .userId(domain.getUserId().getValue())
-                .build();
-
+                .build();        // Create CartItemEntity instances and set up bidirectional relationship
         List<CartItemEntity> items = domain.getItems().stream()
-                .map(item -> cartItemToEntity(item, entity.getId()))
-                .toList();
+                .map(item -> {
+                    CartItemEntity cartItem = CartItemEntity.builder()
+                            .id(null) // 在新建購物車時，所有項目都應該是新的
+                            .productId(item.getProductId().getValue())
+                            .productName(item.getProductName())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .cart(entity) // Set the bidirectional relationship
+                            .build();
+                    return cartItem;
+                })
+                .collect(Collectors.toCollection(ArrayList::new)); // Use ArrayList for mutability
         
         entity.setItems(items);
+        
         return entity;
-    }    /**
+    }/**
      * CartItemEntity -> CartItemPure
      */
     private CartItemPure cartItemToDomain(CartItemEntity entity) {
@@ -72,28 +82,7 @@ public class ShoppingCartEntityMapper {    /**
                 .quantity(entity.getQuantity())
                 .unitPrice(entity.getUnitPrice())
                 .build();
-    }
-
-    /**
-     * CartItemPure -> CartItemEntity
-     */
-    private CartItemEntity cartItemToEntity(CartItemPure domain, Long cartId) {
-        if (domain == null) {
-            return null;
-        }
-
-        return CartItemEntity.builder()
-                .id(domain.getId() != null ? domain.getId().getValue() : null)
-                .cartId(cartId)
-                .productId(domain.getProductId().getValue())
-                .productName(domain.getProductName())
-                // TODO: Store productImageUrl in CartItemEntity
-                .quantity(domain.getQuantity())
-                .unitPrice(domain.getUnitPrice())
-                .build();
-    }
-
-    /**
+    }    /**
      * 批量轉換：Entity List -> Domain List
      */
     public List<ShoppingCartPure> toDomainList(List<ShoppingCartEntity> entities) {

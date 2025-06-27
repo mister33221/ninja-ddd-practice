@@ -76,7 +76,6 @@ export class ShoppingCartComponent implements OnInit {
       });
     }
   }
-
   removeItem(cartItemId: number): void {
     const index = this.shoppingCart.cartItems.findIndex(
       (i) => i.id === cartItemId
@@ -85,9 +84,18 @@ export class ShoppingCartComponent implements OnInit {
     if (index !== -1) {
       this.shoppingCartHttpService.removeCartItem(cartItemId).subscribe({
         next: () => {
-          this.shoppingCart.cartItems.splice(index, 1);
+          // 重新獲取購物車資料以保持前後端同步
+          this.getShoppingCart();
           this.alertService.showAlert(AlertType.SUCCESS, '移除商品成功', 3000);
         },
+        error: (error) => {
+          console.error('Remove item error:', error);
+          this.alertService.showAlert(
+            AlertType.DANGER,
+            '移除商品失敗: ' + (error.error?.message || error.message),
+            3000
+          );
+        }
       });
     }
   }

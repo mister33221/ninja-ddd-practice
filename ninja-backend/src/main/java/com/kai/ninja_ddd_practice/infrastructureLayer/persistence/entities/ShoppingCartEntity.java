@@ -23,18 +23,14 @@ public class ShoppingCartEntity {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    @OneToMany(mappedBy = "cartId", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Long userId;    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    private List<CartItemEntity> items = new ArrayList<>();
-
-    /**
+    private List<CartItemEntity> items = new ArrayList<>();    /**
      * 便利方法：新增項目
      */
     public void addItem(CartItemEntity item) {
         items.add(item);
-        item.setCartId(this.id);
+        item.setCart(this);
     }
 
     /**
@@ -42,6 +38,6 @@ public class ShoppingCartEntity {
      */
     public void removeItem(CartItemEntity item) {
         items.remove(item);
-        item.setCartId(null);
+        item.setCart(null);
     }
 }

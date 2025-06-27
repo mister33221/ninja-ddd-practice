@@ -213,4 +213,136 @@ class ShoppingCartApplicationServiceTest {
         verify(shoppingCartRepository).findByUserId(userId);
         verify(shoppingCartRepository).save(any(ShoppingCartPure.class));
     }
+
+    @Test
+    @DisplayName("移除購物車商品 - 成功")
+    void should_remove_product_from_cart_successfully() {
+        // Given
+        ShoppingCartPure existingCart = new ShoppingCartPure(ShoppingCartId.of(1L), userId);
+        existingCart.addProduct(testProduct, 2);
+        
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.of(existingCart));
+        when(shoppingCartRepository.save(any(ShoppingCartPure.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        shoppingCartService.removeFromCart(userId, 1L);
+        
+        // Then
+        verify(shoppingCartRepository).findByUserId(userId);
+        verify(shoppingCartRepository).save(any(ShoppingCartPure.class));
+    }
+
+    @Test
+    @DisplayName("移除購物車商品 - 購物車不存在時優雅處理")
+    void should_handle_gracefully_when_cart_not_exists_for_remove() {
+        // Given
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThatCode(() -> shoppingCartService.removeFromCart(userId, 1L))
+                .doesNotThrowAnyException();
+        
+        verify(shoppingCartRepository).findByUserId(userId);
+        verify(shoppingCartRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("清空購物車 - 成功")
+    void should_clear_cart_successfully() {
+        // Given
+        ShoppingCartPure existingCart = new ShoppingCartPure(ShoppingCartId.of(1L), userId);
+        existingCart.addProduct(testProduct, 2);
+        
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.of(existingCart));
+        when(shoppingCartRepository.save(any(ShoppingCartPure.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        shoppingCartService.clearCart(userId);
+        
+        // Then
+        verify(shoppingCartRepository).findByUserId(userId);
+        verify(shoppingCartRepository).save(any(ShoppingCartPure.class));
+    }
+
+    @Test
+    @DisplayName("清空購物車 - 購物車不存在時優雅處理")
+    void should_handle_gracefully_when_cart_not_exists_for_clear() {
+        // Given
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThatCode(() -> shoppingCartService.clearCart(userId))
+                .doesNotThrowAnyException();
+        
+        verify(shoppingCartRepository).findByUserId(userId);
+        verify(shoppingCartRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("獲取購物車 - 存在時返回數據")
+    void should_return_cart_when_exists() {
+        // Given
+        ShoppingCartPure existingCart = new ShoppingCartPure(ShoppingCartId.of(1L), userId);
+        existingCart.addProduct(testProduct, 2);
+        
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.of(existingCart));
+        
+        // When
+        var result = shoppingCartService.getShoppingCart(userId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getUserId()).isEqualTo(1L);
+        verify(shoppingCartRepository).findByUserId(userId);
+    }
+
+    @Test
+    @DisplayName("獲取購物車 - 不存在時返回空購物車")
+    void should_return_empty_cart_when_not_exists() {
+        // Given
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        
+        // When
+        var result = shoppingCartService.getShoppingCart(userId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getUserId()).isEqualTo(1L);
+        assertThat(result.getCartItems()).isEmpty();
+        verify(shoppingCartRepository).findByUserId(userId);
+    }    @Test
+    @DisplayName("移除購物車項目by ID - 成功")
+    void should_remove_cart_item_by_id_successfully() {
+        // Given
+        ShoppingCartPure existingCart = new ShoppingCartPure(ShoppingCartId.of(1L), userId);
+        existingCart.addProduct(testProduct, 2);
+        
+        // Get the actual cart item ID from the added item
+        Long actualCartItemId = existingCart.getItems().get(0).getId().getValue();
+        
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.of(existingCart));
+        when(shoppingCartRepository.save(any(ShoppingCartPure.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        shoppingCartService.removeCartItem(userId, actualCartItemId);
+        
+        // Then
+        verify(shoppingCartRepository).findByUserId(userId);
+        verify(shoppingCartRepository).save(any(ShoppingCartPure.class));
+    }
+
+    @Test
+    @DisplayName("移除購物車項目by ID - 購物車不存在時拋出異常")
+    void should_throw_exception_when_cart_not_found_for_remove_item() {
+        // Given
+        when(shoppingCartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThatThrownBy(() -> shoppingCartService.removeCartItem(userId, 1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Shopping cart not found for user");
+        
+        verify(shoppingCartRepository).findByUserId(userId);
+        verify(shoppingCartRepository, never()).save(any());
+    }
 }
