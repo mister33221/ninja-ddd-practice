@@ -11,7 +11,6 @@ import com.kai.ninja_ddd_practice.domainLayer.aggregations.shoppingCart.valueObj
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserId;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ProductRepository;
 import com.kai.ninja_ddd_practice.domainLayer.repositoryInterfaces.ShoppingCartPureRepository;
-import com.kai.ninja_ddd_practice.infrastructureLayer.security.util.JwtUtil;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.CheckoutRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.GetShoppingCartResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,37 +32,31 @@ public class ShoppingCartApplicationService {
 
     private final ShoppingCartPureRepository shoppingCartRepository;
     private final ProductRepository productRepository;
-    private final JwtUtil jwtUtil;
 
     /**
      * 添加商品到購物車
-     */    public void addToCart(String token, AddToCartDto dto) {
+     */
+    public void addToCart(UserId userId, AddToCartDto dto) {
         Long productId = null;
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 DTO
             if (dto == null) {
                 throw new IllegalArgumentException("AddToCartDto cannot be null");
             }
-            
+
             productId = dto.getProductId();
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Adding product {} to cart for user {} (extracted from token)", productId, userId);
+            log.info("Adding product {} to cart for user {}", productId, userId.getValue());
               // 1. 驗證輸入參數
             if (productId == null) {
                 throw new IllegalArgumentException("Product ID must not be null");
             }
-            
+
             // 2. 獲取商品信息
-            UserId userIdObj = UserId.of(userId);
             ProductId productIdObj = ProductId.of(productId);
             
             Optional<ProductPure> productOpt = productRepository.findById(productIdObj);
@@ -74,14 +67,14 @@ public class ShoppingCartApplicationService {
             ProductPure product = productOpt.get();
             
             // 3. 獲取或創建購物車
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             ShoppingCartPure cart;
             
             if (cartOpt.isPresent()) {
                 cart = cartOpt.get();
             } else {
                 // 創建新購物車 (ID 為 null，會在保存時自動生成)
-                cart = new ShoppingCartPure(null, userIdObj);
+                cart = new ShoppingCartPure(null, userId);
             }
             
             // 4. 添加商品到購物車 (使用指定數量，默認為1)
@@ -90,8 +83,10 @@ public class ShoppingCartApplicationService {
             
             // 5. 保存購物車
             shoppingCartRepository.save(cart);
-              log.info("Successfully added product {} to cart for user {}", productId, userId);
-            
+              log.info("Successfully added product {} to cart for user {}", productId, userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error adding product {} to cart: {}", productId, e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
             log.error("Error adding product {} to cart: {}", productId, e.getMessage(), e);
             throw new RuntimeException("Failed to add product to cart: " + e.getMessage(), e);
@@ -101,23 +96,22 @@ public class ShoppingCartApplicationService {
     /**
      * 添加商品到購物車 (Controller 使用的方法名)
      */
-    public void addProductToCart(String token, AddToCartDto dto) {
-        addToCart(token, dto);
-    }    /**
+    public void addProductToCart(UserId userId, AddToCartDto dto) {
+//      3. 進入到 Application 層，在這邊與各個聚合或不曾層級進行交互
+        addToCart(userId, dto);
+    }
+
+    /**
      * 從購物車移除商品
      */
-    public void removeFromCart(String token, Long productId) {
+    public void removeFromCart(UserId userId, Long productId) {
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Removing product {} from cart for user {} (extracted from token)", productId, userId);
+            log.info("Removing product {} from cart for user {}", productId, userId.getValue());
             
             // 1. 驗證輸入參數
             if (productId == null) {
@@ -125,12 +119,11 @@ public class ShoppingCartApplicationService {
             }
             
             // 2. 獲取用戶的購物車
-            UserId userIdObj = UserId.of(userId);
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
                 // 根據 DDD 原則：如果購物車不存在，我們應該優雅處理而不是拋出異常
-                log.info("No cart found for user {}, nothing to remove", userId);
+                log.info("No cart found for user {}, nothing to remove", userId.getValue());
                 return;
             }
             
@@ -143,27 +136,27 @@ public class ShoppingCartApplicationService {
             // 4. 保存購物車（整個聚合作為事務邊界）
             shoppingCartRepository.save(cart);
             
-            log.info("Successfully processed remove product {} request for user {}", productId, userId);
-            
+            log.info("Successfully processed remove product {} request for user {}", productId, userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error removing product {} from cart: {}", productId, e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
             log.error("Error removing product {} from cart: {}", productId, e.getMessage(), e);
             throw new RuntimeException("Failed to remove product from cart: " + e.getMessage(), e);
         }
-    }/**
+    }
+
+    /**
      * 移除購物車項目 (Controller 使用的方法名)
      */
-    public void removeCartItem(String token, Long cartItemId) {
+    public void removeCartItem(UserId userId, Long cartItemId) {
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Removing cart item {} for user {} (extracted from token)", cartItemId, userId);
+            log.info("Removing cart item {} for user {}", cartItemId, userId.getValue());
             
             // 1. 驗證輸入參數
             if (cartItemId == null) {
@@ -171,11 +164,10 @@ public class ShoppingCartApplicationService {
             }
             
             // 2. 獲取用戶的購物車
-            UserId userIdObj = UserId.of(userId);
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
-                throw new IllegalArgumentException("Shopping cart not found for user: " + userId);
+                throw new IllegalArgumentException("Shopping cart not found for user: " + userId.getValue());
             }
             
             ShoppingCartPure cart = cartOpt.get();
@@ -198,8 +190,10 @@ public class ShoppingCartApplicationService {
             shoppingCartRepository.save(cart);
             
             log.info("Successfully removed cart item {} (product {}) for user {}", 
-                    cartItemId, productId.getValue(), userId);
-            
+                    cartItemId, productId.getValue(), userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error removing cart item {}: {}", cartItemId, e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
             log.error("Error removing cart item {}: {}", cartItemId, e.getMessage(), e);
             throw new RuntimeException("Failed to remove cart item: " + e.getMessage(), e);
@@ -207,52 +201,38 @@ public class ShoppingCartApplicationService {
     }
 
     /**
-     * 獲取用戶的購物車
-     */
-    public Object getCartByUserId(Long userId) {
-        // TODO: Implement get cart by user id logic
-        throw new UnsupportedOperationException("getCartByUserId method not implemented yet");
-    }    /**
      * 獲取購物車 (Controller 使用的方法名)
      */
-    public GetShoppingCartDto getShoppingCart(String token) {
-        log.info("Getting shopping cart for token: {}", token != null ? "***" : "null");
+    public GetShoppingCartDto getShoppingCart(UserId userId) {
+        log.info("Getting shopping cart for user: {}", userId.getValue());
         
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
+            log.info("Getting cart for user ID {}", userId.getValue());
             
-            log.info("Extracted user ID {} from token", userId);
-            
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(UserId.of(userId));
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
                 // Create and return empty cart if not exists
-                log.info("No cart found for user {}, returning empty cart", userId);
-                return createEmptyCartDto(userId);
+                log.info("No cart found for user {}, returning empty cart", userId.getValue());
+                return createEmptyCartDto(userId.getValue());
             }
             
             ShoppingCartPure cart = cartOpt.get();
             // Use mapper to convert domain model to DTO
             GetShoppingCartDto result = ShoppingCartApplicationLayerMapper.covertShoppingCartToGetShoppingCartDto(cart);
             
-            log.info("Retrieved cart for user {} with {} items", userId, cart.getItems().size());
+            log.info("Retrieved cart for user {} with {} items", userId.getValue(), cart.getItems().size());
             return result;
             
         } catch (Exception e) {
             log.error("Error getting shopping cart: {}", e.getMessage(), e);
-            // For JWT-related errors, rethrow them to be handled by the controller
-            if (e.getMessage().contains("JWT") || e.getMessage().contains("token") || e.getMessage().contains("Token")) {
-                throw e;
-            }
             // For other errors, return empty cart with default user
-            return createEmptyCartDto(7777L);
+            return createEmptyCartDto(userId.getValue());
         }
     }
     
@@ -265,21 +245,19 @@ public class ShoppingCartApplicationService {
                 .userId(userId)
                 .cartItems(new GetShoppingCartResponse.CartItem[0])
                 .build();
-    }    /**
+    }
+
+    /**
      * 更新購物車項目數量
      */
-    public void updateCartItemQuantity(String token, UpdateCartItemQuantityDto dto) {
+    public void updateCartItemQuantity(UserId userId, UpdateCartItemQuantityDto dto) {
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Updating cart item quantity for user {} (extracted from token)", userId);
+            log.info("Updating cart item quantity for user {}", userId.getValue());
             
             // 1. 驗證輸入參數
             if (dto.getProductId() == null || dto.getQuantity() == null) {
@@ -291,11 +269,10 @@ public class ShoppingCartApplicationService {
             }
             
             // 2. 獲取用戶的購物車
-            UserId userIdObj = UserId.of(userId);
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
-                throw new IllegalArgumentException("Shopping cart not found for user: " + userId);
+                throw new IllegalArgumentException("Shopping cart not found for user: " + userId.getValue());
             }
             
             ShoppingCartPure cart = cartOpt.get();
@@ -305,19 +282,21 @@ public class ShoppingCartApplicationService {
             if (dto.getQuantity() == 0) {
                 // 如果數量為 0，則移除商品
                 cart.removeProduct(productId);
-                log.info("Removed product {} from cart for user {}", dto.getProductId(), userId);
+                log.info("Removed product {} from cart for user {}", dto.getProductId(), userId.getValue());
             } else {
                 // 更新數量
                 cart.updateProductQuantity(productId, dto.getQuantity());
                 log.info("Updated quantity of product {} to {} for user {}", 
-                        dto.getProductId(), dto.getQuantity(), userId);
+                        dto.getProductId(), dto.getQuantity(), userId.getValue());
             }
             
             // 4. 保存購物車
             shoppingCartRepository.save(cart);
             
-            log.info("Successfully updated cart item quantity for user {}", userId);
-            
+            log.info("Successfully updated cart item quantity for user {}", userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error updating cart item quantity: {}", e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
             log.error("Error updating cart item quantity: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to update cart item quantity: " + e.getMessage(), e);
@@ -327,18 +306,14 @@ public class ShoppingCartApplicationService {
     /**
      * 根據購物車項目 ID 更新數量
      */
-    public void updateCartItemQuantityById(String token, Long cartItemId, Integer newQuantity) {
+    public void updateCartItemQuantityById(UserId userId, Long cartItemId, Integer newQuantity) {
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Updating cart item {} quantity to {} for user {}", cartItemId, newQuantity, userId);
+            log.info("Updating cart item {} quantity to {} for user {}", cartItemId, newQuantity, userId.getValue());
             
             // 1. 驗證輸入參數
             if (cartItemId == null || newQuantity == null) {
@@ -350,11 +325,10 @@ public class ShoppingCartApplicationService {
             }
             
             // 2. 獲取用戶的購物車
-            UserId userIdObj = UserId.of(userId);
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
-                throw new IllegalArgumentException("Shopping cart not found for user: " + userId);
+                throw new IllegalArgumentException("Shopping cart not found for user: " + userId.getValue());
             }
             
             ShoppingCartPure cart = cartOpt.get();
@@ -375,38 +349,38 @@ public class ShoppingCartApplicationService {
                 // 如果數量為 0，則移除商品
                 cart.removeProduct(productId);
                 log.info("Removed cart item {} (product {}) from cart for user {}", 
-                        cartItemId, productId.getValue(), userId);
+                        cartItemId, productId.getValue(), userId.getValue());
             } else {
                 // 更新數量
                 cart.updateProductQuantity(productId, newQuantity);
                 log.info("Updated cart item {} (product {}) quantity to {} for user {}", 
-                        cartItemId, productId.getValue(), newQuantity, userId);
+                        cartItemId, productId.getValue(), newQuantity, userId.getValue());
             }
             
             // 5. 保存購物車
             shoppingCartRepository.save(cart);
             
-            log.info("Successfully updated cart item quantity for user {}", userId);
-            
+            log.info("Successfully updated cart item quantity for user {}", userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error updating cart item quantity by ID: {}", e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
             log.error("Error updating cart item quantity by ID: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to update cart item quantity: " + e.getMessage(), e);
         }
-    }    /**
+    }
+
+    /**
      * 結帳
      */
-    public void checkout(String token, CheckoutRequest checkoutRequest) {
+    public void checkout(UserId userId, CheckoutRequest checkoutRequest) {
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Processing checkout for user {} (extracted from token)", userId);
+            log.info("Processing checkout for user {}", userId.getValue());
             
             // 1. 驗證輸入參數
             if (checkoutRequest == null) {
@@ -414,11 +388,10 @@ public class ShoppingCartApplicationService {
             }
             
             // 2. 獲取用戶的購物車
-            UserId userIdObj = UserId.of(userId);
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
-                throw new IllegalArgumentException("Shopping cart not found for user: " + userId);
+                throw new IllegalArgumentException("Shopping cart not found for user: " + userId.getValue());
             }
             
             ShoppingCartPure cart = cartOpt.get();
@@ -446,17 +419,18 @@ public class ShoppingCartApplicationService {
             // 根據 DDD 原則：結帳應該發出領域事件，讓其他聚合響應
             // 例如：OrderCreatedEvent, InventoryUpdateRequestedEvent 等
             // 這樣符合「一個處理流程應避免更新多個Aggregate」的原則
-            
-            log.info("Order created successfully for user {}", userId);
+              log.info("Order created successfully for user {}", userId.getValue());
             
             // 6. 結帳成功後清空購物車
             cart.clear();
             shoppingCartRepository.save(cart);
             
-            log.info("Successfully completed checkout for user {} and cleared cart", userId);
-            
+            log.info("Successfully completed checkout for user {} and cleared cart", userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error processing checkout: {}", e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
-            log.error("Error processing checkout for token: {}", e.getMessage(), e);
+            log.error("Error processing checkout: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process checkout: " + e.getMessage(), e);
         }
     }
@@ -464,25 +438,20 @@ public class ShoppingCartApplicationService {
     /**
      * 清空購物車
      */
-    public void clearCart(String token) {
+    public void clearCart(UserId userId) {
         try {
-            // 從 JWT token 中提取用戶 ID
-            if (token == null || token.trim().isEmpty()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            // 驗證輸入參數
+            if (userId == null) {
+                throw new IllegalArgumentException("UserId cannot be null");
             }
             
-            // 驗證 token 並提取用戶 ID
-            jwtUtil.validateToken(token);
-            Long userId = jwtUtil.extractUserId(token);
-            
-            log.info("Clearing cart for user {} (extracted from token)", userId);
+            log.info("Clearing cart for user {}", userId.getValue());
             
             // 1. 獲取用戶的購物車
-            UserId userIdObj = UserId.of(userId);
-            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userIdObj);
+            Optional<ShoppingCartPure> cartOpt = shoppingCartRepository.findByUserId(userId);
             
             if (cartOpt.isEmpty()) {
-                log.info("No cart found for user {}, nothing to clear", userId);
+                log.info("No cart found for user {}, nothing to clear", userId.getValue());
                 return;
             }
             
@@ -495,8 +464,10 @@ public class ShoppingCartApplicationService {
             // 3. 保存購物車
             shoppingCartRepository.save(cart);
             
-            log.info("Successfully cleared {} items from cart for user {}", itemCount, userId);
-            
+            log.info("Successfully cleared {} items from cart for user {}", itemCount, userId.getValue());
+              } catch (IllegalArgumentException e) {
+            log.error("Error clearing cart: {}", e.getMessage());
+            throw e; // 直接重新拋出參數驗證異常
         } catch (Exception e) {
             log.error("Error clearing cart: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to clear cart: " + e.getMessage(), e);

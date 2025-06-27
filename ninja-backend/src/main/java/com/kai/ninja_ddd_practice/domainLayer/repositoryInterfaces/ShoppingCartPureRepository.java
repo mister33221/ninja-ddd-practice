@@ -10,6 +10,8 @@ import java.util.Optional;
 /**
  * 購物車純領域 Repository 介面
  * 不依賴任何基礎設施技術
+ * 著重於"語義"和"行為"，讓方法名稱和參數清晰表達意圖。
+ * 而是讓實做這個 interface 的 implementation 來處理具體的基礎設施細節，該 implementation 置於 infrastructure 層
  */
 public interface ShoppingCartPureRepository {
 

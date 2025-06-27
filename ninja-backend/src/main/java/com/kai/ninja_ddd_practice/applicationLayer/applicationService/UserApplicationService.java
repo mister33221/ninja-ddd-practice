@@ -93,12 +93,8 @@ public class UserApplicationService {
         UserId userId = UserId.of(Long.parseLong(id));
         return userPureRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
-    }
-
-    public void updateUserInfo(UpdateUserInfoDto updateUserInfoDto, String token) {
-        Long userId = jwtUtil.extractUserId(token);
-        UserId userIdVO = UserId.of(userId);
-        UserPure user = userPureRepository.findById(userIdVO)
+    }    public void updateUserInfo(UpdateUserInfoDto updateUserInfoDto, UserId userId) {
+        UserPure user = userPureRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
 
 //        將更新的方法放在領域內，這樣可以確保領域內的邏輯是正確的
@@ -120,6 +116,6 @@ public class UserApplicationService {
                 dateOfBirth
         );
 
-        userPureRepository.save(user);
+        userPureRepository.save(updatedUser);
     }
 }

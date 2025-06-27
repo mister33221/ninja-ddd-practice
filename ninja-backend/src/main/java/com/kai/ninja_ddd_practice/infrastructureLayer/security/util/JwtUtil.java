@@ -110,4 +110,32 @@ public class JwtUtil {
         Claims claims = extractAllClaims(removePrefix(token));
         return Long.parseLong(claims.get("id").toString());
     }
+
+    /**
+     * 從 JWT Token 中提取用戶名
+     */
+    public String extractUsername(String token) {
+        Claims claims = extractAllClaims(removePrefix(token));
+        return claims.get("username", String.class);
+    }
+
+    /**
+     * 從 JWT Token 中提取用戶 Email
+     */
+    public String extractEmail(String token) {
+        Claims claims = extractAllClaims(removePrefix(token));
+        return claims.get("email", String.class);
+    }
+
+    /**
+     * 從 JWT Token 中提取所有用戶資訊
+     */
+    public Map<String, Object> extractUserInfo(String token) {
+        Claims claims = extractAllClaims(removePrefix(token));
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("userId", Long.parseLong(claims.get("id").toString()));
+        userInfo.put("username", claims.get("username", String.class));
+        userInfo.put("email", claims.get("email", String.class));
+        return userInfo;
+    }
 }

@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("購物車應用服務 - 整合測試")
-class ShoppingCartApplicationServiceTest {
+class ShoppingCartApplicationServiceTest_New {
 
     @Mock
     private ShoppingCartPureRepository shoppingCartRepository;

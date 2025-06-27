@@ -6,7 +6,8 @@ import com.kai.ninja_ddd_practice.applicationLayer.dtos.LoginDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.RegistryDto;
 import com.kai.ninja_ddd_practice.applicationLayer.dtos.UpdateUserInfoDto;
 import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.aggregateRoot.UserPure;
-import com.kai.ninja_ddd_practice.infrastructureLayer.security.annotations.AuthorizationValidation;
+import com.kai.ninja_ddd_practice.domainLayer.aggregations.user.valueObjects.UserId;
+import com.kai.ninja_ddd_practice.infrastructureLayer.security.principal.JwtUserPrincipal;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.LoginRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.RegistryRequest;
 import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.request.UpdateUserInfoRequest;
@@ -16,6 +17,7 @@ import com.kai.ninja_ddd_practice.interfaceLayer.apiModels.response.RegistryResp
 import com.kai.ninja_ddd_practice.interfaceLayer.mapper.UserInterfaceLayerMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -48,11 +50,8 @@ public class UserController {
         LoginDto loginDto = objectMapper.convertValue(request, LoginDto.class);
         String message = userService.login(loginDto);
         return ResponseEntity.ok(LoginResponse.builder().token(message).build());
-    }
-
-    @GetMapping("/get-user-info-by-id/{id}")
+    }    @GetMapping("/get-user-info-by-id/{id}")
     @Operation(summary = "Get user by id", description = "Get user by id", tags = {"User"})
-    @AuthorizationValidation
     public ResponseEntity<GetUserInfoByIdResponse> getUserById(@PathVariable String id) {
         UserPure user = userService.getUserById(id);
         return ResponseEntity.ok(UserInterfaceLayerMapper.convertUserToGetUserInfoByIdResponse(user));
@@ -60,14 +59,26 @@ public class UserController {
 
     @PutMapping("/update-user-info")
     @Operation(summary = "Update user info", description = "Update user info", tags = {"User"})
-    @AuthorizationValidation
     public ResponseEntity<?> updateUserInfo(
-            @RequestHeader("Authorization") String token,
+            @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody UpdateUserInfoRequest request
     ) {
+        // 將 Principal 轉換為領域物件
+        UserId userId = UserId.of(principal.getUserId());
+        
         UpdateUserInfoDto updateUserInfoDto = UserInterfaceLayerMapper.covertUpdateUserInfoRequestToDto(request);
-        userService.updateUserInfo(updateUserInfoDto, token);
+        userService.updateUserInfo(updateUserInfoDto, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/profile")
+    @Operation(summary = "Get current user profile", description = "Get current user profile", tags = {"User"})
+    public ResponseEntity<GetUserInfoByIdResponse> getCurrentUserProfile(
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        // 使用 Principal 中的用戶 ID 獲取用戶資訊
+        UserPure user = userService.getUserById(principal.getUserId().toString());
+        return ResponseEntity.ok(UserInterfaceLayerMapper.convertUserToGetUserInfoByIdResponse(user));
     }
 
     @GetMapping("/test/get/{id}")
