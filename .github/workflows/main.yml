@@ -52,13 +52,13 @@ jobs:
         cd ./ninja-backend/
         ./mvnw jacoco:check -Djacoco.minimum.coverage=70%
       continue-on-error: true  # 初期可以容許失敗，之後可以改為強制要求
-    
-    - name: Run Checkstyle
+      - name: Run Checkstyle
       run: |
         cd ./ninja-backend/
         ./mvnw checkstyle:check
       continue-on-error: true
-      - name: Run OWASP Dependency Check
+    
+    - name: Run OWASP Dependency Check
       run: |
         cd ./ninja-backend/
         ./mvnw dependency-check:check
@@ -114,22 +114,22 @@ jobs:
         cd ./ninja-frontend
         npm run lint
       continue-on-error: true
-    
-    # 新增：使用 npm audit-fix 來自動修復安全問題
+      # 新增：使用 npm audit-fix 來自動修復安全問題
     - name: Run npm audit and fix issues
       run: |
         cd ./ninja-frontend
         npm audit --audit-level high
-        npm audit fix --audit-level high --force      continue-on-error: true
-    
-    # 新增：前端安全掃描（使用更簡單的 npm audit 替代）
+        npm audit fix --audit-level high --force
+      continue-on-error: true
+      # 新增：前端安全掃描（使用更簡單的 npm audit 替代）
     - name: Run frontend security scan
       run: |
         cd ./ninja-frontend
         echo "執行前端安全掃描..."
         mkdir -p reports
         npm audit --json > reports/npm-audit.json || true
-        echo "安全掃描完成，結果已保存到 reports/npm-audit.json"      continue-on-error: true
+        echo "安全掃描完成，結果已保存到 reports/npm-audit.json"
+      continue-on-error: true
     
     # 修改：檢查 Angular 版本後執行前端測試，跳過不相容的測試
     - name: Run frontend tests
@@ -243,8 +243,7 @@ jobs:
         tags: |
           vincentkai/ninja-backend:latest
           vincentkai/ninja-backend:${{ needs.backend-test.outputs.version }}
-    
-    - name: Build and push frontend Docker image
+      - name: Build and push frontend Docker image
       uses: docker/build-push-action@v2
       with:
         context: ./ninja-frontend
@@ -252,7 +251,8 @@ jobs:
         tags: |
           vincentkai/ninja-frontend:latest
           vincentkai/ninja-frontend:${{ needs.backend-test.outputs.version }}
-      # 修改：使用簡化的容器映像掃描
+    
+    # 修改：使用簡化的容器映像掃描
     - name: Simple Docker image scan
       run: |
         echo "執行簡化的 Docker 映像掃描..."
