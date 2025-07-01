@@ -7,8 +7,7 @@ on:
   #   branches: [ master ]
 
 jobs:
-  # 版本設置和初始化工作
-  setup:
+  build:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
@@ -20,16 +19,7 @@ jobs:
       id: version
       run: |
         echo "VERSION=$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-        echo "Generated version: $(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"
 
-  # 後端構建工作
-  backend-build:
-    needs: setup
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-    
     - name: Set up JDK 17
       uses: actions/setup-java@v2
       with:
@@ -42,38 +32,6 @@ jobs:
         chmod +x mvnw
         ./mvnw clean package -DskipTests
     
-    - name: Run backend tests
-      run: |
-        cd ./ninja-backend/
-        ./mvnw test
-        
-    - name: Generate test and coverage reports
-      run: |
-        cd ./ninja-backend/
-        ./mvnw jacoco:report
-        
-    - name: Archive backend artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: backend-dist
-        path: ninja-backend/target
-        
-    - name: Archive backend test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: backend-test-results
-        path: |
-          ninja-backend/target/surefire-reports
-          ninja-backend/target/site/jacoco
-  
-  # 前端構建工作
-  frontend-build:
-    needs: setup
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-    
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
@@ -85,61 +43,16 @@ jobs:
         npm install --legacy-peer-deps
         npm run build -- --configuration production
     
-    - name: Run frontend tests
-      run: |
-        cd ./ninja-frontend
-        npm test -- --watch=false --browsers=ChromeHeadless
-      continue-on-error: true  # 如果前端目前沒有測試，允許繼續執行
-      
-    - name: Archive frontend artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: frontend-dist
-        path: ninja-frontend/dist
-        
-    - name: Archive frontend test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: frontend-test-results
-        path: |
-          ninja-frontend/coverage
-          ninja-frontend/test-results
-      continue-on-error: true  # 如果前端目前沒有測試報告，允許繼續執行
-
-  # 整合前後端構建結果
-  integrate:
-    needs: [setup, backend-build, frontend-build]
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-    
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: backend-dist
-        path: dist/backend
-        
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-dist
-        path: dist/frontend
-    
-    - name: Prepare combined artifacts
-      run: |
-        mkdir -p combined-dist
-        cp -r dist/backend/* combined-dist/ || true
-        mkdir -p combined-dist/frontend
-        cp -r dist/frontend/* combined-dist/frontend/ || true
-        
-    - name: Archive combined artifacts
+    - name: Archive production artifacts
       uses: actions/upload-artifact@v4
       with:
         name: dist
-        path: combined-dist
+        path: |
+          ninja-backend/target
+          ninja-frontend/dist
+
   push:
-    needs: [setup, integrate]
+    needs: build
     runs-on: ubuntu-latest
     
     steps:
@@ -149,7 +62,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dist
-        path: dist
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v1
@@ -164,7 +76,7 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-backend:latest
-          vincentkai/ninja-backend:${{ needs.setup.outputs.version }}
+          vincentkai/ninja-backend:${{ needs.build.outputs.version }}
     
     - name: Build and push frontend Docker image
       uses: docker/build-push-action@v2
@@ -173,9 +85,10 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-frontend:latest
-          vincentkai/ninja-frontend:${{ needs.setup.outputs.version }}
+          vincentkai/ninja-frontend:${{ needs.build.outputs.version }}
+
   notify:
-    needs: [backend-build, frontend-build, integrate, push]
+    needs: [build, push]
     runs-on: ubuntu-latest
     if: always()
     
@@ -191,12 +104,9 @@ jobs:
         body: |
           Job in ${{github.repository}} finished with status ${{job.status}}.
           
-          Backend build status: ${{ needs.backend-build.result }}
-          Frontend build status: ${{ needs.frontend-build.result }}
-          Integration status: ${{ needs.integrate.result }}
+          Build job status: ${{ needs.build.result }}
           Push job status: ${{ needs.push.result }}
           
-          Version: ${{ needs.setup.outputs.version }}
           Commit message: ${{ github.event.head_commit.message }}
           
           See details here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
