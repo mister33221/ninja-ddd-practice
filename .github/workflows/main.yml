@@ -7,704 +7,108 @@ on:
   #   branches: [ master ]
 
 jobs:
-  # 共享版本號設置任務
-  setup:
+  build:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
     
     steps:
     - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0  # 獲取完整 git 歷史
     
     - name: Generate version number
       id: version
       run: |
         echo "VERSION=$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-    
-    # 分析提交以進行語義化版本控制
-    - name: Semantic versioning
-      id: semantic_version
-      run: |
-        # 從 Git 標籤獲取最新版本
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
-        echo "Latest tag: $LATEST_TAG"
-        
-        # 檢查是否有重大更改（假設在提交訊息中包含 "BREAKING CHANGE"）
-        if git log -1 --pretty=%B | grep -q "BREAKING CHANGE"; then
-          # 主版本號遞增
-          IFS='.' read -r -a VERSION_PARTS <<< "$LATEST_TAG"
-          MAJOR=$((VERSION_PARTS[0] + 1))
-          NEW_VERSION="$MAJOR.0.0"
-        elif git log -1 --pretty=%B | grep -q "feat:"; then
-          # 次版本號遞增
-          IFS='.' read -r -a VERSION_PARTS <<< "$LATEST_TAG"
-          MINOR=$((VERSION_PARTS[1] + 1))
-          NEW_VERSION="${VERSION_PARTS[0]}.$MINOR.0"
-        else
-          # 修補版本號遞增
-          IFS='.' read -r -a VERSION_PARTS <<< "$LATEST_TAG"
-          PATCH=$((VERSION_PARTS[2] + 1))
-          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH"
-        fi
-        
-        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-        echo "Generated semantic version: $NEW_VERSION"
-  
-  # 後端構建與測試任務
-  backend-build:
-    needs: setup
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v2
       with:
         java-version: '17'
         distribution: 'adopt'
     
-    - name: Cache Maven dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    
-    - name: Run backend tests
-      run: |
-        cd ./ninja-backend/  
-        chmod +x mvnw
-        ./mvnw test
-    
-    # 生成 JaCoCo 覆蓋率報告 (HTML, XML 和 CSV)
-    - name: Generate test coverage report
-      run: |
-        cd ./ninja-backend/
-        ./mvnw jacoco:report verify
-    
-    # 生成覆蓋率摘要和徽章
-    - name: Generate coverage badges
-      run: |
-        cd ./ninja-backend/
-        
-        # 安裝解析XML的工具
-        sudo apt-get update
-        sudo apt-get install -y xmlstarlet
-        
-        # 提取覆蓋率數據
-        COVERAGE_REPORT="target/site/jacoco/jacoco.xml"
-        if [ -f "$COVERAGE_REPORT" ]; then
-          INSTRUCTION_COVERED=$(xmlstarlet sel -t -v "//counter[@type='INSTRUCTION']/@covered" $COVERAGE_REPORT)
-          INSTRUCTION_MISSED=$(xmlstarlet sel -t -v "//counter[@type='INSTRUCTION']/@missed" $COVERAGE_REPORT)
-          BRANCH_COVERED=$(xmlstarlet sel -t -v "//counter[@type='BRANCH']/@covered" $COVERAGE_REPORT)
-          BRANCH_MISSED=$(xmlstarlet sel -t -v "//counter[@type='BRANCH']/@missed" $COVERAGE_REPORT)
-          
-          # 計算百分比
-          INSTRUCTION_TOTAL=$((INSTRUCTION_COVERED + INSTRUCTION_MISSED))
-          BRANCH_TOTAL=$((BRANCH_COVERED + BRANCH_MISSED))
-          
-          INSTRUCTION_PERCENT=0
-          BRANCH_PERCENT=0
-          
-          if [ $INSTRUCTION_TOTAL -gt 0 ]; then
-            INSTRUCTION_PERCENT=$(awk "BEGIN { printf \"%.2f\", ($INSTRUCTION_COVERED * 100 / $INSTRUCTION_TOTAL) }")
-          fi
-          
-          if [ $BRANCH_TOTAL -gt 0 ]; then
-            BRANCH_PERCENT=$(awk "BEGIN { printf \"%.2f\", ($BRANCH_COVERED * 100 / $BRANCH_TOTAL) }")
-          fi
-          
-          # 創建覆蓋率摘要文件
-          mkdir -p target/coverage-summary
-          cat > target/coverage-summary/coverage-summary.md << EOF
-          # 測試覆蓋率報告
-          
-          生成時間: $(date)
-          
-          ## 覆蓋率概要
-          
-          | 指標 | 覆蓋 | 總數 | 覆蓋率 |
-          |------|------|------|--------|
-          | 指令覆蓋 | $INSTRUCTION_COVERED | $INSTRUCTION_TOTAL | $INSTRUCTION_PERCENT% |
-          | 分支覆蓋 | $BRANCH_COVERED | $BRANCH_TOTAL | $BRANCH_PERCENT% |
-          
-          [詳細 JaCoCo 報告](../jacoco/index.html)
-          EOF
-          
-          echo "生成覆蓋率摘要完成"
-        else
-          echo "找不到 JaCoCo 報告文件"
-        fi
-    
-    - name: Run Checkstyle
-      run: |
-        cd ./ninja-backend/
-        ./mvnw checkstyle:check
-      continue-on-error: true
-    
-    - name: Run OWASP Dependency Check
-      run: |
-        cd ./ninja-backend/
-        ./mvnw dependency-check:check
-      continue-on-error: true
-    
-    # 添加 SonarQube 整合分析
-    - name: SonarQube Analysis
-      run: |
-        cd ./ninja-backend/
-        # 確保 pom.xml 中已設定 sonar-maven-plugin
-        ./mvnw sonar:sonar \
-          -Dsonar.projectKey=ninja-ddd-practice \
-          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-      continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    # 添加 JMeter 效能測試
-    - name: Set up JMeter
-      run: |
-        mkdir -p ~/jmeter
-        cd ~/jmeter
-        wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.5.tgz
-        tar -xzf apache-jmeter-5.5.tgz
-        echo "JMeter setup complete"
-    
-    - name: Run API Performance Tests
-      run: |
-        cd ./ninja-backend/
-        # 假設 JMeter 測試計劃位於 src/test/resources/performance
-        mkdir -p target/jmeter-reports
-        ~/jmeter/apache-jmeter-5.5/bin/jmeter -n -t src/test/resources/performance/api-test-plan.jmx \
-          -l target/jmeter-reports/results.jtl \
-          -e -o target/jmeter-reports/dashboard || echo "JMeter test plan not found, skipping"
-      continue-on-error: true
-    
     - name: Build ninja-backend
       run: |
         cd ./ninja-backend/  
+        chmod +x mvnw
         ./mvnw clean package -DskipTests
-    
-    # 上傳後端測試結果和構建物
-    - name: Upload backend test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: backend-test-results
-        path: |
-          ninja-backend/target/surefire-reports/
-          ninja-backend/target/site/jacoco/
-          ninja-backend/target/coverage-summary/
-          ninja-backend/target/checkstyle-reports/
-          ninja-backend/target/dependency-check-report.html
-          ninja-backend/target/jmeter-reports/
-          ninja-backend/target/site/jacoco/jacoco.xml
-          ninja-backend/target/site/jacoco/jacoco.csv
-    
-    - name: Upload backend artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: backend-dist
-        path: ninja-backend/target
-  
-  # 前端構建與測試任務
-  frontend-build:
-    needs: setup
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
     
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '19.4.0'
     
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: ${{ runner.os }}-node-
-    
-    - name: Install frontend dependencies
-      run: |
-        cd ./ninja-frontend  
-        npm install --legacy-peer-deps
-    
-    - name: Run frontend linting
-      run: |
-        cd ./ninja-frontend
-        npm run lint
-      continue-on-error: true
-    
-    - name: Run frontend tests
-      run: |
-        cd ./ninja-frontend
-        npm run test:ci
-    
-    - name: Run npm audit
-      run: |
-        cd ./ninja-frontend
-        npm audit --audit-level high
-      continue-on-error: true
-    
-    # 添加 Lighthouse 前端效能測試
-    - name: Install Lighthouse CI
-      run: |
-        npm install -g @lhci/cli@0.12.x
-    
-    - name: Run Lighthouse CI
-      run: |
-        cd ./ninja-frontend
-        npm run build -- --configuration production
-        lhci autorun --upload.target=temporary-public-storage || echo "Lighthouse CI completed with some issues"
-      continue-on-error: true
-    
     - name: Build ninja-frontend
       run: |
         cd ./ninja-frontend  
+        npm install --legacy-peer-deps
         npm run build -- --configuration production
     
-    # 上傳前端測試結果和構建物
-    - name: Upload frontend test results
+    - name: Archive production artifacts
       uses: actions/upload-artifact@v4
-      if: always()
       with:
-        name: frontend-test-results
+        name: dist
         path: |
-          ninja-frontend/coverage/
-          .lighthouseci/
-    
-    - name: Upload frontend artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: frontend-dist
-        path: ninja-frontend/dist
-        
-  # 整合構建結果和生成報告
-  integrate:
-    needs: [setup, backend-build, frontend-build]
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0  # 獲取完整 git 歷史
-    
-    # 下載所有測試結果
-    - name: Download backend test results
-      uses: actions/download-artifact@v4
-      with:
-        name: backend-test-results
-        path: test-results/backend
-    
-    - name: Download frontend test results
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-test-results
-        path: test-results/frontend
-        
-    # 下載構建物
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: backend-dist
-        path: dist/backend
-        
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-dist
-        path: dist/frontend
-    
-    # 生成變更日誌
-    - name: Generate Changelog
-      id: generate_changelog
-      run: |
-        echo "# Release notes for version ${{ needs.setup.outputs.version }}" > CHANGELOG.md
-        echo "Generated on $(date)" >> CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "## Changes" >> CHANGELOG.md
-        
-        # 獲取自上次標籤以來的所有提交
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-        if [ -n "$LATEST_TAG" ]; then
-          git log $LATEST_TAG..HEAD --pretty=format:"* %s (%an)" >> CHANGELOG.md
-        else
-          git log --pretty=format:"* %s (%an)" >> CHANGELOG.md
-        fi
-        
-        echo "" >> CHANGELOG.md
-        echo "## Feature highlights" >> CHANGELOG.md
-        git log --since="1 month ago" --grep="^feat:" --pretty=format:"* %s" >> CHANGELOG.md
-        
-        echo "" >> CHANGELOG.md
-        echo "## Bug fixes" >> CHANGELOG.md
-        git log --since="1 month ago" --grep="^fix:" --pretty=format:"* %s" >> CHANGELOG.md
-        
-        echo "變更日誌已生成"
-    
-    # 整合並上傳所有測試結果和構建物
-    - name: Prepare combined artifacts
-      run: |
-        # 創建整合目錄結構
-        mkdir -p combined-artifacts
-        
-        # 複製前後端構建物
-        cp -r dist/backend/* combined-artifacts/ || true
-        mkdir -p combined-artifacts/frontend
-        cp -r dist/frontend/* combined-artifacts/frontend/ || true
-        
-        # 複製測試報告
-        mkdir -p combined-artifacts/reports
-        cp -r test-results/backend/* combined-artifacts/reports/ || true
-        cp -r test-results/frontend/* combined-artifacts/reports/ || true
-        cp CHANGELOG.md combined-artifacts/reports/ || true
-        
-        echo "整合構建物和測試報告完成"
-    
-    # 上傳整合後的構建物和測試結果
-    - name: Upload combined artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: combined-artifacts
-        path: combined-artifacts
-    
-    # 上傳測試報告作為單獨的 artifact，方便後續步驟使用
-    - name: Upload test reports
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-reports
-        path: combined-artifacts/reports
-  
-  # 生成並部署部署儀表板
-  dashboard:
-    needs: [setup, integrate]
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-    
-    - name: Download test reports
-      uses: actions/download-artifact@v4
-      with:
-        name: test-reports
-        path: reports
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    
-    # 生成部署儀表板
-    - name: Generate deployment dashboard
-      run: |
-        # 建立儀表板目錄
-        mkdir -p dashboard
-        
-        # 創建儀表板 HTML 文件
-        cat > dashboard/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Ninja DDD Deployment Dashboard</title>
-          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-          <style>
-            body { padding: 20px; }
-            .header { margin-bottom: 30px; }
-            .metric-card { margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .metric-card .card-header { border-radius: 10px 10px 0 0; font-weight: bold; }
-            .good { background-color: #d4edda; }
-            .warning { background-color: #fff3cd; }
-            .danger { background-color: #f8d7da; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header text-center">
-              <h1>Ninja DDD Deployment Dashboard</h1>
-              <p class="lead">Version: ${VERSION}</p>
-              <p>Build Date: ${BUILD_DATE}</p>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="card metric-card">
-                  <div class="card-header">Test Coverage Summary</div>
-                  <div class="card-body">
-                    <div id="coverageSummary">Loading...</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="col-md-6">
-                <div class="card metric-card">
-                  <div class="card-header">Performance</div>
-                  <div class="card-body">
-                    <div id="performanceSummary">Loading...</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="card metric-card">
-                  <div class="card-header">Security Scan</div>
-                  <div class="card-body">
-                    <div id="securitySummary">Loading...</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="col-md-6">
-                <div class="card metric-card">
-                  <div class="card-header">Frontend Metrics</div>
-                  <div class="card-body">
-                    <div id="frontendSummary">Loading...</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="row mt-4">
-              <div class="col-12">
-                <div class="card metric-card">
-                  <div class="card-header">Recent Changes</div>
-                  <div class="card-body">
-                    <div id="changelog">Loading...</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-          <script>
-            // Dashboard data would be replaced with actual metrics during build
-            document.addEventListener('DOMContentLoaded', function() {
-              // Populate data from build metrics
-              document.getElementById('coverageSummary').innerHTML = '${COVERAGE_SUMMARY}';
-              document.getElementById('performanceSummary').innerHTML = '${PERFORMANCE_SUMMARY}';
-              document.getElementById('securitySummary').innerHTML = '${SECURITY_SUMMARY}';
-              document.getElementById('frontendSummary').innerHTML = '${FRONTEND_SUMMARY}';
-              document.getElementById('changelog').innerHTML = '${CHANGELOG}';
-            });
-          </script>
-        </body>
-        </html>
-        EOF
+          ninja-backend/target
+          ninja-frontend/dist
 
-        # 從測試報告中提取數據填充儀表板
-        VERSION="${{ needs.setup.outputs.version }}"
-        BUILD_DATE="$(date)"
-        
-        # 處理覆蓋率摘要
-        if [ -f "reports/jacoco-summary.txt" ]; then
-          COVERAGE_SUMMARY=$(cat reports/jacoco-summary.txt | sed 's/$/\<br\>/g' | tr -d '\n')
-        else
-          COVERAGE_SUMMARY="No coverage data available"
-        fi
-        
-        # 處理性能測試摘要
-        if [ -f "reports/jmeter-summary.txt" ]; then
-          PERFORMANCE_SUMMARY=$(cat reports/jmeter-summary.txt | sed 's/$/\<br\>/g' | tr -d '\n')
-        else
-          PERFORMANCE_SUMMARY="No performance data available"
-        fi
-        
-        # 處理安全掃描摘要
-        if [ -f "reports/security-summary.txt" ]; then
-          SECURITY_SUMMARY=$(cat reports/security-summary.txt | sed 's/$/\<br\>/g' | tr -d '\n')
-        else
-          SECURITY_SUMMARY="No security scan data available"
-        fi
-        
-        # 處理前端效能摘要
-        if [ -f "reports/lighthouse-summary.txt" ]; then
-          FRONTEND_SUMMARY=$(cat reports/lighthouse-summary.txt | sed 's/$/\<br\>/g' | tr -d '\n')
-        else
-          FRONTEND_SUMMARY="No frontend metrics available"
-        fi
-        
-        # 處理變更日誌
-        if [ -f "reports/CHANGELOG.md" ]; then
-          CHANGELOG=$(cat reports/CHANGELOG.md | sed 's/^#/\<h3\>/g' | sed 's/^##/\<h4\>/g' | sed 's/^\*/\<li\>/g' | sed 's/$/<br>/g' | tr -d '\n')
-        else
-          CHANGELOG="No changelog available"
-        fi
-        
-        # 更新儀表板文件中的數據
-        sed -i "s|\${VERSION}|$VERSION|g" dashboard/index.html
-        sed -i "s|\${BUILD_DATE}|$BUILD_DATE|g" dashboard/index.html
-        sed -i "s|\${COVERAGE_SUMMARY}|$COVERAGE_SUMMARY|g" dashboard/index.html
-        sed -i "s|\${PERFORMANCE_SUMMARY}|$PERFORMANCE_SUMMARY|g" dashboard/index.html
-        sed -i "s|\${SECURITY_SUMMARY}|$SECURITY_SUMMARY|g" dashboard/index.html
-        sed -i "s|\${FRONTEND_SUMMARY}|$FRONTEND_SUMMARY|g" dashboard/index.html
-        sed -i "s|\${CHANGELOG}|$CHANGELOG|g" dashboard/index.html
-        
-        echo "部署儀表板已生成"
-    
-    # 上傳儀表板作為工作流程的一部分
-    - name: Upload dashboard artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: deployment-dashboard
-        path: dashboard
-        
-    # 如果在主分支上，可選地部署儀表板到 GitHub Pages
-    - name: Deploy dashboard to GitHub Pages
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: dashboard
-        branch: gh-pages
-        clean: true
-
-  # 構建和推送 Docker 映像
   push:
-    needs: [setup, integrate, dashboard]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
+    needs: build
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v2
     
-    - name: Download combined artifacts
+    - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: combined-artifacts
-        path: dist
-    
-    # 設置 Docker Buildx
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-    
-    # 登錄到 Docker Hub
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
+        name: dist
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     
-    # 構建並推送後端映像
-    - name: Build and push backend image
-      uses: docker/build-push-action@v3
+    - name: Build and push backend Docker image
+      uses: docker/build-push-action@v2
       with:
         context: ./ninja-backend
-        file: ./ninja-backend/Dockerfile
         push: true
         tags: |
-          ${{ secrets.DOCKER_USERNAME }}/ninja-backend:latest
-          ${{ secrets.DOCKER_USERNAME }}/ninja-backend:${{ needs.setup.outputs.version }}
-        build-args: |
-          VERSION=${{ needs.setup.outputs.version }}
-        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/ninja-backend:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/ninja-backend:buildcache,mode=max
+          vincentkai/ninja-backend:latest
+          vincentkai/ninja-backend:${{ needs.build.outputs.version }}
     
-    # 構建並推送前端映像
-    - name: Build and push frontend image
-      uses: docker/build-push-action@v3
+    - name: Build and push frontend Docker image
+      uses: docker/build-push-action@v2
       with:
         context: ./ninja-frontend
-        file: ./ninja-frontend/Dockerfile
         push: true
         tags: |
-          ${{ secrets.DOCKER_USERNAME }}/ninja-frontend:latest
-          ${{ secrets.DOCKER_USERNAME }}/ninja-frontend:${{ needs.setup.outputs.version }}
-        build-args: |
-          VERSION=${{ needs.setup.outputs.version }}
-        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/ninja-frontend:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/ninja-frontend:buildcache,mode=max
-    
-    # 如果是標籤，則創建發佈
-    - name: Create GitHub Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        name: Release ${{ needs.setup.outputs.version }}
-        body_path: dist/reports/CHANGELOG.md
-        files: |
-          dist/backend/ninja-backend.jar
-          dist/frontend/ninja-frontend.zip
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-  # 部署通知工作流程
+          vincentkai/ninja-frontend:latest
+          vincentkai/ninja-frontend:${{ needs.build.outputs.version }}
+
   notify:
-    needs: [setup, push]
-    if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+    needs: [build, push]
     runs-on: ubuntu-latest
+    if: always()
     
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
-      
-    # 決定部署狀態
-    - name: Determine deployment status
-      id: deployment_status
-      run: |
-        if [ "${{ needs.push.result }}" == "success" ]; then
-          echo "status=success" >> $GITHUB_OUTPUT
-          echo "message=Deployment of version ${{ needs.setup.outputs.version }} completed successfully! 🚀" >> $GITHUB_OUTPUT
-        else
-          echo "status=failure" >> $GITHUB_OUTPUT
-          echo "message=Deployment of version ${{ needs.setup.outputs.version }} failed. Check build logs for details. ❌" >> $GITHUB_OUTPUT
-        fi
-    
-    # 發送 Slack 通知 (如果配置了 Slack webhook)
-    - name: Send Slack notification
-      if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ steps.deployment_status.outputs.status }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        text: ${{ steps.deployment_status.outputs.message }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-    
-    # 發送 email 通知 (可選)
     - name: Send email notification
-      if: ${{ secrets.EMAIL_RECIPIENTS != '' }}
-      uses: dawidd6/action-send-mail@v3
+      uses: dawidd6/action-send-mail@v2
       with:
-        server_address: ${{ secrets.SMTP_SERVER }}
-        server_port: ${{ secrets.SMTP_PORT }}
-        username: ${{ secrets.SMTP_USERNAME }}
-        password: ${{ secrets.SMTP_PASSWORD }}
-        subject: Ninja DDD - Deployment ${{ steps.deployment_status.outputs.status }}
-        to: ${{ secrets.EMAIL_RECIPIENTS }}
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{secrets.EMAIL_USER}}
+        password: ${{secrets.EMAIL_PASS}}
+        subject: GitHub Actions job result for ${{github.repository}}
+        body: |
+          Job in ${{github.repository}} finished with status ${{job.status}}.
+          
+          Build job status: ${{ needs.build.result }}
+          Push job status: ${{ needs.push.result }}
+          
+          Commit message: ${{ github.event.head_commit.message }}
+          
+          See details here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        to: mister33221@gmail.com
         from: GitHub Actions
-        body: ${{ steps.deployment_status.outputs.message }}
-        
-    # 更新部署狀態 Badge
-    - name: Generate status badge
-      run: |
-        if [ "${{ needs.push.result }}" == "success" ]; then
-          COLOR="green"
-          STATUS="deployed"
-        else
-          COLOR="red" 
-          STATUS="failed"
-        fi
-        
-        BADGE_URL="https://img.shields.io/badge/deployment-${STATUS}-${COLOR}?style=for-the-badge"
-        echo "![Deployment Status](${BADGE_URL})" > DEPLOYMENT_STATUS.md
-      
-    # 提交部署狀態 Badge 到儲存庫
-    - name: Commit status badge
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add DEPLOYMENT_STATUS.md
-        git commit -m "Update deployment status badge [skip ci]" || exit 0
-        git push
