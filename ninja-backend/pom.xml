@@ -113,7 +113,6 @@
 		-->
 	</dependencies>
 
-
 	<build>
 		<plugins>
 			<plugin>
@@ -127,6 +126,76 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			
+			<!-- JaCoCo 代碼覆蓋率插件 -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.10</version>
+				<executions>
+					<!-- 準備 JaCoCo 執行時間代理 -->
+					<execution>
+						<id>default-prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<!-- 確保在測試運行後生成報告 -->
+					<execution>
+						<id>default-report</id>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<phase>test</phase>
+					</execution>
+					<!-- 檢查覆蓋率限制 -->
+					<execution>
+						<id>default-check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>INSTRUCTION</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.70</minimum>
+										</limit>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.70</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+							<!-- 如果覆蓋率不達標，可先設置為不失敗建構 -->
+							<failOnViolation>false</failOnViolation>
+						</configuration>
+					</execution>
+					<!-- 生成更詳細的 HTML 報告 -->
+					<execution>
+						<id>generate-html-report</id>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
+						</configuration>
+						<phase>verify</phase>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- SonarQube 整合插件 -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.9.1.2184</version>
 			</plugin>
 		</plugins>
 	</build>
