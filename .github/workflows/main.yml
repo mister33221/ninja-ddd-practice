@@ -152,10 +152,11 @@ jobs:
         
     - name: Download frontend test results
       uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
         name: frontend-test-results
         path: reports/frontend
-        continue-on-error: true
+        
       - name: Prepare test reports summary
         run: |
         # 創建測試報告摘要目錄
@@ -247,7 +248,8 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-frontend:latest
-          vincentkai/ninja-frontend:${{ needs.setup.outputs.version }}  notify:
+          vincentkai/ninja-frontend:${{ needs.setup.outputs.version }}  
+  notify:
     needs: [backend-build, frontend-build, integrate, push]
     runs-on: ubuntu-latest
     if: always()
@@ -257,13 +259,15 @@ jobs:
     
     - name: Download test reports
       uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
         name: test-reports
         path: reports
-      continue-on-error: true
+      
         
     - name: Read test summary
       id: test_summary
+      continue-on-error: true
       run: |
         if [ -f "reports/test-summary.txt" ]; then
           TEST_SUMMARY=$(cat reports/test-summary.txt | sed -z 's/\n/\\n/g')
@@ -273,7 +277,7 @@ jobs:
         else
           echo "summary=No test summary available" >> $GITHUB_OUTPUT
         fi
-      continue-on-error: true
+      
     
     - name: Send email notification
       uses: dawidd6/action-send-mail@v2
