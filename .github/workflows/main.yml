@@ -41,30 +41,49 @@ jobs:
         cd ./ninja-backend/  
         chmod +x mvnw
         ./mvnw clean package -DskipTests
-    
-    - name: Run backend tests
+      - name: Run backend tests with coverage
       run: |
         cd ./ninja-backend/
         ./mvnw test
         
-    - name: Generate test and coverage reports
+    # JaCoCo 報告已經在 test 階段自動生成，無需單獨執行 jacoco:report
+    - name: Generate coverage summary
       run: |
         cd ./ninja-backend/
-        ./mvnw jacoco:report
+        echo "# JaCoCo Coverage Summary" > coverage-summary.txt
+        echo "Generated on $(date)" >> coverage-summary.txt
+        echo "" >> coverage-summary.txt
+        
+        if [ -f "target/site/jacoco/index.html" ]; then
+          # 嘗試提取覆蓋率摘要
+          INSTRUCTION_COVERAGE=$(grep -o 'Total[^%]*%' target/site/jacoco/index.html | head -1 || echo "N/A")
+          LINE_COVERAGE=$(grep -o 'Total[^%]*%' target/site/jacoco/index.html | head -2 | tail -1 || echo "N/A")
+          METHOD_COVERAGE=$(grep -o 'Total[^%]*%' target/site/jacoco/index.html | head -3 | tail -1 || echo "N/A")
+          
+          echo "- Instruction Coverage: $INSTRUCTION_COVERAGE" >> coverage-summary.txt
+          echo "- Line Coverage: $LINE_COVERAGE" >> coverage-summary.txt
+          echo "- Method Coverage: $METHOD_COVERAGE" >> coverage-summary.txt
+        else
+          echo "No JaCoCo coverage report found" >> coverage-summary.txt
+        fi
+        
+        # 將摘要移動到測試報告目錄
+        mkdir -p target/jacoco-summary
+        cp coverage-summary.txt target/jacoco-summary/
         
     - name: Archive backend artifacts
       uses: actions/upload-artifact@v4
       with:
         name: backend-dist
         path: ninja-backend/target
-        
-    - name: Archive backend test results
+          - name: Archive backend test results
       uses: actions/upload-artifact@v4
       with:
         name: backend-test-results
         path: |
           ninja-backend/target/surefire-reports
           ninja-backend/target/site/jacoco
+          ninja-backend/target/jacoco-summary
   
   # 前端構建工作
   frontend-build:
@@ -105,7 +124,6 @@ jobs:
           ninja-frontend/coverage
           ninja-frontend/test-results
       continue-on-error: true  # 如果前端目前沒有測試報告，允許繼續執行
-
   # 整合前後端構建結果
   integrate:
     needs: [setup, backend-build, frontend-build]
@@ -126,18 +144,74 @@ jobs:
         name: frontend-dist
         path: dist/frontend
     
+    - name: Download backend test results
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-test-results
+        path: reports/backend
+        
+    - name: Download frontend test results
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-test-results
+        path: reports/frontend
+        continue-on-error: true
+      - name: Prepare test reports summary
+      run: |
+        # 創建測試報告摘要目錄
+        mkdir -p combined-reports
+        
+        # 複製後端測試報告摘要
+        if [ -f "reports/backend/jacoco-summary/coverage-summary.txt" ]; then
+          cp reports/backend/jacoco-summary/coverage-summary.txt combined-reports/
+        fi
+        
+        # 整合測試報告摘要
+        echo "# Combined Test Reports" > combined-reports/test-summary.txt
+        echo "Generated on $(date)" >> combined-reports/test-summary.txt
+        echo "" >> combined-reports/test-summary.txt
+        
+        echo "## Backend Coverage" >> combined-reports/test-summary.txt
+        if [ -f "reports/backend/jacoco-summary/coverage-summary.txt" ]; then
+          cat reports/backend/jacoco-summary/coverage-summary.txt >> combined-reports/test-summary.txt
+        else
+          echo "No backend coverage data available" >> combined-reports/test-summary.txt
+        fi
+        
+        echo "" >> combined-reports/test-summary.txt
+        echo "## Frontend Tests" >> combined-reports/test-summary.txt
+        if [ -d "reports/frontend" ]; then
+          echo "Frontend test reports available" >> combined-reports/test-summary.txt
+        else
+          echo "No frontend test data available" >> combined-reports/test-summary.txt
+        fi
+    
     - name: Prepare combined artifacts
       run: |
         mkdir -p combined-dist
+        
+        # 複製構建物
         cp -r dist/backend/* combined-dist/ || true
         mkdir -p combined-dist/frontend
         cp -r dist/frontend/* combined-dist/frontend/ || true
+        
+        # 複製測試報告
+        mkdir -p combined-dist/reports
+        cp -r reports/backend/* combined-dist/reports/backend/ || true
+        cp -r reports/frontend/* combined-dist/reports/frontend/ || true
+        cp -r combined-reports/* combined-dist/reports/ || true
         
     - name: Archive combined artifacts
       uses: actions/upload-artifact@v4
       with:
         name: dist
         path: combined-dist
+        
+    - name: Archive test reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: combined-reports
   push:
     needs: [setup, integrate]
     runs-on: ubuntu-latest
@@ -173,13 +247,34 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-frontend:latest
-          vincentkai/ninja-frontend:${{ needs.setup.outputs.version }}
-  notify:
+          vincentkai/ninja-frontend:${{ needs.setup.outputs.version }}  notify:
     needs: [backend-build, frontend-build, integrate, push]
     runs-on: ubuntu-latest
     if: always()
     
     steps:
+    - uses: actions/checkout@v2
+    
+    - name: Download test reports
+      uses: actions/download-artifact@v4
+      with:
+        name: test-reports
+        path: reports
+      continue-on-error: true
+        
+    - name: Read test summary
+      id: test_summary
+      run: |
+        if [ -f "reports/test-summary.txt" ]; then
+          TEST_SUMMARY=$(cat reports/test-summary.txt | sed -z 's/\n/\\n/g')
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$TEST_SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "summary=No test summary available" >> $GITHUB_OUTPUT
+        fi
+      continue-on-error: true
+    
     - name: Send email notification
       uses: dawidd6/action-send-mail@v2
       with:
@@ -198,6 +293,9 @@ jobs:
           
           Version: ${{ needs.setup.outputs.version }}
           Commit message: ${{ github.event.head_commit.message }}
+          
+          Test Summary:
+          ${{ steps.test_summary.outputs.summary || 'No test summary available' }}
           
           See details here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         to: mister33221@gmail.com
