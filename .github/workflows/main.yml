@@ -41,7 +41,7 @@ jobs:
         cd ./ninja-backend/  
         chmod +x mvnw
         ./mvnw clean package -DskipTests
-      - name: Run backend tests with coverage
+    - name: Run backend tests with coverage
       run: |
         cd ./ninja-backend/
         ./mvnw test
@@ -157,7 +157,7 @@ jobs:
         path: reports/frontend
         continue-on-error: true
       - name: Prepare test reports summary
-      run: |
+        run: |
         # 創建測試報告摘要目錄
         mkdir -p combined-reports
         
