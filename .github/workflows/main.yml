@@ -127,15 +127,28 @@ jobs:
         to: mister33221@gmail.com
         from: GitHub Actions
 
+# 開啟 GITHUB_TOKEN 的寫入權限（推薦）
+# 1️⃣ 到你的 GitHub repo
+# 2️⃣ 點選 Settings → Actions → General
+# 3️⃣ 拉到 Workflow permissions
+# 4️⃣ 選擇：
+
+# pgsql
+# 複製
+# 編輯
+# ✔ Read and write permissions
+# 5️⃣ 儲存
+
+# 👉 這樣 GITHUB_TOKEN 就具備推 tag 的權限。
   release:
     needs: [build-backend, push]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    steps:    
+    steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0  # 獲取完整 git 歷史
-        token: ${{ secrets.PAT }}
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     # 下載構建成品 (可選，如果你想附加到 Release)
     - name: Download backend artifacts
