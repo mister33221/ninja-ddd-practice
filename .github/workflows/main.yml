@@ -1,98 +1,120 @@
-name: Ninja-ddd-practice CI/CD Pipeline
+name: Ninja-ddd-practice CI/CD Pipeline  # 工作流程名稱，會顯示在 GitHub Actions 頁面上
 
 on:
-  push:
-    branches: [ master ]
+  push:  # 定義觸發條件
+    branches: [ master ]  # 當有 commit push 到 master 分支時執行這個 workflow
 
 jobs:
-  build-backend:
-    runs-on: ubuntu-latest
+  build-backend:  # 後端建置 job 名稱
+    runs-on: ubuntu-latest  # 指定 runner 環境，使用最新版的 Ubuntu Linux 環境
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ steps.version.outputs.version }}  # 將 version 步驟產生的 version 輸出供其他 job 使用
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4  # 拉取當前 commit 的程式碼到 runner 上
 
-    - name: Generate version number
-      id: version
+    - name: Generate version number  # 建立版本號步驟名稱
+      id: version  # 步驟 ID，讓其他地方可引用此步驟的 outputs
       run: |
-        VERSION="$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"
-        echo "VERSION=$VERSION"
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        VERSION="$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"  
+        echo "VERSION=$VERSION"  
+        echo "version=$VERSION" >> $GITHUB_OUTPUT  
+      # 建立版本號：日期+執行序號+commit 縮寫
+      # 將版本號印到 log 供除錯檢視
+      # 輸出版本號供後續 job 使用
+      # 功能：產生格式化版本號，例如 2025.07.07-103-c9f0475，並提供給其他 job 使用
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v4  # 設定 Java 環境
       with:
-        java-version: '17'
-        distribution: 'temurin'
+        java-version: '17'  # 使用 JDK 17
+        distribution: 'temurin'  # 使用 Temurin 發行版（AdoptOpenJDK 的延續）
+      # 功能：在 runner 上安裝並啟用 JDK 17 環境供編譯用
 
     - name: Build ninja-backend
       run: |
         cd ./ninja-backend  
-        chmod +x mvnw
-        ./mvnw clean package -DskipTests
+        chmod +x mvnw  
+        ./mvnw clean package -DskipTests  
+      # 切換到後端專案目錄
+      # 確保 Maven wrapper 有執行權限
+      # 使用 Maven 包裝專案並跳過測試
+      # 功能：編譯後端專案，產生 JAR 檔
 
     - name: Upload backend artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4  # 上傳編譯好的檔案供後續 job 使用
       with:
-        name: backend-dist
-        path: ninja-backend/target
+        name: backend-dist  # 上傳產物的名稱
+        path: ninja-backend/target  # 上傳哪個目錄的內容
+      # 功能：把後端產物（JAR 等）上傳給 GitHub Actions 保存
 
-  build-frontend:
-    runs-on: ubuntu-latest
+  build-frontend:  # 前端建置 job
+    runs-on: ubuntu-latest  # 使用 Ubuntu runner
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4  # 拉取程式碼
 
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v4  # 設定 Node.js 環境
       with:
-        node-version: '19.4.0'
+        node-version: '19.4.0'  # 使用 Node.js 19.4.0 版本
+      # 功能：安裝 Node.js 供前端建置使用
 
     - name: Build ninja-frontend
       run: |
         cd ./ninja-frontend  
-        npm install --legacy-peer-deps
-        npm run build -- --configuration production
+        npm install --legacy-peer-deps  
+        npm run build -- --configuration production  
+      # 切換至前端專案目錄
+      # 安裝套件，允許舊相依方式解決衝突
+      # 建立生產環境版本
+      # 功能：編譯前端專案，產生 dist 資料夾
 
     - name: Upload frontend artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4  # 上傳編譯結果
       with:
-        name: frontend-dist
-        path: ninja-frontend/dist
+        name: frontend-dist  # 上傳檔案標籤
+        path: ninja-frontend/dist  # 上傳的實體路徑
+      # 功能：把前端編譯結果上傳以供後續 job 使用
 
-  push:
-    needs: [build-backend, build-frontend]
+  push:  # 推送映像檔到 Docker Hub
+    needs: [build-backend, build-frontend]  # 等待前後端建置完成
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ needs.build-backend.outputs.version }}
+      version: ${{ needs.build-backend.outputs.version }}  # 傳遞版本號供後續 job 使用
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4  # 拉取程式碼（主要用於 docker build context）
 
     - name: Download backend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4  # 下載後端編譯結果
       with:
         name: backend-dist
         path: ninja-backend/target
+      # 功能：取回後端 build 產物供 docker build 使用
 
     - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4  # 下載前端編譯結果
       with:
         name: frontend-dist
         path: ninja-frontend/dist
+      # 功能：取回前端 build 產物供 docker build 使用
 
     - name: Log in to Docker Hub
-      uses: docker/login-action@v3
+      uses: docker/login-action@v3  # 登入 Docker Hub
       with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}  # 從 secret 取帳號
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  # 從 secret 取 token
+      # 功能：登入 Docker Hub 以便推送映像檔
 
     - name: Build and push backend Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v5  # 建立並推送 Docker image
       with:
-        context: ./ninja-backend
-        push: true
+        context: ./ninja-backend  # docker build 的 context 目錄
+        push: true  # 自動推送至 Docker Hub
         tags: |
-          vincentkai/ninja-backend:latest
-          vincentkai/ninja-backend:${{ needs.build-backend.outputs.version }}
+          vincentkai/ninja-backend:latest  
+          vincentkai/ninja-backend:${{ needs.build-backend.outputs.version }}  
+      # 打 latest tag
+      # 打版本號 tag
+      # 功能：建立並推送後端映像檔
 
     - name: Build and push frontend Docker image
       uses: docker/build-push-action@v5
@@ -102,64 +124,69 @@ jobs:
         tags: |
           vincentkai/ninja-frontend:latest
           vincentkai/ninja-frontend:${{ needs.build-backend.outputs.version }}
+      # 功能：建立並推送前端映像檔
 
-  release:
-    needs: [push]
+  release:  # 建立 GitHub Release
+    needs: [push]  # 等待 push job 完成
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4  # 拉取程式碼（主要用於建立 Release 資產壓縮檔）
 
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
       with:
         name: backend-dist
         path: dist/backend
+      # 功能：下載後端 build 產物
 
     - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
         path: dist/frontend
+      # 功能：下載前端 build 產物
 
     - name: Create release assets
       run: |
-        mkdir -p release-assets
-        
-        # 後端 JAR 檔案
-        find dist/backend -name "*.jar" -exec cp {} release-assets/ \;
-        
-        # 前端打包壓縮
+        mkdir -p release-assets  
+        find dist/backend -name "*.jar" -exec cp {} release-assets/ \;  
         cd dist/frontend
-        zip -r ../../release-assets/frontend.zip .
+        zip -r ../../release-assets/frontend.zip .  
         cd ../..
+      # 建立 release 資產資料夾
+      # 將 JAR 複製到資產資料夾
+      # 壓縮前端編譯結果
+      # 功能：準備 Release 附加檔案（後端 JAR + 前端 zip）
 
     - name: Create GitHub Release + Tag
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v1  # 建立 Release 與 Git tag
       with:
-        tag_name: v${{ needs.push.outputs.version }}
-        name: Release v${{ needs.push.outputs.version }}
+        tag_name: v${{ needs.push.outputs.version }}  # 建立 tag 名稱
+        name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱
         body: |
-          Auto-generated release for v${{ needs.push.outputs.version }}.
-        draft: false
-        prerelease: false
+          Auto-generated release for v${{ needs.push.outputs.version }}.  
+        # Release 說明
+        draft: false  # 不以草稿方式發布
+        prerelease: false  # 不是預發佈
         files: |
-          release-assets/*
+          release-assets/*  # 附加資產
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 用 GitHub Token 驗證發佈權限
+      # 功能：自動建立 Release 並打上版本號 tag，附上資產
 
-  notify:
-    needs: [build-backend, build-frontend, push, release]
+  notify:  # 通知 job
+    needs: [build-backend, build-frontend, push, release]  # 等所有主流程完成
     runs-on: ubuntu-latest
-    if: always()
+    if: always()  # 不論成功或失敗都執行
     steps:
     - name: Send email notification
-      uses: dawidd6/action-send-mail@v2
+      uses: dawidd6/action-send-mail@v2  # 寄送 Email
       with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.EMAIL_USER }}
-        password: ${{ secrets.EMAIL_PASS }}
-        subject: "Ninja DDD - Release v${{ needs.build-backend.outputs.version }} Deployment Status"
+        server_address: smtp.gmail.com  # SMTP 主機
+        server_port: 465  # SMTP port（SSL）
+        username: ${{ secrets.EMAIL_USER }}  # 寄件帳號
+        password: ${{ secrets.EMAIL_PASS }}  # 寄件密碼或應用程式密碼
+        subject: "Ninja DDD - Release v${{ needs.build-backend.outputs.version }} Deployment Status"  # Email 標題
         body: |
           版本號: v${{ needs.build-backend.outputs.version }}
           
@@ -173,5 +200,6 @@ jobs:
 
           查看 Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build-backend.outputs.version }}
           查看工作流程詳情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        to: mister33221@gmail.com
-        from: GitHub Actions
+        to: mister33221@gmail.com  # 收件人
+        from: GitHub Actions  # 寄件人名稱
+      # 功能：將部署結果以 Email 寄出，包括各 job 狀態與相關連結
