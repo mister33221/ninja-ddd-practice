@@ -98,8 +98,53 @@ jobs:
         tags: |
           vincentkai/ninja-frontend:latest
           vincentkai/ninja-frontend:${{ needs.build-backend.outputs.version }}
+
+  release:
+    needs: [push]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-dist
+        path: dist/backend
+
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: dist/frontend
+
+    - name: Create release assets
+      run: |
+        mkdir -p release-assets
+        
+        # 後端 JAR 檔案
+        find dist/backend -name "*.jar" -exec cp {} release-assets/ \;
+        
+        # 前端打包壓縮
+        cd dist/frontend
+        zip -r ../../release-assets/frontend.zip .
+        cd ../..
+
+    - name: Create GitHub Release + Tag
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ needs.build-backend.outputs.version }}
+        name: Release v${{ needs.build-backend.outputs.version }}
+        body: |
+          Auto-generated release for v${{ needs.build-backend.outputs.version }}.
+        draft: false
+        prerelease: false
+        files: |
+          release-assets/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   notify:
-    needs: [push, release]
+    needs: [build-backend, build-frontend, push, release]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -122,100 +167,7 @@ jobs:
 
           Commit message: ${{ github.event.head_commit.message }}
 
-          查看 GitHub Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build-backend.outputs.version }}
+          查看 Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build-backend.outputs.version }}
           查看工作流程詳情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         to: mister33221@gmail.com
         from: GitHub Actions
-
-# 開啟 GITHUB_TOKEN 的寫入權限（推薦）
-# 1️⃣ 到你的 GitHub repo
-# 2️⃣ 點選 Settings → Actions → General
-# 3️⃣ 拉到 Workflow permissions
-# 4️⃣ 選擇：
-
-# pgsql
-# 複製
-# 編輯
-# ✔ Read and write permissions
-# 5️⃣ 儲存
-
-# 👉 這樣 GITHUB_TOKEN 就具備推 tag 的權限。
-  release:
-    needs: [build-backend, push]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0  # 獲取完整 git 歷史
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    # 下載構建成品 (可選，如果你想附加到 Release)
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: backend-dist
-        path: dist/backend
-    
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-dist
-        path: dist/frontend
-    
-    # 生成 Changelog (簡單版本)
-    - name: Generate changelog
-      id: changelog
-      run: |
-        echo "# Release ${{ needs.build-backend.outputs.version }}" > CHANGELOG.md
-        echo "Generated on $(date)" >> CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "## Changes" >> CHANGELOG.md
-        
-        # 從最近的標籤以來獲取提交
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-        if [ -n "$LATEST_TAG" ]; then
-          git log $LATEST_TAG..HEAD --pretty=format:"* %s" >> CHANGELOG.md
-        else
-          git log -10 --pretty=format:"* %s" >> CHANGELOG.md
-        fi
-    
-    # 創建 ZIP 封裝的發布資產
-    - name: Create release assets
-      run: |
-        mkdir -p release-assets
-        
-        # 後端 JAR 檔案
-        find dist/backend -name "*.jar" -exec cp {} release-assets/ \;
-        
-        # 前端打包
-        cd dist/frontend
-        zip -r ../../release-assets/frontend.zip .
-        cd ../..
-    
-    # 建立 Git tag
-    - name: Create Git tag
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        # 檢查 tag 是否已存在
-        if ! git rev-parse "v${{ needs.build-backend.outputs.version }}" >/dev/null 2>&1; then
-          git tag -a "v${{ needs.build-backend.outputs.version }}" -m "Release v${{ needs.build-backend.outputs.version }}"
-          git push origin "v${{ needs.build-backend.outputs.version }}"
-        else
-          echo "Tag v${{ needs.build-backend.outputs.version }} already exists"
-        fi
-    
-    # 創建 GitHub Release
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ needs.build-backend.outputs.version }}
-        name: Release v${{ needs.build-backend.outputs.version }}
-        body_path: CHANGELOG.md
-        draft: false
-        prerelease: false
-        files: |
-          release-assets/*
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
