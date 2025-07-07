@@ -131,11 +131,11 @@ jobs:
     needs: [build-backend, push]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    steps:
+    steps:    
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0  # 獲取完整 git 歷史
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT }}
     
     # 下載構建成品 (可選，如果你想附加到 Release)
     - name: Download backend artifacts
