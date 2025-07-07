@@ -4,92 +4,156 @@ on:
   push:
     branches: [ master ]
 
-jobs:
-  release:
+jobs:  # 版本管理和初始化
+  version:
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-    steps:
-    - name: Release Please
-      id: release
-      uses: google-github-actions/release-please-action@v4
-      with:
-        release-type: node  # 或選擇 java 或 combined，視你的專案型態
-        package-name: ninja-ddd-practice
-
-  build-backend:
-    if: needs.release.outputs.release_created == 'true'
-    runs-on: ubuntu-latest
-    needs: release
+      version: ${{ steps.semantic.outputs.new_version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      previous_tag: ${{ steps.semantic.outputs.previous_tag }}
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # 需要完整的 git 歷史記錄來生成 changelog
+    
+    # 使用語義化版本產生新版本號
+    - name: Semantic versioning
+      id: semantic
+      uses: mathieudutour/github-tag-action@v6.1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        default_bump: patch  # 默認為 patch 更新 (x.x.1)
+        tag_prefix: v        # 使用 v 前綴，如 v1.0.0
+        release_branches: master,main # 哪些分支可以發佈
+        create_annotated_tag: true    # 創建帶註解的標籤
+        dry_run: true                 # 只計算版本，不實際創建標籤
+    
+    # 生成 Changelog
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # 初始化 CHANGELOG 文件
+        echo "# Release notes for version ${{ steps.semantic.outputs.new_version }}" > CHANGELOG.md
+        echo "Generated on $(date)" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        
+        # 如果存在上一個標籤，從該標籤開始生成 changelog
+        if [[ -n "${{ steps.semantic.outputs.previous_tag }}" ]]; then
+          echo "## Changes since ${{ steps.semantic.outputs.previous_tag }}" >> CHANGELOG.md
+          git log "${{ steps.semantic.outputs.previous_tag }}"..HEAD --pretty=format:"* %s (%an)" --reverse >> CHANGELOG.md
+        else
+          echo "## All changes" >> CHANGELOG.md
+          git log --pretty=format:"* %s (%an)" --reverse >> CHANGELOG.md
+        fi
+        
+        # 分類 Conventional Commits
+        echo "" >> CHANGELOG.md
+        echo "## Features" >> CHANGELOG.md
+        git log --grep="^feat:" --pretty=format:"* %s" --reverse >> CHANGELOG.md || echo "* No new features" >> CHANGELOG.md
+        
+        echo "" >> CHANGELOG.md
+        echo "## Bug fixes" >> CHANGELOG.md
+        git log --grep="^fix:" --pretty=format:"* %s" --reverse >> CHANGELOG.md || echo "* No bug fixes" >> CHANGELOG.md
+        
+        echo "" >> CHANGELOG.md
+        echo "## Documentation" >> CHANGELOG.md
+        git log --grep="^docs:" --pretty=format:"* %s" --reverse >> CHANGELOG.md || echo "* No documentation changes" >> CHANGELOG.md
+        
+        # 保存 changelog 到 outputs
+        CHANGELOG=$(cat CHANGELOG.md)
+        CHANGELOG="${CHANGELOG//'%'/'%25'}"
+        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+        echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+        
+        # 上傳 CHANGELOG 作為 artifact
+        mkdir -p changelog
+        cp CHANGELOG.md changelog/
+    
+    - name: Upload changelog
+      uses: actions/upload-artifact@v4
+      with:
+        name: changelog
+        path: changelog/
+
+  build-backend:
+    needs: version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ needs.version.outputs.version }}
+    steps:
+    - uses: actions/checkout@v2
+
     - name: Set up JDK 17
       uses: actions/setup-java@v2
       with:
         java-version: '17'
         distribution: 'adopt'
+
     - name: Build ninja-backend
       run: |
         cd ./ninja-backend  
         chmod +x mvnw
         ./mvnw clean package -DskipTests
+
     - name: Upload backend artifacts
       uses: actions/upload-artifact@v4
       with:
         name: backend-dist
         path: ninja-backend/target
-
   build-frontend:
-    if: needs.release.outputs.release_created == 'true'
+    needs: version
     runs-on: ubuntu-latest
-    needs: release
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '19.4.0'
+
     - name: Build ninja-frontend
       run: |
         cd ./ninja-frontend  
         npm install --legacy-peer-deps
         npm run build -- --configuration production
+
     - name: Upload frontend artifacts
       uses: actions/upload-artifact@v4
       with:
         name: frontend-dist
         path: ninja-frontend/dist
-
   push:
-    if: needs.release.outputs.release_created == 'true'
+    needs: [version, build-backend, build-frontend]
     runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
     steps:
     - uses: actions/checkout@v2
+
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
       with:
         name: backend-dist
         path: ninja-backend/target
+
     - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
         path: ninja-frontend/dist
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Build and push backend Docker image
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}    - name: Build and push backend Docker image
       uses: docker/build-push-action@v2
       with:
         context: ./ninja-backend
         push: true
         tags: |
           vincentkai/ninja-backend:latest
-          vincentkai/ninja-backend:${{ needs.release.outputs.tag_name }}
+          vincentkai/ninja-backend:${{ needs.version.outputs.version }}
+
     - name: Build and push frontend Docker image
       uses: docker/build-push-action@v2
       with:
@@ -97,13 +161,32 @@ jobs:
         push: true
         tags: |
           vincentkai/ninja-frontend:latest
-          vincentkai/ninja-frontend:${{ needs.release.outputs.tag_name }}
-
+          vincentkai/ninja-frontend:${{ needs.version.outputs.version }}
   notify:
-    needs: [push]
+    needs: [version, push, release]
     runs-on: ubuntu-latest
     if: always()
     steps:
+    - name: Download changelog
+      uses: actions/download-artifact@v4
+      with:
+        name: changelog
+        path: ./
+      continue-on-error: true
+    
+    - name: Read changelog for email
+      id: read_changelog
+      run: |
+        if [ -f "CHANGELOG.md" ]; then
+          CHANGELOG_SHORT=$(head -n 10 CHANGELOG.md)
+          echo "CHANGELOG_SHORT<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG_SHORT" >> $GITHUB_ENV
+          echo "..." >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        else
+          echo "CHANGELOG_SHORT=No changelog available" >> $GITHUB_ENV
+        fi
+    
     - name: Send email notification
       uses: dawidd6/action-send-mail@v2
       with:
@@ -111,16 +194,123 @@ jobs:
         server_port: 465
         username: ${{ secrets.EMAIL_USER }}
         password: ${{ secrets.EMAIL_PASS }}
-        subject: GitHub Actions job result for ${{ github.repository }}
+        subject: "${{ github.repository }} - Release v${{ needs.version.outputs.version }} 已部署"
         body: |
-          Release: ${{ needs.release.result }}
-          Backend build: ${{ needs.build-backend.result }}
-          Frontend build: ${{ needs.build-frontend.result }}
-          Push: ${{ needs.push.result }}
-          Tag: ${{ needs.release.outputs.tag_name }}
-
+          Ninja DDD 專案已完成新版本部署！
+          
+          版本號: v${{ needs.version.outputs.version }}
+          
+          構建狀態:
+          - Backend build: ${{ needs.build-backend.result }}
+          - Frontend build: ${{ needs.build-frontend.result }}
+          - Push: ${{ needs.push.result }}
+          - Release: ${{ needs.release.result }}
+          
+          版本更新摘要:
+          ${{ env.CHANGELOG_SHORT }}
+          
+          查看完整變更日誌:
+          ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.version.outputs.version }}
+          
           Commit message: ${{ github.event.head_commit.message }}
-
-          See details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          查看詳細工作流程: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         to: mister33221@gmail.com
         from: GitHub Actions
+  # 創建 Git Tag 和 Release
+  release:
+    needs: [version, push]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'  # 只在主分支上發佈
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # 需要完整的 git 歷史記錄
+    
+    # 下載 changelog
+    - name: Download changelog
+      uses: actions/download-artifact@v4
+      with:
+        name: changelog
+        path: ./
+    
+    # 下載構建成品
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-dist
+        path: dist/backend
+    
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: dist/frontend
+    
+    # 建立 ZIP 檔案作為發佈資源
+    - name: Create release assets
+      run: |
+        mkdir -p release-assets
+        cp CHANGELOG.md release-assets/
+        
+        # 打包後端 JAR 文件
+        cp dist/backend/ninja-backend.jar release-assets/ || echo "No JAR file found"
+        
+        # 打包前端
+        cd dist/frontend
+        zip -r ../../release-assets/frontend-dist.zip .
+        cd ../..
+    
+    # 創建 Git Tag
+    - name: Create Git tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a v${{ needs.version.outputs.version }} -m "Release v${{ needs.version.outputs.version }}"
+        git push origin v${{ needs.version.outputs.version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    # 創建 GitHub Release
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ needs.version.outputs.version }}
+        name: Release v${{ needs.version.outputs.version }}
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+        files: |
+          release-assets/ninja-backend.jar
+          release-assets/frontend-dist.zip
+          CHANGELOG.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # 檢查提交訊息是否符合 Conventional Commits 規範
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # 獲取所有提交歷史
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    
+    - name: Install commitlint
+      run: |
+        npm install --save-dev @commitlint/cli @commitlint/config-conventional
+        echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+    
+    - name: Check commit messages
+      run: |
+        # 如果是 PR，則檢查 PR 中的所有提交
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        else
+          # 檢查最近的提交
+          git log -1 --pretty=format:"%s" | npx commitlint --verbose
+        fi
+      continue-on-error: true  # 讓工作流程繼續執行，即使提交訊息格式不符合
