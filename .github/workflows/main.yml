@@ -104,7 +104,7 @@ jobs:
           vincentkai/ninja-frontend:${{ needs.build-backend.outputs.version }}
 
   release:
-    needs: [build-backend, build-frontend, push]
+    needs: [push]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -136,10 +136,10 @@ jobs:
     - name: Create GitHub Release + Tag
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ needs.build-backend.outputs.version }}
-        name: Release v${{ needs.build-backend.outputs.version }}
+        tag_name: v${{ needs.push.outputs.version }}
+        name: Release v${{ needs.push.outputs.version }}
         body: |
-          Auto-generated release for v${{ needs.build-backend.outputs.version }}.
+          Auto-generated release for v${{ needs.push.outputs.version }}.
         draft: false
         prerelease: false
         files: |
