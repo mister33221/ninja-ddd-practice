@@ -63,9 +63,6 @@ jobs:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
     steps:
-    - name: Debug version
-      run: echo "Version is: ${{ needs.build-backend.outputs.version }}"
-
     - uses: actions/checkout@v4
 
     - name: Download backend artifacts
@@ -108,9 +105,6 @@ jobs:
     needs: [push]
     runs-on: ubuntu-latest
     steps:
-    - name: Debug version
-      run: echo "Version is: ${{ needs.build-backend.outputs.version }}"
-
     - uses: actions/checkout@v4
 
     - name: Download backend artifacts
@@ -128,7 +122,11 @@ jobs:
     - name: Create release assets
       run: |
         mkdir -p release-assets
+        
+        # 後端 JAR 檔案
         find dist/backend -name "*.jar" -exec cp {} release-assets/ \;
+        
+        # 前端打包壓縮
         cd dist/frontend
         zip -r ../../release-assets/frontend.zip .
         cd ../..
@@ -136,7 +134,7 @@ jobs:
     - name: Create GitHub Release + Tag
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ format('v{0}', needs.build-backend.outputs.version) }}
+        tag_name: v${{ needs.build-backend.outputs.version }}
         name: Release v${{ needs.build-backend.outputs.version }}
         body: |
           Auto-generated release for v${{ needs.build-backend.outputs.version }}.
@@ -152,9 +150,6 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-    - name: Debug version
-      run: echo "Version is: ${{ needs.build-backend.outputs.version }}"
-
     - name: Send email notification
       uses: dawidd6/action-send-mail@v2
       with:
