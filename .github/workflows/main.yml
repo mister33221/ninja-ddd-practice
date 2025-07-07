@@ -62,6 +62,8 @@ jobs:
   push:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ needs.build-backend.outputs.version }}
     steps:
     - uses: actions/checkout@v4
 
@@ -107,8 +109,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Debug tag name
-      run: echo "Computed tag_name: v${{ needs.build-backend.outputs.version }}"
+# print the version number for debugging
+    - name: Print version number
+      run: echo "Release version: ${{ needs.build-backend.outputs.version }}"
 
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
