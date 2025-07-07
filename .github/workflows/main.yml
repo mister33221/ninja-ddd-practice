@@ -4,8 +4,39 @@ on:
   push:
     branches: [ master ]
 
-jobs:  # 版本管理和初始化
+jobs:
+  # 檢查提交訊息是否符合 Conventional Commits 規範
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # 獲取所有提交歷史
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    
+    - name: Install commitlint
+      run: |
+        npm install --save-dev @commitlint/cli @commitlint/config-conventional
+        echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+    
+    - name: Check commit messages
+      run: |
+        # 如果是 PR，則檢查 PR 中的所有提交
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        else
+          # 檢查最近的提交
+          git log -1 --pretty=format:"%s" | npx commitlint --verbose
+        fi
+      continue-on-error: true  # 讓工作流程繼續執行，即使提交訊息格式不符合
+
+  # 版本管理和初始化
   version:
+    needs: lint-commits
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.semantic.outputs.new_version }}
@@ -75,7 +106,7 @@ jobs:  # 版本管理和初始化
       with:
         name: changelog
         path: changelog/
-
+  # 後端構建作業
   build-backend:
     needs: version
     runs-on: ubuntu-latest
@@ -100,7 +131,7 @@ jobs:  # 版本管理和初始化
       uses: actions/upload-artifact@v4
       with:
         name: backend-dist
-        path: ninja-backend/target
+        path: ninja-backend/target  # 前端構建作業
   build-frontend:
     needs: version
     runs-on: ubuntu-latest
@@ -122,7 +153,7 @@ jobs:  # 版本管理和初始化
       uses: actions/upload-artifact@v4
       with:
         name: frontend-dist
-        path: ninja-frontend/dist
+        path: ninja-frontend/dist  # Docker 映像構建與推送
   push:
     needs: [version, build-backend, build-frontend]
     runs-on: ubuntu-latest
@@ -140,12 +171,13 @@ jobs:  # 版本管理和初始化
       with:
         name: frontend-dist
         path: ninja-frontend/dist
-
-    - name: Log in to Docker Hub
+          - name: Log in to Docker Hub
       uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}    - name: Build and push backend Docker image
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        
+    - name: Build and push backend Docker image
       uses: docker/build-push-action@v2
       with:
         context: ./ninja-backend
@@ -161,12 +193,12 @@ jobs:  # 版本管理和初始化
         push: true
         tags: |
           vincentkai/ninja-frontend:latest
-          vincentkai/ninja-frontend:${{ needs.version.outputs.version }}
-  notify:
-    needs: [version, push, release]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
+          vincentkai/ninja-frontend:${{ needs.version.outputs.version }}# 通知作業應該放在 release 之後執行，所以先注釋掉它，稍後會重新添加
+  # notify:
+  #   needs: [version, push, release]
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   steps:
     - name: Download changelog
       uses: actions/download-artifact@v4
       with:
@@ -286,6 +318,65 @@ jobs:  # 版本管理和初始化
           CHANGELOG.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 發送通知
+  notify:
+    needs: [version, push, release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Download changelog
+      uses: actions/download-artifact@v4
+      with:
+        name: changelog
+        path: ./
+      continue-on-error: true
+    
+    - name: Read changelog for email
+      id: read_changelog
+      run: |
+        if [ -f "CHANGELOG.md" ]; then
+          CHANGELOG_SHORT=$(head -n 10 CHANGELOG.md)
+          echo "CHANGELOG_SHORT<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG_SHORT" >> $GITHUB_ENV
+          echo "..." >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        else
+          echo "CHANGELOG_SHORT=No changelog available" >> $GITHUB_ENV
+        fi
+    
+    - name: Send email notification
+      uses: dawidd6/action-send-mail@v2
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USER }}
+        password: ${{ secrets.EMAIL_PASS }}
+        subject: "${{ github.repository }} - Release v${{ needs.version.outputs.version }} 已部署"
+        body: |
+          Ninja DDD 專案已完成新版本部署！
+          
+          版本號: v${{ needs.version.outputs.version }}
+          
+          構建狀態:
+          - Backend build: ${{ needs.build-backend.result }}
+          - Frontend build: ${{ needs.build-frontend.result }}
+          - Push: ${{ needs.push.result }}
+          - Release: ${{ needs.release.result }}
+          
+          版本更新摘要:
+          ${{ env.CHANGELOG_SHORT }}
+          
+          查看完整變更日誌:
+          ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.version.outputs.version }}
+          
+          Commit message: ${{ github.event.head_commit.message }}
+          
+          查看詳細工作流程: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        to: mister33221@gmail.com
+        from: GitHub Actions
   # 檢查提交訊息是否符合 Conventional Commits 規範
   lint-commits:
     runs-on: ubuntu-latest
