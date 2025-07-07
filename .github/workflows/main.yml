@@ -102,10 +102,13 @@ jobs:
           vincentkai/ninja-frontend:${{ needs.build-backend.outputs.version }}
 
   release:
-    needs: [push]
+    needs: [build-backend, build-frontend, push]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
+    - name: Debug tag name
+      run: echo "Computed tag_name: v${{ needs.build-backend.outputs.version }}"
 
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
