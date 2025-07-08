@@ -222,7 +222,8 @@ jobs:
         server_port: 465  # SMTP port（SSL）
         username: ${{ secrets.EMAIL_USER }}  # 寄件帳號
         password: ${{ secrets.EMAIL_PASS }}  # 寄件密碼或應用程式密碼
-        subject: "Ninja DDD - Release v${{ needs.build-backend.outputs.version }} Deployment Status"  # Email 標題        body: |
+        subject: "Ninja DDD - Release v${{ needs.build-backend.outputs.version }} Deployment Status"  # Email 標題        
+        body: |
           版本號: v${{ needs.build-backend.outputs.version }}
           
           部署結果:
