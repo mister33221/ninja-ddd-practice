@@ -23,18 +23,12 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '17'
-        distribution: 'temurin'
-
-    - name: Build ninja-backend
+        distribution: 'temurin'    - name: Build and Test with JaCoCo
       run: |
         cd ./ninja-backend
         chmod +x mvnw
-        ./mvnw clean package -DskipTests=false  # ✅ 改成有跑測試，否則 jacoco 不會有 coverage data
-
-    - name: Generate JaCoCo report
-      run: |
-        cd ./ninja-backend
-        ./mvnw jacoco:report  # ✅ 產生 HTML 格式測試覆蓋率報表到 target/site/jacoco
+        # 直接使用 Maven test，JaCoCo 會自動收集覆蓋率數據並生成報告
+        ./mvnw clean test
 
     - name: Upload backend artifacts
       uses: actions/upload-artifact@v4
@@ -139,34 +133,73 @@ jobs:
       with:
         name: backend-dist
         path: dist/backend
-      # 功能：下載後端 build 產物
-
-    - name: Download frontend artifacts
+      # 功能：下載後端 build 產物    - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
         path: dist/frontend
       # 功能：下載前端 build 產物
-
-    - name: Create release assets
+        
+    - name: Download JaCoCo coverage report
+      uses: actions/download-artifact@v4
+      with:
+        name: jacoco-report
+        path: dist/jacoco-report
+      # 功能：下載 JaCoCo 覆蓋率報告    - name: Create release assets
       run: |
         mkdir -p release-assets  
         find dist/backend -name "*.jar" -exec cp {} release-assets/ \;  
         cd dist/frontend
         zip -r ../../release-assets/frontend.zip .  
         cd ../..
+        
+        # 處理 JaCoCo 覆蓋率報告
+        if [ -d dist/jacoco-report ]; then
+          cd dist/jacoco-report
+          zip -r ../../release-assets/jacoco-report.zip .
+          cd ../..
+          
+          # 建立覆蓋率摘要
+          echo "# 程式碼覆蓋率摘要" > release-assets/coverage-summary.txt
+          echo "覆蓋率報告生成於：$(date)" >> release-assets/coverage-summary.txt
+          
+          # 讀取覆蓋率資訊
+          if [ -f dist/jacoco-report/index.html ]; then
+            echo "覆蓋率數據可用" >> release-assets/coverage-summary.txt
+            # 提取覆蓋率數據並去除 HTML 標籤
+            grep -A 5 "Total.*%" dist/jacoco-report/index.html | sed 's/<[^>]*>//g' | grep -v "^[[:space:]]*$" >> release-assets/coverage-summary.txt
+          else
+            echo "無法找到覆蓋率報告" >> release-assets/coverage-summary.txt
+          fi
+          
+          # 將摘要存為環境變數供 release body 使用
+          COVERAGE_SUMMARY=$(cat release-assets/coverage-summary.txt)
+          echo "COVERAGE_SUMMARY<<EOF" >> $GITHUB_ENV
+          echo "$COVERAGE_SUMMARY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        else
+          echo "JaCoCo 報告目錄不存在，無法產生覆蓋率摘要" > release-assets/coverage-summary.txt
+          echo "COVERAGE_SUMMARY=無法取得覆蓋率報告" >> $GITHUB_ENV
+        fi
       # 建立 release 資產資料夾
       # 將 JAR 複製到資產資料夾
       # 壓縮前端編譯結果
-      # 功能：準備 Release 附加檔案（後端 JAR + 前端 zip）
-
-    - name: Create GitHub Release + Tag
+      # 處理並壓縮 JaCoCo 覆蓋率報告
+      # 功能：準備 Release 附加檔案（後端 JAR + 前端 zip + 覆蓋率報告）    - name: Create GitHub Release + Tag
       uses: softprops/action-gh-release@v1  # 建立 Release 與 Git tag
       with:
         tag_name: v${{ needs.push.outputs.version }}  # 建立 tag 名稱
         name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱
         body: |
-          Auto-generated release for v${{ needs.push.outputs.version }}.  
+          Auto-generated release for v${{ needs.push.outputs.version }}.
+          
+          ### 程式碼覆蓋率報告
+          
+          ```
+          ${{ env.COVERAGE_SUMMARY }}
+          ```
+          
+          請下載 jacoco-report.zip 查看完整覆蓋率報告。
         # Release 說明
         draft: false  # 不以草稿方式發布
         prerelease: false  # 不是預發佈
@@ -188,8 +221,7 @@ jobs:
         server_port: 465  # SMTP port（SSL）
         username: ${{ secrets.EMAIL_USER }}  # 寄件帳號
         password: ${{ secrets.EMAIL_PASS }}  # 寄件密碼或應用程式密碼
-        subject: "Ninja DDD - Release v${{ needs.build-backend.outputs.version }} Deployment Status"  # Email 標題
-        body: |
+        subject: "Ninja DDD - Release v${{ needs.build-backend.outputs.version }} Deployment Status"  # Email 標題        body: |
           版本號: v${{ needs.build-backend.outputs.version }}
           
           部署結果:
@@ -202,6 +234,8 @@ jobs:
 
           查看 Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build-backend.outputs.version }}
           查看工作流程詳情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          程式碼覆蓋率報告已包含在 Release 中。
         to: mister33221@gmail.com  # 收件人
         from: GitHub Actions  # 寄件人名稱
       # 功能：將部署結果以 Email 寄出，包括各 job 狀態與相關連結
