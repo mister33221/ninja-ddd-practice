@@ -134,7 +134,8 @@ jobs:
       with:
         name: backend-dist
         path: dist/backend
-      # 功能：下載後端 build 產物    - name: Download frontend artifacts
+      # 功能：下載後端 build 產物
+    - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
