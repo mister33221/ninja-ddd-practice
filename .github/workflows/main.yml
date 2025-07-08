@@ -123,58 +123,56 @@ jobs:
           vincentkai/ninja-frontend:${{ needs.build-backend.outputs.version }}
       # 功能：建立並推送前端映像檔
 
-  release:  # 建立 GitHub Release
-    needs: [push]  # 等待 push job 完成
+  release:
+    needs: [push]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4  # 拉取程式碼（主要用於建立 Release 資產壓縮檔）
+    - uses: actions/checkout@v4
 
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
       with:
         name: backend-dist
         path: dist/backend
-      # 功能：下載後端 build 產物
+
     - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
         path: dist/frontend
-      # 功能：下載前端 build 產物
-        
+
     - name: Download JaCoCo coverage report
       uses: actions/download-artifact@v4
       with:
         name: jacoco-report
         path: dist/jacoco-report
-      # 功能：下載 JaCoCo 覆蓋率報告    - name: Create release assets
+
+    - name: Create release assets
       run: |
-        mkdir -p release-assets  
-        find dist/backend -name "*.jar" -exec cp {} release-assets/ \;  
+        mkdir -p release-assets
+        find dist/backend -name "*.jar" -exec cp {} release-assets/ \;
         cd dist/frontend
-        zip -r ../../release-assets/frontend.zip .  
+        zip -r ../../release-assets/frontend.zip .
         cd ../..
-        
+
         # 處理 JaCoCo 覆蓋率報告
         if [ -d dist/jacoco-report ]; then
           cd dist/jacoco-report
           zip -r ../../release-assets/jacoco-report.zip .
           cd ../..
-          
+
           # 建立覆蓋率摘要
           echo "# 程式碼覆蓋率摘要" > release-assets/coverage-summary.txt
           echo "覆蓋率報告生成於：$(date)" >> release-assets/coverage-summary.txt
-          
-          # 讀取覆蓋率資訊
+
           if [ -f dist/jacoco-report/index.html ]; then
             echo "覆蓋率數據可用" >> release-assets/coverage-summary.txt
-            # 提取覆蓋率數據並去除 HTML 標籤
             grep -A 5 "Total.*%" dist/jacoco-report/index.html | sed 's/<[^>]*>//g' | grep -v "^[[:space:]]*$" >> release-assets/coverage-summary.txt
           else
             echo "無法找到覆蓋率報告" >> release-assets/coverage-summary.txt
           fi
-          
-          # 將摘要存為環境變數供 release body 使用
+
+          # 設定為環境變數
           COVERAGE_SUMMARY=$(cat release-assets/coverage-summary.txt)
           echo "COVERAGE_SUMMARY<<EOF" >> $GITHUB_ENV
           echo "$COVERAGE_SUMMARY" >> $GITHUB_ENV
@@ -183,33 +181,29 @@ jobs:
           echo "JaCoCo 報告目錄不存在，無法產生覆蓋率摘要" > release-assets/coverage-summary.txt
           echo "COVERAGE_SUMMARY=無法取得覆蓋率報告" >> $GITHUB_ENV
         fi
-      # 建立 release 資產資料夾
-      # 將 JAR 複製到資產資料夾
-      # 壓縮前端編譯結果
-      # 處理並壓縮 JaCoCo 覆蓋率報告
-      # 功能：準備 Release 附加檔案（後端 JAR + 前端 zip + 覆蓋率報告）    - name: Create GitHub Release + Tag
-      uses: softprops/action-gh-release@v1  # 建立 Release 與 Git tag
+
+    - name: Create GitHub Release + Tag
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ needs.push.outputs.version }}  # 建立 tag 名稱
-        name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱
+        tag_name: v${{ needs.push.outputs.version }}
+        name: Release v${{ needs.push.outputs.version }}
         body: |
           Auto-generated release for v${{ needs.push.outputs.version }}.
-          
+
           ### 程式碼覆蓋率報告
-          
+
           ```
           ${{ env.COVERAGE_SUMMARY }}
           ```
-          
+
           請下載 jacoco-report.zip 查看完整覆蓋率報告。
-        # Release 說明
-        draft: false  # 不以草稿方式發布
-        prerelease: false  # 不是預發佈
+        draft: false
+        prerelease: false
         files: |
-          release-assets/*  # 附加資產
+          release-assets/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 用 GitHub Token 驗證發佈權限
-      # 功能：自動建立 Release 並打上版本號 tag，附上資產
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   notify:  # 通知 job
     needs: [build-backend, build-frontend, push, release]  # 等所有主流程完成
