@@ -29,7 +29,7 @@ jobs:
         cd ./ninja-backend
         chmod +x mvnw
         # 直接使用 Maven test，JaCoCo 會自動收集覆蓋率數據並生成報告
-        ./mvnw clean test
+        ./mvnw clean test package
 
     - name: Upload backend artifacts
       uses: actions/upload-artifact@v4
@@ -84,7 +84,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: backend-dist
-        path: ninja-backend
+        path: ninja-backend/target
       # 功能：取回後端 build 產物供 docker build 使用
 
     - name: Download frontend artifacts
