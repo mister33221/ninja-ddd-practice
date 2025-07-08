@@ -28,24 +28,27 @@ jobs:
       with:
         java-version: '17'  # 使用 JDK 17
         distribution: 'temurin'  # 使用 Temurin 發行版（AdoptOpenJDK 的延續）
-      # 功能：在 runner 上安裝並啟用 JDK 17 環境供編譯用
-
-    - name: Build ninja-backend
+      # 功能：在 runner 上安裝並啟用 JDK 17 環境供編譯用    - name: Build and Test ninja-backend with JaCoCo
       run: |
         cd ./ninja-backend  
         chmod +x mvnw  
-        ./mvnw clean package -DskipTests  
+        ./mvnw clean verify  
       # 切換到後端專案目錄
       # 確保 Maven wrapper 有執行權限
-      # 使用 Maven 包裝專案並跳過測試
-      # 功能：編譯後端專案，產生 JAR 檔
-
-    - name: Upload backend artifacts
+      # 使用 Maven verify 階段（含 test）並產生 JaCoCo 覆蓋率報告
+      # 功能：編譯後端專案、執行測試、產生覆蓋率報告及 JAR 檔    - name: Upload backend artifacts
       uses: actions/upload-artifact@v4  # 上傳編譯好的檔案供後續 job 使用
       with:
         name: backend-dist  # 上傳產物的名稱
         path: ninja-backend/target  # 上傳哪個目錄的內容
       # 功能：把後端產物（JAR 等）上傳給 GitHub Actions 保存
+      
+    - name: Upload JaCoCo coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: jacoco-report
+        path: ninja-backend/target/site/jacoco/
+      # 功能：上傳 JaCoCo 覆蓋率報告供後續查看與發佈
 
   build-frontend:  # 前端建置 job
     runs-on: ubuntu-latest  # 使用 Ubuntu runner
@@ -137,34 +140,59 @@ jobs:
       with:
         name: backend-dist
         path: dist/backend
-      # 功能：下載後端 build 產物
-
-    - name: Download frontend artifacts
+      # 功能：下載後端 build 產物    - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
         path: dist/frontend
       # 功能：下載前端 build 產物
-
-    - name: Create release assets
+      
+    - name: Download JaCoCo report
+      uses: actions/download-artifact@v4
+      with:
+        name: jacoco-report
+        path: dist/jacoco-report
+      # 功能：下載 JaCoCo 覆蓋率報告    - name: Create release assets
       run: |
         mkdir -p release-assets  
         find dist/backend -name "*.jar" -exec cp {} release-assets/ \;  
         cd dist/frontend
         zip -r ../../release-assets/frontend.zip .  
         cd ../..
+        # 壓縮 JaCoCo 覆蓋率報告
+        cd dist/jacoco-report
+        zip -r ../../release-assets/jacoco-report.zip .
+        cd ../..
+        # 產生覆蓋率摘要
+        echo "# 程式碼覆蓋率摘要" > release-assets/coverage-summary.md
+        if [ -f dist/jacoco-report/index.html ]; then
+          echo "覆蓋率報告生成於：$(date)" >> release-assets/coverage-summary.md
+          grep -A 5 "Total.*%" dist/jacoco-report/index.html | sed 's/<[^>]*>//g' | grep -v "^[[:space:]]*$" >> release-assets/coverage-summary.md
+        else
+          echo "覆蓋率報告不可用" >> release-assets/coverage-summary.md
+        fi
       # 建立 release 資產資料夾
       # 將 JAR 複製到資產資料夾
       # 壓縮前端編譯結果
-      # 功能：準備 Release 附加檔案（後端 JAR + 前端 zip）
+      # 壓縮 JaCoCo 報告
+      # 產生覆蓋率摘要文件
+      # 功能：準備 Release 附加檔案（後端 JAR + 前端 zip + 覆蓋率報告）
 
     - name: Create GitHub Release + Tag
       uses: softprops/action-gh-release@v1  # 建立 Release 與 Git tag
       with:
         tag_name: v${{ needs.push.outputs.version }}  # 建立 tag 名稱
-        name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱
+        name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱        
         body: |
-          Auto-generated release for v${{ needs.push.outputs.version }}.  
+          Auto-generated release for v${{ needs.push.outputs.version }}.
+          
+          ### 程式碼覆蓋率
+          
+          ```
+          $(cat release-assets/coverage-summary.md)
+          ```
+          
+          詳細覆蓋率報告請下載 jacoco-report.zip
         # Release 說明
         draft: false  # 不以草稿方式發布
         prerelease: false  # 不是預發佈
@@ -196,10 +224,10 @@ jobs:
           Docker push: ${{ needs.push.result }}
           Release: ${{ needs.release.result }}
 
-          Commit message: ${{ github.event.head_commit.message }}
-
-          查看 Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build-backend.outputs.version }}
+          Commit message: ${{ github.event.head_commit.message }}          查看 Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build-backend.outputs.version }}
           查看工作流程詳情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          程式碼覆蓋率: 請查看 Release 頁面
         to: mister33221@gmail.com  # 收件人
         from: GitHub Actions  # 寄件人名稱
       # 功能：將部署結果以 Email 寄出，包括各 job 狀態與相關連結
