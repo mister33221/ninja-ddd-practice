@@ -23,7 +23,8 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '17'
-        distribution: 'temurin'    - name: Build and Test with JaCoCo
+        distribution: 'temurin'    
+    - name: Build and Test with JaCoCo
       run: |
         cd ./ninja-backend
         chmod +x mvnw
