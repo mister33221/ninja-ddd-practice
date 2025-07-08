@@ -24,11 +24,12 @@ jobs:
       # 功能：產生格式化版本號，例如 2025.07.07-103-c9f0475，並提供給其他 job 使用
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4  # 設定 Java 環境
-      with:
+      uses: actions/setup-java@v4  # 設定 Java 環境      with:
         java-version: '17'  # 使用 JDK 17
         distribution: 'temurin'  # 使用 Temurin 發行版（AdoptOpenJDK 的延續）
-      # 功能：在 runner 上安裝並啟用 JDK 17 環境供編譯用    - name: Build and Test ninja-backend with JaCoCo
+      # 功能：在 runner 上安裝並啟用 JDK 17 環境供編譯用
+      
+    - name: Build and Test ninja-backend with JaCoCo
       run: |
         cd ./ninja-backend  
         chmod +x mvnw  
@@ -136,11 +137,12 @@ jobs:
     - uses: actions/checkout@v4  # 拉取程式碼（主要用於建立 Release 資產壓縮檔）
 
     - name: Download backend artifacts
-      uses: actions/download-artifact@v4
-      with:
+      uses: actions/download-artifact@v4      with:
         name: backend-dist
         path: dist/backend
-      # 功能：下載後端 build 產物    - name: Download frontend artifacts
+      # 功能：下載後端 build 產物
+      
+    - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-dist
@@ -148,11 +150,11 @@ jobs:
       # 功能：下載前端 build 產物
       
     - name: Download JaCoCo report
-      uses: actions/download-artifact@v4
-      with:
+      uses: actions/download-artifact@v4      with:
         name: jacoco-report
         path: dist/jacoco-report
-      # 功能：下載 JaCoCo 覆蓋率報告    - name: Create release assets
+      # 功能：下載 JaCoCo 覆蓋率報告
+        - name: Create release assets
       run: |
         mkdir -p release-assets  
         find dist/backend -name "*.jar" -exec cp {} release-assets/ \;  
@@ -171,6 +173,11 @@ jobs:
         else
           echo "覆蓋率報告不可用" >> release-assets/coverage-summary.md
         fi
+        # 讀取覆蓋率摘要文件並設為環境變數
+        COVERAGE_SUMMARY=$(cat release-assets/coverage-summary.md)
+        echo "COVERAGE_SUMMARY<<EOF" >> $GITHUB_ENV
+        echo "$COVERAGE_SUMMARY" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
       # 建立 release 資產資料夾
       # 將 JAR 複製到資產資料夾
       # 壓縮前端編譯結果
@@ -182,14 +189,13 @@ jobs:
       uses: softprops/action-gh-release@v1  # 建立 Release 與 Git tag
       with:
         tag_name: v${{ needs.push.outputs.version }}  # 建立 tag 名稱
-        name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱        
-        body: |
+        name: Release v${{ needs.push.outputs.version }}  # Release 顯示名稱          body: |
           Auto-generated release for v${{ needs.push.outputs.version }}.
           
           ### 程式碼覆蓋率
           
           ```
-          $(cat release-assets/coverage-summary.md)
+          ${{ env.COVERAGE_SUMMARY }}
           ```
           
           詳細覆蓋率報告請下載 jacoco-report.zip
