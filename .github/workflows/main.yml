@@ -6,46 +6,48 @@ on:
 
 jobs:
   build-backend:  # 後端建置 job 名稱
-    runs-on: ubuntu-latest  # 指定 runner 環境，使用最新版的 Ubuntu Linux 環境
+    runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}  # 將 version 步驟產生的 version 輸出供其他 job 使用
+      version: ${{ steps.version.outputs.version }}
     steps:
-    - uses: actions/checkout@v4  # 拉取當前 commit 的程式碼到 runner 上
+    - uses: actions/checkout@v4
 
-    - name: Generate version number  # 建立版本號步驟名稱
-      id: version  # 步驟 ID，讓其他地方可引用此步驟的 outputs
+    - name: Generate version number
+      id: version
       run: |
-        VERSION="$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"  
-        echo "VERSION=$VERSION"  
-        echo "version=$VERSION" >> $GITHUB_OUTPUT  
-      # 建立版本號：日期+執行序號+commit 縮寫
-      # 將版本號印到 log 供除錯檢視
-      # 輸出版本號供後續 job 使用
-      # 功能：產生格式化版本號，例如 2025.07.07-103-c9f0475，並提供給其他 job 使用
+        VERSION="$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"
+        echo "VERSION=$VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4  # 設定 Java 環境
+      uses: actions/setup-java@v4
       with:
-        java-version: '17'  # 使用 JDK 17
-        distribution: 'temurin'  # 使用 Temurin 發行版（AdoptOpenJDK 的延續）
-      # 功能：在 runner 上安裝並啟用 JDK 17 環境供編譯用
+        java-version: '17'
+        distribution: 'temurin'
 
     - name: Build ninja-backend
       run: |
-        cd ./ninja-backend  
-        chmod +x mvnw  
-        ./mvnw clean package -DskipTests  
-      # 切換到後端專案目錄
-      # 確保 Maven wrapper 有執行權限
-      # 使用 Maven 包裝專案並跳過測試
-      # 功能：編譯後端專案，產生 JAR 檔
+        cd ./ninja-backend
+        chmod +x mvnw
+        ./mvnw clean package -DskipTests=false  # ✅ 改成有跑測試，否則 jacoco 不會有 coverage data
+
+    - name: Generate JaCoCo report
+      run: |
+        cd ./ninja-backend
+        ./mvnw jacoco:report  # ✅ 產生 HTML 格式測試覆蓋率報表到 target/site/jacoco
 
     - name: Upload backend artifacts
-      uses: actions/upload-artifact@v4  # 上傳編譯好的檔案供後續 job 使用
+      uses: actions/upload-artifact@v4
       with:
-        name: backend-dist  # 上傳產物的名稱
-        path: ninja-backend/target  # 上傳哪個目錄的內容
-      # 功能：把後端產物（JAR 等）上傳給 GitHub Actions 保存
+        name: backend-dist
+        path: ninja-backend/target
+
+    - name: Upload JaCoCo coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: jacoco-report
+        path: ninja-backend/target/site/jacoco  # ✅ 上傳報表供檢視
+
 
   build-frontend:  # 前端建置 job
     runs-on: ubuntu-latest  # 使用 Ubuntu runner
