@@ -80,9 +80,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4  # 拉取程式碼（主要用於 docker build context）
 
-    - name: Prepare target folder
-      run: mkdir -p ninja-backend/target
-
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
       with:
